@@ -2,10 +2,9 @@ node_modules
 
 # Output
 .output
-.vercel
-.netlify
 .wrangler
-/.svelte-kit
+app/.svelte-kit
+app/www
 /build
 
 # OS
