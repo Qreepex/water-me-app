@@ -49,6 +49,33 @@ func main() {
 		handleLogin(store, jwtSecret, w, r)
 	})
 
+	// Protected user routes
+	mux.HandleFunc("/api/user", authMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
+		if handlePreflight(w, r, []string{http.MethodGet, http.MethodPut}) {
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			handleGetUser(store, w, r)
+		case http.MethodPut:
+			handleUpdateUserProfile(store, w, r)
+		default:
+			methodNotAllowed(w)
+		}
+	}))
+
+	mux.HandleFunc("/api/user/password", authMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
+		if handlePreflight(w, r, []string{http.MethodPut}) {
+			return
+		}
+		switch r.Method {
+		case http.MethodPut:
+			handleChangePassword(store, w, r)
+		default:
+			methodNotAllowed(w)
+		}
+	}))
+
 	// Protected plant routes
 	mux.HandleFunc("/api/plants", authMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
 		if handlePreflight(w, r, []string{http.MethodGet, http.MethodPost}) {
@@ -326,6 +353,102 @@ func respondJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func handleGetUser(store *Store, w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	user, found, err := store.GetUserByID(r.Context(), userID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	if !found {
+		notFound(w)
+		return
+	}
+	respondJSON(w, http.StatusOK, user)
+}
+
+func handleUpdateUserProfile(store *Store, w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, err.Error(), nil)
+		return
+	}
+
+	user, err := store.UpdateUser(r.Context(), userID, req)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, user)
+}
+
+func handleChangePassword(store *Store, w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, err.Error(), nil)
+		return
+	}
+
+	if req.CurrentPassword == "" || req.NewPassword == "" {
+		badRequest(w, "Current password and new password are required", nil)
+		return
+	}
+
+	if len(req.NewPassword) < 6 {
+		badRequest(w, "New password must be at least 6 characters", nil)
+		return
+	}
+
+	// Get user to verify current password
+	user, found, err := store.GetUserByID(r.Context(), userID)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	if !found {
+		notFound(w)
+		return
+	}
+
+	// Verify current password
+	if err := VerifyPassword(user.PasswordHash, req.CurrentPassword); err != nil {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Current password is incorrect"})
+		return
+	}
+
+	// Hash new password
+	newPasswordHash, err := HashPassword(req.NewPassword)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	// Update password
+	if err := store.UpdateUserPassword(r.Context(), userID, newPasswordHash); err != nil {
+		serverError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"message": "Password changed successfully"})
 }
 
 // corsMiddleware adds permissive CORS headers (Origin = *).

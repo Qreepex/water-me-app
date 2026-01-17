@@ -4,6 +4,7 @@ import { getAuth, saveAuth, clearAuth } from '$lib/auth/auth';
 
 export interface User {
 	id: string;
+	username?: string;
 	email: string;
 	createdAt: string;
 }
@@ -58,8 +59,12 @@ function createAuthStore() {
 				initialized: true
 			});
 		},
-		setUser: (user: User) => {
-			update((state) => ({ ...state, user }));
+		setUser: async (user: User) => {
+			const state = await getAuth();
+			if (state.token) {
+				await saveAuth(state.token, user);
+			}
+			update((s) => ({ ...s, user }));
 		}
 	};
 }

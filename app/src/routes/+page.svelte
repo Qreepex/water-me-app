@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth';
+	import type { User } from '$lib/auth/auth';
 
 	let mode: 'login' | 'signup' = 'login';
 	let email = '';

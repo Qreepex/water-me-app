@@ -63,6 +63,7 @@ type ValidationError struct {
 // User represents a user account.
 type User struct {
 	ID           string `json:"id"`
+	Username     string `json:"username"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"-"`
 	CreatedAt    string `json:"createdAt"`
@@ -84,4 +85,16 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
+}
+
+// UpdateUserRequest is for updating user profile information.
+type UpdateUserRequest struct {
+	Username *string `json:"username,omitempty"`
+	Email    *string `json:"email,omitempty"`
+}
+
+// ChangePasswordRequest is for changing user password.
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
 }

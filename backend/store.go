@@ -49,6 +49,7 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 	const ddl = `
 	CREATE TABLE IF NOT EXISTS users (
 		id TEXT PRIMARY KEY,
+		username TEXT,
 		email TEXT NOT NULL UNIQUE,
 		password_hash TEXT NOT NULL,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -311,21 +312,21 @@ var errNotFound = errors.New("plant not found")
 
 func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 	var (
-		id string
-		userID string
-		species string
-		name string
-		sunLight string
-		prefTemp float64
-		watering int
-		lastWatered time.Time
-		fertInterval int
+		id             string
+		userID         string
+		species        string
+		name           string
+		sunLight       string
+		prefTemp       float64
+		watering       int
+		lastWatered    time.Time
+		fertInterval   int
 		lastFertilized time.Time
-		prefHumidity float64
-		spray sql.NullInt32
-		notesBytes []byte
-		flagsBytes []byte
-		photoBytes []byte
+		prefHumidity   float64
+		spray          sql.NullInt32
+		notesBytes     []byte
+		flagsBytes     []byte
+		photoBytes     []byte
 	)
 
 	if err := row.Scan(
@@ -504,15 +505,16 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 	now := time.Now().UTC()
 
 	const query = `
-	INSERT INTO users (id, email, password_hash, created_at)
-	VALUES ($1, $2, $3, $4)
-	RETURNING id, email, created_at`
+	INSERT INTO users (id, username, email, password_hash, created_at)
+	VALUES ($1, $2, $3, $4, $5)
+	RETURNING id, username, email, created_at`
 
 	var user User
 	var createdAt time.Time
 
-	err := s.pool.QueryRow(ctx, query, id, email, passwordHash, now).Scan(
+	err := s.pool.QueryRow(ctx, query, id, "", email, passwordHash, now).Scan(
 		&user.ID,
+		&user.Username,
 		&user.Email,
 		&createdAt,
 	)
@@ -526,7 +528,7 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, error) {
 	const query = `
-	SELECT id, email, password_hash, created_at
+	SELECT id, username, email, password_hash, created_at
 	FROM users
 	WHERE email = $1`
 
@@ -535,6 +537,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, e
 
 	err := s.pool.QueryRow(ctx, query, email).Scan(
 		&user.ID,
+		&user.Username,
 		&user.Email,
 		&user.PasswordHash,
 		&createdAt,
@@ -548,4 +551,101 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, e
 
 	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
 	return user, true, nil
+}
+
+func (s *Store) GetUserByID(ctx context.Context, userID string) (User, bool, error) {
+	const query = `
+	SELECT id, username, email, created_at
+	FROM users
+	WHERE id = $1`
+
+	var user User
+	var createdAt time.Time
+
+	err := s.pool.QueryRow(ctx, query, userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, false, nil
+		}
+		return User{}, false, fmt.Errorf("get user by id: %w", err)
+	}
+
+	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
+	return user, true, nil
+}
+
+func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUserRequest) (User, error) {
+	var setClauses []string
+	var args []interface{}
+	argIndex := 1
+
+	if updates.Username != nil {
+		setClauses = append(setClauses, fmt.Sprintf("username = $%d", argIndex))
+		args = append(args, *updates.Username)
+		argIndex++
+	}
+
+	if updates.Email != nil {
+		setClauses = append(setClauses, fmt.Sprintf("email = $%d", argIndex))
+		args = append(args, *updates.Email)
+		argIndex++
+	}
+
+	if len(setClauses) == 0 {
+		// No updates provided, just return current user
+		user, _, err := s.GetUserByID(ctx, userID)
+		return user, err
+	}
+
+	args = append(args, userID)
+	query := fmt.Sprintf(`
+	UPDATE users
+	SET %s
+	WHERE id = $%d
+	RETURNING id, username, email, created_at`,
+		strings.Join(setClauses, ", "),
+		argIndex,
+	)
+
+	var user User
+	var createdAt time.Time
+
+	err := s.pool.QueryRow(ctx, query, args...).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, fmt.Errorf("user not found")
+		}
+		return User{}, fmt.Errorf("update user: %w", err)
+	}
+
+	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
+	return user, nil
+}
+
+func (s *Store) UpdateUserPassword(ctx context.Context, userID string, newPasswordHash string) error {
+	const query = `
+	UPDATE users
+	SET password_hash = $1
+	WHERE id = $2`
+
+	result, err := s.pool.Exec(ctx, query, newPasswordHash, userID)
+	if err != nil {
+		return fmt.Errorf("update password: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
 }
