@@ -1,0 +1,482 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// Store wraps database access.
+type Store struct {
+	pool *pgxpool.Pool
+}
+
+func NewStore(ctx context.Context, connString string) (*Store, error) {
+	cfg, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("parse postgres config: %w", err)
+	}
+
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("connect postgres: %w", err)
+	}
+
+	s := &Store{pool: pool}
+	if err := s.ensureSchema(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func (s *Store) Close() {
+	if s.pool != nil {
+		s.pool.Close()
+	}
+}
+
+func (s *Store) ensureSchema(ctx context.Context) error {
+	const ddl = `
+	CREATE TABLE IF NOT EXISTS plants (
+		id TEXT PRIMARY KEY,
+		species TEXT NOT NULL,
+		name TEXT NOT NULL,
+		sun_light TEXT NOT NULL,
+		prefered_temperature REAL NOT NULL,
+		watering_interval_days INTEGER NOT NULL,
+		last_watered TIMESTAMPTZ NOT NULL,
+		fertilizing_interval_days INTEGER NOT NULL,
+		last_fertilized TIMESTAMPTZ NOT NULL,
+		prefered_humidity REAL NOT NULL,
+		spray_interval_days INTEGER NULL,
+		notes JSONB NOT NULL DEFAULT '[]',
+		flags JSONB NOT NULL DEFAULT '[]',
+		photo_ids JSONB NOT NULL DEFAULT '[]',
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	`
+	if _, err := s.pool.Exec(ctx, ddl); err != nil {
+		return fmt.Errorf("create plants table: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) ListPlants(ctx context.Context) ([]Plant, error) {
+	const query = `
+	SELECT id, species, name, sun_light, prefered_temperature,
+		watering_interval_days, last_watered, fertilizing_interval_days,
+		last_fertilized, prefered_humidity, spray_interval_days,
+		notes, flags, photo_ids
+	FROM plants
+	ORDER BY name ASC`
+
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("query plants: %w", err)
+	}
+	defer rows.Close()
+
+	plants := make([]Plant, 0)
+	for rows.Next() {
+		plant, err := scanPlant(rows)
+		if err != nil {
+			return nil, err
+		}
+		plants = append(plants, plant)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
+}
+
+func (s *Store) GetPlant(ctx context.Context, id string) (Plant, bool, error) {
+	const query = `
+	SELECT id, species, name, sun_light, prefered_temperature,
+		watering_interval_days, last_watered, fertilizing_interval_days,
+		last_fertilized, prefered_humidity, spray_interval_days,
+		notes, flags, photo_ids
+	FROM plants
+	WHERE id = $1`
+
+	row := s.pool.QueryRow(ctx, query, id)
+	plant, err := scanPlant(row)
+	if err != nil {
+		if errors.Is(err, errNotFound) {
+			return Plant{}, false, nil
+		}
+		return Plant{}, false, err
+	}
+	return plant, true, nil
+}
+
+func (s *Store) CreatePlant(ctx context.Context, input PlantInput) (Plant, error) {
+	now := time.Now().UTC()
+	id := generateID(input.ID)
+
+	lastWatered := now
+	if input.LastWatered != nil {
+		parsed, err := parseTime(*input.LastWatered)
+		if err != nil {
+			return Plant{}, fmt.Errorf("invalid lastWatered: %w", err)
+		}
+		lastWatered = parsed
+	}
+
+	lastFertilized := now
+	if input.LastFertilized != nil {
+		parsed, err := parseTime(*input.LastFertilized)
+		if err != nil {
+			return Plant{}, fmt.Errorf("invalid lastFertilized: %w", err)
+		}
+		lastFertilized = parsed
+	}
+
+	notesJSON, flagsJSON, photoJSON, err := marshalCollections(input)
+	if err != nil {
+		return Plant{}, err
+	}
+
+	spray := interface{}(nil)
+	if input.SprayIntervalDays != nil {
+		spray = *input.SprayIntervalDays
+	}
+
+	const query = `
+	INSERT INTO plants (
+		id, species, name, sun_light, prefered_temperature,
+		watering_interval_days, last_watered, fertilizing_interval_days,
+		last_fertilized, prefered_humidity, spray_interval_days,
+		notes, flags, photo_ids, created_at, updated_at
+	) VALUES (
+		$1, $2, $3, $4, $5,
+		$6, $7, $8,
+		$9, $10, $11,
+		$12, $13, $14, $15, $16
+	) RETURNING 
+		id, species, name, sun_light, prefered_temperature,
+		watering_interval_days, last_watered, fertilizing_interval_days,
+		last_fertilized, prefered_humidity, spray_interval_days,
+		notes, flags, photo_ids`
+
+	row := s.pool.QueryRow(
+		ctx,
+		query,
+		id,
+		valueOrDefault(input.Species),
+		valueOrDefault(input.Name),
+		valueOrDefault(input.SunLight),
+		valueOrDefault(input.PreferedTemperature),
+		valueOrDefault(input.WateringIntervalDays),
+		lastWatered,
+		valueOrDefault(input.FertilizingIntervalDays),
+		lastFertilized,
+		valueOrDefault(input.PreferedHumidity),
+		spray,
+		notesJSON,
+		flagsJSON,
+		photoJSON,
+		now,
+		now,
+	)
+
+	plant, err := scanPlant(row)
+	if err != nil {
+		return Plant{}, err
+	}
+	return plant, nil
+}
+
+func (s *Store) UpdatePlant(ctx context.Context, id string, updates PlantInput) (Plant, bool, error) {
+	existing, found, err := s.GetPlant(ctx, id)
+	if err != nil || !found {
+		return Plant{}, found, err
+	}
+
+	merged, err := mergePlant(existing, updates)
+	if err != nil {
+		return Plant{}, false, err
+	}
+
+	notesJSON, flagsJSON, photoJSON, err := marshalCollections(PlantInput{
+		Notes:    &merged.Notes,
+		Flags:    &merged.Flags,
+		PhotoIDs: &merged.PhotoIDs,
+	})
+	if err != nil {
+		return Plant{}, false, err
+	}
+
+	spray := interface{}(nil)
+	if merged.SprayIntervalDays != nil {
+		spray = *merged.SprayIntervalDays
+	}
+
+	lastWateredTime, err := parseTime(merged.LastWatered)
+	if err != nil {
+		return Plant{}, false, err
+	}
+	lastFertilizedTime, err := parseTime(merged.LastFertilized)
+	if err != nil {
+		return Plant{}, false, err
+	}
+
+	now := time.Now().UTC()
+
+	const query = `
+	UPDATE plants SET
+		species = $1,
+		name = $2,
+		sun_light = $3,
+		prefered_temperature = $4,
+		watering_interval_days = $5,
+		last_watered = $6,
+		fertilizing_interval_days = $7,
+		last_fertilized = $8,
+		prefered_humidity = $9,
+		spray_interval_days = $10,
+		notes = $11,
+		flags = $12,
+		photo_ids = $13,
+		updated_at = $14
+	WHERE id = $15
+	RETURNING id, species, name, sun_light, prefered_temperature,
+		watering_interval_days, last_watered, fertilizing_interval_days,
+		last_fertilized, prefered_humidity, spray_interval_days,
+		notes, flags, photo_ids`
+
+	row := s.pool.QueryRow(
+		ctx,
+		query,
+		merged.Species,
+		merged.Name,
+		merged.SunLight,
+		merged.PreferedTemperature,
+		merged.WateringIntervalDays,
+		lastWateredTime,
+		merged.FertilizingIntervalDays,
+		lastFertilizedTime,
+		merged.PreferedHumidity,
+		spray,
+		notesJSON,
+		flagsJSON,
+		photoJSON,
+		now,
+		id,
+	)
+
+	plant, err := scanPlant(row)
+	if err != nil {
+		return Plant{}, false, err
+	}
+	return plant, true, nil
+}
+
+func (s *Store) DeletePlant(ctx context.Context, id string) (bool, error) {
+	const query = `DELETE FROM plants WHERE id = $1`
+	cmdTag, err := s.pool.Exec(ctx, query, id)
+	if err != nil {
+		return false, fmt.Errorf("delete plant: %w", err)
+	}
+	return cmdTag.RowsAffected() > 0, nil
+}
+
+var errNotFound = errors.New("plant not found")
+
+func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
+	var (
+		id string
+		species string
+		name string
+		sunLight string
+		prefTemp float64
+		watering int
+		lastWatered time.Time
+		fertInterval int
+		lastFertilized time.Time
+		prefHumidity float64
+		spray sql.NullInt32
+		notesBytes []byte
+		flagsBytes []byte
+		photoBytes []byte
+	)
+
+	if err := row.Scan(
+		&id,
+		&species,
+		&name,
+		&sunLight,
+		&prefTemp,
+		&watering,
+		&lastWatered,
+		&fertInterval,
+		&lastFertilized,
+		&prefHumidity,
+		&spray,
+		&notesBytes,
+		&flagsBytes,
+		&photoBytes,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Plant{}, errNotFound
+		}
+		return Plant{}, err
+	}
+
+	notes := make([]string, 0)
+	if len(notesBytes) > 0 {
+		_ = json.Unmarshal(notesBytes, &notes)
+	}
+
+	flagsStr := make([]string, 0)
+	if len(flagsBytes) > 0 {
+		_ = json.Unmarshal(flagsBytes, &flagsStr)
+	}
+	flags := make([]PlantFlag, 0, len(flagsStr))
+	for _, f := range flagsStr {
+		flag := PlantFlag(f)
+		if isPlantFlag(flag) {
+			flags = append(flags, flag)
+		}
+	}
+
+	photoIDs := make([]string, 0)
+	if len(photoBytes) > 0 {
+		_ = json.Unmarshal(photoBytes, &photoIDs)
+	}
+
+	plant := Plant{
+		ID:                      id,
+		Species:                 species,
+		Name:                    name,
+		SunLight:                SunlightRequirement(sunLight),
+		PreferedTemperature:     prefTemp,
+		WateringIntervalDays:    watering,
+		LastWatered:             lastWatered.UTC().Format(time.RFC3339Nano),
+		FertilizingIntervalDays: fertInterval,
+		LastFertilized:          lastFertilized.UTC().Format(time.RFC3339Nano),
+		PreferedHumidity:        prefHumidity,
+		Notes:                   notes,
+		Flags:                   flags,
+		PhotoIDs:                photoIDs,
+	}
+	if spray.Valid {
+		val := int(spray.Int32)
+		plant.SprayIntervalDays = &val
+	}
+
+	return plant, nil
+}
+
+func generateID(provided *string) string {
+	if provided != nil && strings.TrimSpace(*provided) != "" {
+		return strings.TrimSpace(*provided)
+	}
+	return fmt.Sprintf("plant_%d_%s", time.Now().UnixMilli(), uuid.NewString())
+}
+
+func marshalCollections(input PlantInput) ([]byte, []byte, []byte, error) {
+	notes := []string{}
+	if input.Notes != nil {
+		notes = *input.Notes
+	}
+	flags := []PlantFlag{}
+	if input.Flags != nil {
+		flags = *input.Flags
+	}
+	photos := []string{}
+	if input.PhotoIDs != nil {
+		photos = *input.PhotoIDs
+	}
+
+	notesJSON, err := json.Marshal(notes)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("marshal notes: %w", err)
+	}
+	flagsJSON, err := json.Marshal(flags)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("marshal flags: %w", err)
+	}
+	photoJSON, err := json.Marshal(photos)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("marshal photoIds: %w", err)
+	}
+
+	return notesJSON, flagsJSON, photoJSON, nil
+}
+
+func mergePlant(existing Plant, updates PlantInput) (Plant, error) {
+	merged := existing
+
+	if updates.Species != nil {
+		merged.Species = *updates.Species
+	}
+	if updates.Name != nil {
+		merged.Name = *updates.Name
+	}
+	if updates.SunLight != nil {
+		merged.SunLight = *updates.SunLight
+	}
+	if updates.PreferedTemperature != nil {
+		merged.PreferedTemperature = *updates.PreferedTemperature
+	}
+	if updates.WateringIntervalDays != nil {
+		merged.WateringIntervalDays = *updates.WateringIntervalDays
+	}
+	if updates.LastWatered != nil {
+		merged.LastWatered = *updates.LastWatered
+	}
+	if updates.FertilizingIntervalDays != nil {
+		merged.FertilizingIntervalDays = *updates.FertilizingIntervalDays
+	}
+	if updates.LastFertilized != nil {
+		merged.LastFertilized = *updates.LastFertilized
+	}
+	if updates.PreferedHumidity != nil {
+		merged.PreferedHumidity = *updates.PreferedHumidity
+	}
+	if updates.SprayIntervalDays != nil {
+		val := *updates.SprayIntervalDays
+		merged.SprayIntervalDays = &val
+	}
+	if updates.Notes != nil {
+		merged.Notes = *updates.Notes
+	}
+	if updates.Flags != nil {
+		merged.Flags = *updates.Flags
+	}
+	if updates.PhotoIDs != nil {
+		merged.PhotoIDs = *updates.PhotoIDs
+	}
+
+	return merged, nil
+}
+
+func parseTime(val string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339Nano, val)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parse time: %w", err)
+	}
+	return t.UTC(), nil
+}
+
+func valueOrDefault[T any](ptr *T) T {
+	var zero T
+	if ptr == nil {
+		return zero
+	}
+	return *ptr
+}
