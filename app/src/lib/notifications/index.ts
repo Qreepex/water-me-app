@@ -1,8 +1,8 @@
-export { 
-	initializePushNotifications, 
-	getNotificationToken, 
+export {
+	initializePushNotifications,
+	getNotificationToken,
 	getNotificationState,
 	checkNotificationPermissions,
 	cleanupPushNotifications,
-	type NotificationState 
+	type NotificationState
 } from './push';

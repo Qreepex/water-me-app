@@ -38,7 +38,7 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 				console.log('Push registration success, token:', token.value);
 				notificationState.token = token.value;
 				notificationState.isRegistered = true;
-				
+
 				// Store token in Capacitor Preferences for debugging
 				try {
 					await Preferences.set({ key: 'fcm_token', value: token.value });
@@ -50,10 +50,12 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 			// Listen for registration errors
 			await PushNotifications.addListener('registrationError', (error: any) => {
 				console.error('Push registration error:', error);
-				
+
 				// Check for common Firebase initialization error
 				if (error && error.error && error.error.includes('FirebaseApp is not initialized')) {
-					console.error('⚠️ Firebase not configured! Please add google-services.json to your Android project.');
+					console.error(
+						'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
+					);
 					console.error('📖 See: https://firebase.google.com/docs/android/setup');
 				}
 			});
@@ -63,7 +65,7 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 				'pushNotificationReceived',
 				(notification: PushNotificationSchema) => {
 					console.log('Push notification received (foreground):', notification);
-					
+
 					// You can show a custom UI or alert here
 					console.log(`Title: ${notification.title}, Body: ${notification.body}`);
 				}
@@ -74,7 +76,7 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 				'pushNotificationActionPerformed',
 				(action: ActionPerformed) => {
 					console.log('Push notification action performed:', action);
-					
+
 					// Handle notification tap - navigate to specific screen, etc.
 					const data = action.notification.data;
 					console.log('Notification data:', data);
@@ -87,22 +89,25 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 
 		// Request permission to use push notifications
 		const permStatus = await PushNotifications.requestPermissions();
-		
+
 		if (permStatus.receive === 'granted') {
 			console.log('Push notification permission granted');
-			
+
 			// Register with Apple / Google to receive push notifications
 			try {
 				await PushNotifications.register();
 			} catch (registerError: any) {
 				console.error('Failed to register for push notifications:', registerError);
-				
+
 				// Provide helpful error message for Firebase setup
-				if (registerError && registerError.message && 
-				    registerError.message.includes('FirebaseApp is not initialized')) {
+				if (
+					registerError &&
+					registerError.message &&
+					registerError.message.includes('FirebaseApp is not initialized')
+				) {
 					console.error('❌ Firebase Configuration Missing!');
 				}
-				
+
 				return notificationState;
 			}
 		} else {

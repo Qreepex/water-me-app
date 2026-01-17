@@ -114,16 +114,18 @@
 	<div class="mx-auto max-w-7xl">
 		<!-- Header -->
 		<div class="mb-12">
-			<div class="flex items-center justify-between mb-4">
+			<div class="mb-4 flex items-center justify-between">
 				<div>
-					<h1 class="mb-2 flex items-center gap-3 text-5xl font-bold text-green-800">🌱 My Plants</h1>
+					<h1 class="mb-2 flex items-center gap-3 text-5xl font-bold text-green-800">
+						🌱 My Plants
+					</h1>
 					<p class="text-lg text-green-700">Take care of your green friends</p>
 				</div>
 			</div>
 			<div class="flex gap-3">
 				<button
 					on:click={() => goto('/manage')}
-					class="rounded-lg bg-green-600 px-5 py-2 text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+					class="rounded-lg bg-green-600 px-5 py-2 text-white transition hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
 				>
 					Manage Plants
 				</button>

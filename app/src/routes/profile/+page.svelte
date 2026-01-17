@@ -154,27 +154,27 @@
 </script>
 
 {#if initialized}
-	<div class="max-w-2xl mx-auto">
-		<h1 class="text-3xl font-bold text-emerald-900 mb-8">User Profile</h1>
+	<div class="mx-auto max-w-2xl">
+		<h1 class="mb-8 text-3xl font-bold text-emerald-900">User Profile</h1>
 
 		{#if message}
 			<div
-				class={`mb-6 p-4 rounded-lg ${
+				class={`mb-6 rounded-lg p-4 ${
 					messageType === 'success'
-						? 'bg-green-100 text-green-800 border border-green-300'
-						: 'bg-red-100 text-red-800 border border-red-300'
+						? 'border border-green-300 bg-green-100 text-green-800'
+						: 'border border-red-300 bg-red-100 text-red-800'
 				}`}
 			>
 				{message}
 			</div>
 		{/if}
 
-		<div class="bg-white rounded-lg shadow-md p-6 mb-8 border border-emerald-200">
-			<h2 class="text-xl font-bold text-emerald-900 mb-6">Profile Information</h2>
+		<div class="mb-8 rounded-lg border border-emerald-200 bg-white p-6 shadow-md">
+			<h2 class="mb-6 text-xl font-bold text-emerald-900">Profile Information</h2>
 
 			<div class="space-y-4">
 				<div>
-					<label for="username" class="block text-sm font-semibold text-emerald-800 mb-2">
+					<label for="username" class="mb-2 block text-sm font-semibold text-emerald-800">
 						Username
 					</label>
 					<input
@@ -182,12 +182,12 @@
 						type="text"
 						bind:value={username}
 						placeholder="Your username"
-						class="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
 					/>
 				</div>
 
 				<div>
-					<label for="email" class="block text-sm font-semibold text-emerald-800 mb-2">
+					<label for="email" class="mb-2 block text-sm font-semibold text-emerald-800">
 						Email
 					</label>
 					<input
@@ -195,26 +195,26 @@
 						type="email"
 						bind:value={email}
 						placeholder="your@email.com"
-						class="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
 					/>
 				</div>
 
 				<button
 					onclick={handleUpdateProfile}
 					disabled={loading}
-					class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+					class="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{loading ? 'Updating...' : 'Update Profile'}
 				</button>
 			</div>
 		</div>
 
-		<div class="bg-white rounded-lg shadow-md p-6 border border-emerald-200">
-			<h2 class="text-xl font-bold text-emerald-900 mb-6">Change Password</h2>
+		<div class="rounded-lg border border-emerald-200 bg-white p-6 shadow-md">
+			<h2 class="mb-6 text-xl font-bold text-emerald-900">Change Password</h2>
 
 			<div class="space-y-4">
 				<div>
-					<label for="currentPassword" class="block text-sm font-semibold text-emerald-800 mb-2">
+					<label for="currentPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
 						Current Password
 					</label>
 					<input
@@ -222,12 +222,12 @@
 						type="password"
 						bind:value={currentPassword}
 						placeholder="Enter current password"
-						class="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
 					/>
 				</div>
 
 				<div>
-					<label for="newPassword" class="block text-sm font-semibold text-emerald-800 mb-2">
+					<label for="newPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
 						New Password
 					</label>
 					<input
@@ -235,12 +235,12 @@
 						type="password"
 						bind:value={newPassword}
 						placeholder="Enter new password"
-						class="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
 					/>
 				</div>
 
 				<div>
-					<label for="confirmPassword" class="block text-sm font-semibold text-emerald-800 mb-2">
+					<label for="confirmPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
 						Confirm New Password
 					</label>
 					<input
@@ -248,14 +248,14 @@
 						type="password"
 						bind:value={confirmPassword}
 						placeholder="Confirm new password"
-						class="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
 					/>
 				</div>
 
 				<button
 					onclick={handleChangePassword}
 					disabled={loading}
-					class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+					class="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{loading ? 'Changing...' : 'Change Password'}
 				</button>

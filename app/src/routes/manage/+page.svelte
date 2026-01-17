@@ -197,7 +197,7 @@
 
 			const response = await fetch(API_BASE_URL + url, {
 				method,
-				headers: { 
+				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
@@ -243,7 +243,7 @@
 		<div class="mb-8">
 			<div class="mb-4 flex items-center justify-between">
 				<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">🌿 Manage Plants</h1>
-				<div class="flex gap-3 items-center">
+				<div class="flex items-center gap-3">
 					<a
 						href="/overview"
 						class="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 font-medium text-white shadow-sm transition hover:from-green-700 hover:to-emerald-700"

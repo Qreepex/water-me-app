@@ -3,7 +3,9 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import BurgerMenu from '$lib/components/BurgerMenu.svelte';
-	import { initializePushNotifications, cleanupPushNotifications, getNotificationToken } from '$lib/notifications';
+	import {
+		initializePushNotifications,
+		cleanupPushNotifications	} from '$lib/notifications';
 	import { browser } from '$app/environment';
 
 	let { children } = $props();
@@ -14,7 +16,7 @@
 			// Initialize push notifications
 			const result = await initializePushNotifications();
 			fcmToken = result.token;
-			
+
 			if (fcmToken) {
 				console.log('✅ FCM Token registered:', fcmToken);
 			}
@@ -30,15 +32,15 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-emerald-50 to-green-50 relative">
+<div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
 	<!-- Floating Burger Menu -->
-	<div class="fixed top-0 right-0 z-50 pt-safe pr-safe">
+	<div class="pt-safe pr-safe fixed top-0 right-0 z-50">
 		<div class="p-4">
 			<BurgerMenu />
 		</div>
 	</div>
 
-	<main class="px-4 pt-safe pb-safe">
+	<main class="pt-safe pb-safe px-4">
 		{@render children()}
 	</main>
 </div>

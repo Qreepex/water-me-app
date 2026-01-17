@@ -15,7 +15,7 @@
 	onMount(async () => {
 		// Get current notification state
 		notificationState = getNotificationState();
-		
+
 		// Check if token is in Capacitor Preferences (in case it was registered before)
 		if (!notificationState.token) {
 			try {
@@ -40,10 +40,15 @@
 	}
 </script>
 
-<div class="p-6 bg-white rounded-lg shadow-md border border-emerald-200">
-	<h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
-		<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+<div class="rounded-lg border border-emerald-200 bg-white p-6 shadow-md">
+	<h3 class="mb-4 flex items-center gap-2 text-lg font-bold text-emerald-900">
+		<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+			></path>
 		</svg>
 		Push Notifications
 	</h3>
@@ -79,25 +84,25 @@
 
 		<!-- FCM Token -->
 		{#if notificationState.token}
-			<div class="pt-3 border-t border-emerald-200">
-				<div class="flex items-center justify-between mb-2">
-					<p class="font-semibold text-gray-700 text-sm">FCM Token:</p>
+			<div class="border-t border-emerald-200 pt-3">
+				<div class="mb-2 flex items-center justify-between">
+					<p class="text-sm font-semibold text-gray-700">FCM Token:</p>
 					<button
 						onclick={() => (showToken = !showToken)}
-						class="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+						class="text-xs font-medium text-emerald-600 hover:text-emerald-700"
 					>
 						{showToken ? 'Hide' : 'Show'}
 					</button>
 				</div>
-				
+
 				{#if showToken}
-					<div class="bg-gray-50 rounded p-3 border border-gray-200">
-						<p class="text-xs font-mono break-all text-gray-700">
+					<div class="rounded border border-gray-200 bg-gray-50 p-3">
+						<p class="font-mono text-xs break-all text-gray-700">
 							{notificationState.token}
 						</p>
 						<button
 							onclick={copyToken}
-							class="mt-2 w-full bg-emerald-600 text-white text-sm py-2 px-3 rounded-lg hover:bg-emerald-700 transition-colors"
+							class="mt-2 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white transition-colors hover:bg-emerald-700"
 						>
 							📋 Copy Token
 						</button>
@@ -106,11 +111,11 @@
 			</div>
 
 			<!-- Instructions -->
-			<div class="pt-3 border-t border-emerald-200">
-				<p class="text-xs text-gray-600 mb-2">
+			<div class="border-t border-emerald-200 pt-3">
+				<p class="mb-2 text-xs text-gray-600">
 					<strong>To send test notification:</strong>
 				</p>
-				<ol class="text-xs text-gray-600 space-y-1 list-decimal list-inside">
+				<ol class="list-inside list-decimal space-y-1 text-xs text-gray-600">
 					<li>Copy the token above</li>
 					<li>Go to Firebase Console → Cloud Messaging</li>
 					<li>Click "Send test message"</li>
@@ -118,7 +123,7 @@
 				</ol>
 			</div>
 		{:else}
-			<div class="pt-3 border-t border-emerald-200">
+			<div class="border-t border-emerald-200 pt-3">
 				<p class="text-xs text-gray-600">
 					{#if !notificationState.isSupported}
 						Push notifications are only available on native platforms (iOS/Android).

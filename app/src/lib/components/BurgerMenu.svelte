@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { IMPRINT_URL, PRIVACY_POLICY_URL, WEBSITE_URL } from '$lib/constants';
+	import { openExternalLink } from '$lib/os/browser';
 	import { authStore } from '$lib/stores/auth';
 	import NotificationDebug from './NotificationDebug.svelte';
 
@@ -41,15 +43,10 @@
 	<!-- Burger Icon Button -->
 	<button
 		onclick={toggleMenu}
-		class="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-emerald-200"
+		class="rounded-full border border-emerald-200 bg-white p-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl"
 		aria-label="Menu"
 	>
-		<svg
-			class="w-6 h-6 text-emerald-700"
-			fill="none"
-			stroke="currentColor"
-			viewBox="0 0 24 24"
-		>
+		<svg class="h-6 w-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path
 				stroke-linecap="round"
 				stroke-linejoin="round"
@@ -61,28 +58,43 @@
 
 	{#if isOpen}
 		<!-- Full Screen Menu Overlay -->
-		<div class="fixed inset-0 bg-white z-[100] overflow-y-auto safe-area">
+		<div class="safe-area fixed inset-0 z-[100] overflow-y-auto bg-white">
 			<!-- Close Button -->
-			<div class="flex justify-between items-center p-6 border-b border-emerald-200">
+			<div class="flex items-center justify-between border-b border-emerald-200 p-6">
 				<h2 class="text-2xl font-bold text-emerald-700">Menu</h2>
 				<button
 					onclick={closeMenu}
-					class="p-2 rounded-full hover:bg-emerald-100 transition-colors"
+					class="rounded-full p-2 transition-colors hover:bg-emerald-100"
 					aria-label="Close menu"
 				>
-					<svg class="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					<svg
+						class="h-6 w-6 text-emerald-700"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						></path>
 					</svg>
 				</button>
 			</div>
 
 			<!-- User Info -->
 			{#if $authStore.user}
-				<div class="p-6 bg-emerald-50 border-b border-emerald-200">
+				<div class="border-b border-emerald-200 bg-emerald-50 p-6">
 					<div class="flex items-center gap-3">
-						<div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center">
-							<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+						<div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600">
+							<svg class="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+								></path>
 							</svg>
 						</div>
 						<div>
@@ -96,27 +108,27 @@
 			{/if}
 
 			<!-- Menu Items -->
-			<div class="p-6 space-y-2">
+			<div class="space-y-2 p-6">
 				<button
 					onclick={() => navigateTo('/overview')}
-					class="w-full text-left px-6 py-4 hover:bg-emerald-50 rounded-xl transition-colors flex items-center gap-3 text-lg"
+					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path 
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
 							stroke-width="2"
-              d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+							d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
 						></path>
 					</svg>
-					<span class="text-emerald-900 font-medium">My Plants</span>
+					<span class="font-medium text-emerald-900">My Plants</span>
 				</button>
 
 				<button
 					onclick={() => navigateTo('/profile')}
-					class="w-full text-left px-6 py-4 hover:bg-emerald-50 rounded-xl transition-colors flex items-center gap-3 text-lg"
+					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -124,14 +136,14 @@
 							d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 						></path>
 					</svg>
-					<span class="text-emerald-900 font-medium">User Profile</span>
+					<span class="font-medium text-emerald-900">User Profile</span>
 				</button>
 
 				<button
 					onclick={() => navigateTo('/manage')}
-					class="w-full text-left px-6 py-4 hover:bg-emerald-50 rounded-xl transition-colors flex items-center gap-3 text-lg"
+					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -139,61 +151,62 @@
 							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 						></path>
 					</svg>
-					<span class="text-emerald-900 font-medium">Manage Plants</span>
+					<span class="font-medium text-emerald-900">Manage Plants</span>
 				</button>
 			</div>
 
 			<!-- Language Picker -->
-			<div class="px-6 py-4 border-t border-emerald-200">
-				<p class="text-sm font-semibold text-emerald-700 mb-3">Language</p>
+			<div class="border-t border-emerald-200 px-6 py-4">
+				<p class="mb-3 text-sm font-semibold text-emerald-700">Language</p>
 				<div class="flex gap-3">
-						<button
-							onclick={() => handleLanguageChange('en')}
-							class={`px-6 py-3 rounded-lg text-base font-medium transition-colors ${
-								selectedLanguage === 'en'
-									? 'bg-emerald-600 text-white'
-									: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-							}`}
-						>
-							EN
-						</button>
-						<button
-							onclick={() => handleLanguageChange('de')}
-							class={`px-6 py-3 rounded-lg text-base font-medium transition-colors ${
-								selectedLanguage === 'de'
-									? 'bg-emerald-600 text-white'
-									: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-							}`}
-						>
-							DE
-						</button>
-						<button
-							onclick={() => handleLanguageChange('es')}
-							class={`px-6 py-3 rounded-lg text-base font-medium transition-colors ${
-								selectedLanguage === 'es'
-									? 'bg-emerald-600 text-white'
-									: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-							}`}
-						>
-							ES
-						</button>
-					</div>
+					<button
+						onclick={() => handleLanguageChange('en')}
+						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
+							selectedLanguage === 'en'
+								? 'bg-emerald-600 text-white'
+								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+						}`}
+					>
+						EN
+					</button>
+					<button
+						onclick={() => handleLanguageChange('de')}
+						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
+							selectedLanguage === 'de'
+								? 'bg-emerald-600 text-white'
+								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+						}`}
+					>
+						DE
+					</button>
+					<button
+						onclick={() => handleLanguageChange('es')}
+						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
+							selectedLanguage === 'es'
+								? 'bg-emerald-600 text-white'
+								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+						}`}
+					>
+						ES
+					</button>
+				</div>
 			</div>
 
 			<!-- Notification Debug -->
-			<div class="px-6 py-4 border-t border-emerald-200">
+			<div class="border-t border-emerald-200 px-6 py-4">
 				<button
 					onclick={toggleNotificationDebug}
-					class="w-full text-left px-4 py-3 text-base text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-between"
+					class="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-base text-emerald-700 transition-colors hover:bg-emerald-50"
 				>
 					<span>🔔 Push Notifications (Debug)</span>
 					<svg
-						class="w-4 h-4 transition-transform {showNotificationDebug ? 'rotate-180' : ''}"
+						class="h-4 w-4 transition-transform {showNotificationDebug ? 'rotate-180' : ''}"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
 					>
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
+						></path>
 					</svg>
 				</button>
 				{#if showNotificationDebug}
@@ -204,41 +217,38 @@
 			</div>
 
 			<!-- Footer Links -->
-			<div class="px-6 py-4 border-t border-emerald-200 space-y-2">
-				<a
-					href="/"
-					class="block px-4 py-3 text-base text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-					onclick={closeMenu}
+			<div class="space-y-2 border-t border-emerald-200 px-6 py-4">
+				<button
+					class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
+					onclick={() => openExternalLink(WEBSITE_URL)}
 				>
 					Website
-				</a>
-				<a
-					href="/privacy"
-					class="block px-4 py-3 text-base text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-					onclick={closeMenu}
+				</button>
+				<button
+					class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
+					onclick={() => openExternalLink(PRIVACY_POLICY_URL)}
 				>
 					Privacy Policy
-				</a>
-				<a
-					href="/impressum"
-					class="block px-4 py-3 text-base text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-					onclick={closeMenu}
+				</button>
+				<button
+					class="block rounded-lg px-4 py-3 text-base text-emerald-700 transition-colors hover:bg-emerald-50"
+					onclick={() => openExternalLink(IMPRINT_URL)}
 				>
 					Impressum
-				</a>
+				</button>
 			</div>
 
 			<!-- Build Info -->
-			<div class="px-6 py-4 border-t border-emerald-200 text-sm text-emerald-600">
+			<div class="border-t border-emerald-200 px-6 py-4 text-sm text-emerald-600">
 				<p>Build: {new Date().toISOString().split('T')[0]}</p>
 				<p>Version: 1.0.0</p>
 			</div>
 
 			<!-- Logout Button -->
-			<div class="px-6 py-4 border-t border-emerald-200">
+			<div class="border-t border-emerald-200 px-6 py-4">
 				<button
 					onclick={handleLogout}
-					class="w-full text-center px-6 py-4 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors font-semibold text-lg"
+					class="w-full rounded-lg bg-red-50 px-6 py-4 text-center text-lg font-semibold text-red-600 transition-colors hover:bg-red-100"
 				>
 					Logout
 				</button>
