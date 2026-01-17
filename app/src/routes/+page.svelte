@@ -1,224 +1,175 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import type { Plant } from '$lib/types/types';
+	import { authStore } from '$lib/stores/auth';
 
-	type SortOption =
-		| 'name'
-		| 'lastWatered'
-		| 'lastFertilized'
-		| 'sprayInterval'
-		| 'wateringInterval';
-
-	let plants: Plant[] = [];
-	let loading = true;
+	let mode: 'login' | 'signup' = 'login';
+	let email = '';
+	let password = '';
+	let loading = false;
 	let error: string | null = null;
-	let sortBy: SortOption = 'name';
+	let isInitialized = false;
 
 	onMount(async () => {
+		// Wait for auth store to initialize from Capacitor preferences
+		const unsubscribe = authStore.subscribe((state) => {
+			isInitialized = state.initialized;
+			if (state.isAuthenticated) {
+				goto('/overview');
+			}
+		});
+
+		return unsubscribe;
+	});
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		loading = true;
+		error = null;
+
 		try {
-			const response = await fetch('/api/plants');
-			if (!response.ok) throw new Error('Failed to fetch plants');
-			plants = await response.json();
+			const endpoint = mode === 'login' ? '/api/login' : '/api/signup';
+			const response = await fetch(`https://water.benschiemann.com${endpoint}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, password })
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				error = data.error || 'Authentication failed';
+				return;
+			}
+
+			// Store auth data and redirect
+			const user: User = data.user;
+			const token: string = data.token;
+
+			authStore.login(user, token);
+			goto('/overview');
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unknown error';
+			error = err instanceof Error ? err.message : 'An error occurred';
 		} finally {
 			loading = false;
 		}
-	});
-
-	function getSortedPlants(): Plant[] {
-		const sorted = [...plants];
-
-		switch (sortBy) {
-			case 'name':
-				return sorted.sort((a, b) => a.name.localeCompare(b.name));
-			case 'lastWatered':
-				return sorted.sort(
-					(a, b) => new Date(b.lastWatered).getTime() - new Date(a.lastWatered).getTime()
-				);
-			case 'lastFertilized':
-				return sorted.sort(
-					(a, b) => new Date(b.lastFertilized).getTime() - new Date(a.lastFertilized).getTime()
-				);
-			case 'wateringInterval':
-				return sorted.sort((a, b) => a.wateringIntervalDays - b.wateringIntervalDays);
-			case 'sprayInterval':
-				return sorted.sort((a, b) => (a.sprayIntervalDays || 999) - (b.sprayIntervalDays || 999));
-			default:
-				return sorted;
-		}
 	}
 
-	function daysAgo(dateString: string): string {
-		const days = Math.floor((Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24));
-		if (days === 0) return 'Today';
-		if (days === 1) return 'Yesterday';
-		return `${days} days ago`;
-	}
-
-	function getWateringStatus(plant: Plant): { text: string; color: string } {
-		const days = Math.floor(
-			(Date.now() - new Date(plant.lastWatered).getTime()) / (1000 * 60 * 60 * 24)
-		);
-		const daysUntilWater = plant.wateringIntervalDays - days;
-
-		if (daysUntilWater <= 0) return { text: '🌵 Needs water!', color: 'text-red-600' };
-		if (daysUntilWater <= 1) return { text: '⚠️ Water soon', color: 'text-yellow-600' };
-		return { text: `✓ In ${daysUntilWater} days`, color: 'text-green-600' };
+	function toggleMode() {
+		mode = mode === 'login' ? 'signup' : 'login';
+		error = null;
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-8">
-	<div class="mx-auto max-w-7xl">
-		<!-- Header -->
-		<div class="mb-12">
-			<h1 class="mb-2 flex items-center gap-3 text-5xl font-bold text-green-800">🌱 My Plants</h1>
-			<p class="text-lg text-green-700">Take care of your green friends</p>
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
+	<div class="w-full max-w-md">
+		<!-- Logo/Title -->
+		<div class="text-center mb-8">
+			<h1 class="text-5xl font-bold text-green-800 mb-2">🌱 PlantCare</h1>
+			<p class="text-green-700">Take care of your green friends</p>
 		</div>
 
-		<!-- Controls -->
-		<div class="mb-8 flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<label for="sort" class="font-semibold text-green-800">Sort by:</label>
-				<select
-					id="sort"
-					bind:value={sortBy}
-					class="rounded-lg border-2 border-green-300 bg-white px-4 py-2 font-medium text-green-800 transition hover:border-green-400 focus:border-green-500 focus:outline-none"
-				>
-					<option value="name">Plant Name</option>
-					<option value="lastWatered">Last Watered</option>
-					<option value="lastFertilized">Last Fertilized</option>
-					<option value="wateringInterval">Watering Frequency</option>
-					<option value="sprayInterval">Spray Frequency</option>
-				</select>
+		<!-- Card -->
+		<div class="bg-white rounded-2xl shadow-lg p-8">
+			<!-- Mode Indicator -->
+			<div class="mb-8">
+				<h2 class="text-2xl font-bold text-green-800 mb-4">
+					{mode === 'login' ? 'Welcome Back' : 'Create Account'}
+				</h2>
+				<p class="text-gray-600">
+					{mode === 'login'
+						? 'Sign in to manage your plants'
+						: 'Join us to start tracking your plants'}
+				</p>
 			</div>
-			<div class="font-medium text-green-800">
-				{plants.length}
-				{plants.length === 1 ? 'plant' : 'plants'}
-			</div>
-		</div>
 
-		<!-- Loading & Error States -->
-		{#if loading}
-			<div class="flex min-h-96 items-center justify-center">
-				<div class="text-center">
-					<div class="mb-4 animate-bounce text-6xl">🌿</div>
-					<p class="text-lg font-medium text-green-700">Loading your plants...</p>
+			<!-- Form -->
+			<form on:submit={handleSubmit} class="space-y-5">
+				<!-- Email Input -->
+				<div>
+					<label for="email" class="block text-sm font-semibold text-green-800 mb-2">
+						Email
+					</label>
+					<input
+						type="email"
+						id="email"
+						bind:value={email}
+						placeholder="you@example.com"
+						required
+						disabled={loading}
+						class="w-full rounded-lg border-2 border-green-300 px-4 py-3 transition focus:border-green-500 focus:outline-none disabled:bg-gray-100 hover:border-green-400"
+					/>
 				</div>
-			</div>
-		{:else if error}
-			<div class="rounded-lg border-2 border-red-400 bg-red-100 px-6 py-4 text-red-800">
-				<p class="font-bold">Error loading plants</p>
-				<p>{error}</p>
-			</div>
-		{:else if plants.length === 0}
-			<div class="py-16 text-center">
-				<div class="mb-4 text-8xl">🪴</div>
-				<p class="text-xl font-medium text-green-800">No plants yet!</p>
-				<p class="mt-2 text-green-700">Start adding your plants to track their care.</p>
-			</div>
-		{:else}
-			<!-- Plant Grid -->
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-				{#each getSortedPlants() as plant (plant.id)}
-					<div
-						class="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
-					>
-						<!-- Image -->
-						<div
-							class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-green-200 to-emerald-300"
-						>
-							{#if plant.photoIds.length > 0}
-								<img
-									src={plant.photoIds[0]}
-									alt={plant.name}
-									class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-								/>
-							{:else}
-								<div class="text-7xl transition-transform duration-300 group-hover:scale-110">
-									🌱
-								</div>
-							{/if}
-						</div>
 
-						<!-- Content -->
-						<div class="p-5">
-							<!-- Name and Species -->
-							<h3 class="mb-1 line-clamp-2 text-xl font-bold text-green-800">{plant.name}</h3>
-							<p class="mb-4 line-clamp-1 text-sm text-green-600">{plant.species}</p>
+				<!-- Password Input -->
+				<div>
+					<label for="password" class="block text-sm font-semibold text-green-800 mb-2">
+						Password
+					</label>
+					<input
+						type="password"
+						id="password"
+						bind:value={password}
+						placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••'}
+						required
+						disabled={loading}
+						class="w-full rounded-lg border-2 border-green-300 px-4 py-3 transition focus:border-green-500 focus:outline-none disabled:bg-gray-100 hover:border-green-400"
+					/>
+				</div>
 
-							<!-- Watering Status -->
-							<div class="mb-4">
-								<div class={`mb-2 text-sm font-semibold ${getWateringStatus(plant).color}`}>
-									{getWateringStatus(plant).text}
-								</div>
-								<p class="text-xs text-gray-600">
-									Watered {daysAgo(plant.lastWatered)}
-								</p>
-							</div>
-
-							<!-- Metadata Grid -->
-							<div class="mb-4 grid grid-cols-2 gap-3 text-xs">
-								<div class="rounded-lg bg-blue-50 p-2">
-									<div class="font-semibold text-blue-600">💧</div>
-									<p class="mt-1 text-xs text-gray-700">Every {plant.wateringIntervalDays}d</p>
-								</div>
-								<div class="rounded-lg bg-yellow-50 p-2">
-									<div class="font-semibold text-yellow-600">🥗</div>
-									<p class="mt-1 text-xs text-gray-700">Every {plant.fertilizingIntervalDays}d</p>
-								</div>
-								<div class="rounded-lg bg-purple-50 p-2">
-									<div class="font-semibold text-purple-600">☀️</div>
-									<p class="mt-1 text-xs text-gray-700">
-										{plant.sunLight.split(' ').slice(0, 1).join('')}
-									</p>
-								</div>
-								<div class="rounded-lg bg-teal-50 p-2">
-									<div class="font-semibold text-teal-600">💨</div>
-									<p class="mt-1 text-xs text-gray-700">{plant.preferedHumidity}%</p>
-								</div>
-							</div>
-
-							<!-- Spray Info -->
-							{#if plant.sprayIntervalDays}
-								<div class="mb-3 rounded-lg bg-cyan-50 p-2">
-									<p class="text-xs text-gray-600">
-										💦 Spray every <span class="font-semibold text-cyan-700"
-											>{plant.sprayIntervalDays}</span
-										> days
-									</p>
-									<p class="mt-1 text-xs text-gray-600">
-										Last: <span class="font-semibold">{daysAgo(plant.lastFertilized)}</span>
-									</p>
-								</div>
-							{/if}
-
-							<!-- Flags -->
-							{#if plant.flags.length > 0}
-								<div class="mb-3 flex flex-wrap gap-2">
-									{#each plant.flags as flag}
-										<span
-											class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800"
-										>
-											⚡ {flag}
-										</span>
-									{/each}
-								</div>
-							{/if}
-
-							<!-- Notes Preview -->
-							{#if plant.notes.length > 0}
-								<div class="border-t border-gray-200 pt-3">
-									<p class="line-clamp-2 text-xs text-gray-600">
-										📝 {plant.notes[0]}
-									</p>
-								</div>
-							{/if}
-						</div>
+				<!-- Error Message -->
+				{#if error}
+					<div class="rounded-lg border-2 border-red-400 bg-red-100 px-4 py-3 text-red-800">
+						<p class="text-sm font-semibold">{error}</p>
 					</div>
-				{/each}
+				{/if}
+
+				<!-- Submit Button -->
+				<button
+					type="submit"
+					disabled={loading}
+					class="w-full rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					{#if loading}
+						<span class="inline-flex items-center gap-2">
+							<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							{mode === 'login' ? 'Signing in...' : 'Creating account...'}
+						</span>
+					{:else}
+						{mode === 'login' ? 'Sign In' : 'Sign Up'}
+					{/if}
+				</button>
+			</form>
+
+			<!-- Toggle Mode -->
+			<div class="mt-6 text-center">
+				<p class="text-gray-600">
+					{mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
+					<button
+						type="button"
+						on:click={toggleMode}
+						class="font-semibold text-green-600 hover:text-green-700 transition"
+					>
+						{mode === 'login' ? 'Sign Up' : 'Sign In'}
+					</button>
+				</p>
 			</div>
-		{/if}
+
+			<!-- Demo Note -->
+			<div class="mt-8 rounded-lg bg-emerald-50 border border-emerald-300 p-4">
+				<p class="text-xs text-emerald-800">
+					💡 <strong>Demo tip:</strong> Use any email and password (min 6 chars) to get started!
+				</p>
+			</div>
+		</div>
+
+		<!-- Footer -->
+		<div class="mt-8 text-center text-sm text-gray-600">
+			<p>Made with 🌿 for plant lovers</p>
+		</div>
 	</div>
 </div>
 

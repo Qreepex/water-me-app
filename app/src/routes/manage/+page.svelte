@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 	import type { Plant } from '$lib/types/types';
 	import { PlantFlag, SunlightRequirement } from '$lib/types/types';
+	import { API_BASE_URL } from '$lib';
+	import { authStore } from '$lib/stores/auth';
+	import { goto } from '$app/navigation';
 
 	interface FormData {
 		id?: string;
@@ -23,6 +26,13 @@
 	let error: string | null = null;
 	let success: string | null = null;
 	let submitting = false;
+	let token: string | null = null;
+	let isInitialized = false;
+
+	authStore.subscribe((state) => {
+		token = state.token;
+		isInitialized = state.initialized;
+	});
 
 	let showForm = false;
 	let editingId: string | null = null;
@@ -44,13 +54,37 @@
 	let photoPreview: string[] = [];
 	let fileInput: HTMLInputElement;
 
+	function handleLogout() {
+		authStore.logout();
+		goto('/');
+	}
+
 	onMount(async () => {
-		await loadPlants();
+		// Wait for auth to initialize
+		const checkAuth = setInterval(() => {
+			if (isInitialized) {
+				clearInterval(checkAuth);
+				if (!token) {
+					goto('/');
+					return;
+				}
+				loadPlants();
+			}
+		}, 50);
 	});
 
 	async function loadPlants(): Promise<void> {
 		try {
-			const response = await fetch('/api/plants');
+			const response = await fetch('https://water.benschiemann.com/api/plants', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+
+			if (response.status === 401) {
+				authStore.logout();
+				goto('/');
+				return;
+			}
+
 			if (!response.ok) throw new Error('Failed to fetch plants');
 			plants = await response.json();
 		} catch (err) {
@@ -137,6 +171,12 @@
 	}
 
 	async function submitForm(): Promise<void> {
+		if (!token) {
+			authStore.logout();
+			goto('/');
+			return;
+		}
+
 		if (!formData.species.trim() || !formData.name.trim()) {
 			error = 'Species and name are required';
 			return;
@@ -155,9 +195,12 @@
 				photoIds: photoPreview
 			};
 
-			const response = await fetch(url, {
+			const response = await fetch('https://water.benschiemann.com' + url, {
 				method,
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
 				body: JSON.stringify(payload)
 			});
 
@@ -178,10 +221,13 @@
 	}
 
 	async function deletePlant(id: string): Promise<void> {
-		if (!confirm('Are you sure you want to delete this plant?')) return;
+		if (!token || !confirm('Are you sure you want to delete this plant?')) return;
 
 		try {
-			const response = await fetch(`/api/plants/${id}`, { method: 'DELETE' });
+			const response = await fetch(`https://water.benschiemann.com/api/plants/${id}`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${token}` }
+			});
 			if (!response.ok) throw new Error('Failed to delete plant');
 			success = 'Plant deleted successfully!';
 			await loadPlants();
@@ -197,12 +243,20 @@
 		<div class="mb-8">
 			<div class="mb-4 flex items-center justify-between">
 				<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">🌿 Manage Plants</h1>
-				<a
-					href="/"
-					class="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 font-medium text-white shadow-sm transition hover:from-green-700 hover:to-emerald-700"
-				>
-					← Back to Overview
-				</a>
+				<div class="flex gap-3 items-center">
+					<a
+						href="/overview"
+						class="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 font-medium text-white shadow-sm transition hover:from-green-700 hover:to-emerald-700"
+					>
+						← Back to Overview
+					</a>
+					<button
+						on:click={handleLogout}
+						class="rounded-xl bg-red-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-red-700"
+					>
+						Logout
+					</button>
+				</div>
 			</div>
 			<p class="text-emerald-800">Create, update, or delete your plants</p>
 		</div>

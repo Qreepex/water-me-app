@@ -47,8 +47,16 @@ func (s *Store) Close() {
 
 func (s *Store) ensureSchema(ctx context.Context) error {
 	const ddl = `
+	CREATE TABLE IF NOT EXISTS users (
+		id TEXT PRIMARY KEY,
+		email TEXT NOT NULL UNIQUE,
+		password_hash TEXT NOT NULL,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+
 	CREATE TABLE IF NOT EXISTS plants (
 		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 		species TEXT NOT NULL,
 		name TEXT NOT NULL,
 		sun_light TEXT NOT NULL,
@@ -65,23 +73,26 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);
+
+	CREATE INDEX IF NOT EXISTS idx_plants_user_id ON plants(user_id);
 	`
 	if _, err := s.pool.Exec(ctx, ddl); err != nil {
-		return fmt.Errorf("create plants table: %w", err)
+		return fmt.Errorf("create schema: %w", err)
 	}
 	return nil
 }
 
-func (s *Store) ListPlants(ctx context.Context) ([]Plant, error) {
+func (s *Store) ListPlants(ctx context.Context, userID string) ([]Plant, error) {
 	const query = `
-	SELECT id, species, name, sun_light, prefered_temperature,
+	SELECT id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
 		last_fertilized, prefered_humidity, spray_interval_days,
 		notes, flags, photo_ids
 	FROM plants
+	WHERE user_id = $1
 	ORDER BY name ASC`
 
-	rows, err := s.pool.Query(ctx, query)
+	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("query plants: %w", err)
 	}
@@ -103,16 +114,16 @@ func (s *Store) ListPlants(ctx context.Context) ([]Plant, error) {
 	return plants, nil
 }
 
-func (s *Store) GetPlant(ctx context.Context, id string) (Plant, bool, error) {
+func (s *Store) GetPlant(ctx context.Context, id string, userID string) (Plant, bool, error) {
 	const query = `
-	SELECT id, species, name, sun_light, prefered_temperature,
+	SELECT id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
 		last_fertilized, prefered_humidity, spray_interval_days,
 		notes, flags, photo_ids
 	FROM plants
-	WHERE id = $1`
+	WHERE id = $1 AND user_id = $2`
 
-	row := s.pool.QueryRow(ctx, query, id)
+	row := s.pool.QueryRow(ctx, query, id, userID)
 	plant, err := scanPlant(row)
 	if err != nil {
 		if errors.Is(err, errNotFound) {
@@ -123,7 +134,7 @@ func (s *Store) GetPlant(ctx context.Context, id string) (Plant, bool, error) {
 	return plant, true, nil
 }
 
-func (s *Store) CreatePlant(ctx context.Context, input PlantInput) (Plant, error) {
+func (s *Store) CreatePlant(ctx context.Context, userID string, input PlantInput) (Plant, error) {
 	now := time.Now().UTC()
 	id := generateID(input.ID)
 
@@ -157,17 +168,17 @@ func (s *Store) CreatePlant(ctx context.Context, input PlantInput) (Plant, error
 
 	const query = `
 	INSERT INTO plants (
-		id, species, name, sun_light, prefered_temperature,
+		id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
 		last_fertilized, prefered_humidity, spray_interval_days,
 		notes, flags, photo_ids, created_at, updated_at
 	) VALUES (
 		$1, $2, $3, $4, $5,
-		$6, $7, $8,
-		$9, $10, $11,
-		$12, $13, $14, $15, $16
+		$6, $7, $8, $9,
+		$10, $11, $12,
+		$13, $14, $15, $16, $17
 	) RETURNING 
-		id, species, name, sun_light, prefered_temperature,
+		id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
 		last_fertilized, prefered_humidity, spray_interval_days,
 		notes, flags, photo_ids`
@@ -176,6 +187,7 @@ func (s *Store) CreatePlant(ctx context.Context, input PlantInput) (Plant, error
 		ctx,
 		query,
 		id,
+		userID,
 		valueOrDefault(input.Species),
 		valueOrDefault(input.Name),
 		valueOrDefault(input.SunLight),
@@ -200,8 +212,8 @@ func (s *Store) CreatePlant(ctx context.Context, input PlantInput) (Plant, error
 	return plant, nil
 }
 
-func (s *Store) UpdatePlant(ctx context.Context, id string, updates PlantInput) (Plant, bool, error) {
-	existing, found, err := s.GetPlant(ctx, id)
+func (s *Store) UpdatePlant(ctx context.Context, id string, userID string, updates PlantInput) (Plant, bool, error) {
+	existing, found, err := s.GetPlant(ctx, id, userID)
 	if err != nil || !found {
 		return Plant{}, found, err
 	}
@@ -252,8 +264,8 @@ func (s *Store) UpdatePlant(ctx context.Context, id string, updates PlantInput) 
 		flags = $12,
 		photo_ids = $13,
 		updated_at = $14
-	WHERE id = $15
-	RETURNING id, species, name, sun_light, prefered_temperature,
+	WHERE id = $15 AND user_id = $16
+	RETURNING id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
 		last_fertilized, prefered_humidity, spray_interval_days,
 		notes, flags, photo_ids`
@@ -276,6 +288,7 @@ func (s *Store) UpdatePlant(ctx context.Context, id string, updates PlantInput) 
 		photoJSON,
 		now,
 		id,
+		userID,
 	)
 
 	plant, err := scanPlant(row)
@@ -285,9 +298,9 @@ func (s *Store) UpdatePlant(ctx context.Context, id string, updates PlantInput) 
 	return plant, true, nil
 }
 
-func (s *Store) DeletePlant(ctx context.Context, id string) (bool, error) {
-	const query = `DELETE FROM plants WHERE id = $1`
-	cmdTag, err := s.pool.Exec(ctx, query, id)
+func (s *Store) DeletePlant(ctx context.Context, id string, userID string) (bool, error) {
+	const query = `DELETE FROM plants WHERE id = $1 AND user_id = $2`
+	cmdTag, err := s.pool.Exec(ctx, query, id, userID)
 	if err != nil {
 		return false, fmt.Errorf("delete plant: %w", err)
 	}
@@ -299,6 +312,7 @@ var errNotFound = errors.New("plant not found")
 func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 	var (
 		id string
+		userID string
 		species string
 		name string
 		sunLight string
@@ -316,6 +330,7 @@ func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 
 	if err := row.Scan(
 		&id,
+		&userID,
 		&species,
 		&name,
 		&sunLight,
@@ -360,6 +375,7 @@ func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 
 	plant := Plant{
 		ID:                      id,
+		UserID:                  userID,
 		Species:                 species,
 		Name:                    name,
 		SunLight:                SunlightRequirement(sunLight),
@@ -479,4 +495,57 @@ func valueOrDefault[T any](ptr *T) T {
 		return zero
 	}
 	return *ptr
+}
+
+// User operations
+
+func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (User, error) {
+	id := fmt.Sprintf("user_%d_%s", time.Now().UnixMilli(), uuid.NewString())
+	now := time.Now().UTC()
+
+	const query = `
+	INSERT INTO users (id, email, password_hash, created_at)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, email, created_at`
+
+	var user User
+	var createdAt time.Time
+
+	err := s.pool.QueryRow(ctx, query, id, email, passwordHash, now).Scan(
+		&user.ID,
+		&user.Email,
+		&createdAt,
+	)
+	if err != nil {
+		return User{}, fmt.Errorf("create user: %w", err)
+	}
+
+	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
+	return user, nil
+}
+
+func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, error) {
+	const query = `
+	SELECT id, email, password_hash, created_at
+	FROM users
+	WHERE email = $1`
+
+	var user User
+	var createdAt time.Time
+
+	err := s.pool.QueryRow(ctx, query, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return User{}, false, nil
+		}
+		return User{}, false, fmt.Errorf("get user by email: %w", err)
+	}
+
+	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
+	return user, true, nil
 }

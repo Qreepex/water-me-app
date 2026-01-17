@@ -14,6 +14,7 @@ import (
 func main() {
 	ctx := context.Background()
 	connString := getenv("DATABASE_URL", "postgres://postgres:pw@localhost:5432/plants?sslmode=disable")
+	jwtSecret := getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
 
 	store, err := NewStore(ctx, connString)
 	if err != nil {
@@ -22,7 +23,37 @@ func main() {
 	defer store.Close()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/plants", func(w http.ResponseWriter, r *http.Request) {
+
+	// Public routes
+	mux.HandleFunc("/api/signup", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		if r.Method != http.MethodPost {
+			methodNotAllowed(w)
+			return
+		}
+		handleSignup(store, jwtSecret, w, r)
+	})
+
+	mux.HandleFunc("/api/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		if r.Method != http.MethodPost {
+			methodNotAllowed(w)
+			return
+		}
+		handleLogin(store, jwtSecret, w, r)
+	})
+
+	// Protected plant routes
+	mux.HandleFunc("/api/plants", authMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
+		if handlePreflight(w, r, []string{http.MethodGet, http.MethodPost}) {
+			return
+		}
 		switch r.Method {
 		case http.MethodGet:
 			handleListPlants(store, w, r)
@@ -31,12 +62,16 @@ func main() {
 		default:
 			methodNotAllowed(w)
 		}
-	})
+	}))
 
-	mux.HandleFunc("/api/plants/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/plants/", authMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimPrefix(r.URL.Path, "/api/plants/")
 		if id == "" || strings.Contains(id, "/") {
 			notFound(w)
+			return
+		}
+
+		if handlePreflight(w, r, []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete}) {
 			return
 		}
 
@@ -52,12 +87,12 @@ func main() {
 		default:
 			methodNotAllowed(w)
 		}
-	})
+	}))
 
 	addr := getenv("PORT", "8080")
 	srv := &http.Server{
 		Addr:         ":" + addr,
-		Handler:      mux,
+		Handler:      corsMiddleware(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
@@ -69,7 +104,13 @@ func main() {
 }
 
 func handleListPlants(store *Store, w http.ResponseWriter, r *http.Request) {
-	plants, err := store.ListPlants(r.Context())
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	plants, err := store.ListPlants(r.Context(), userID)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -78,7 +119,13 @@ func handleListPlants(store *Store, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetPlant(store *Store, id string, w http.ResponseWriter, r *http.Request) {
-	plant, found, err := store.GetPlant(r.Context(), id)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	plant, found, err := store.GetPlant(r.Context(), id, userID)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -91,6 +138,12 @@ func handleGetPlant(store *Store, id string, w http.ResponseWriter, r *http.Requ
 }
 
 func handleCreatePlant(store *Store, w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
 	var input PlantInput
 	if err := decodeJSON(r, &input); err != nil {
 		badRequest(w, err.Error(), nil)
@@ -104,7 +157,7 @@ func handleCreatePlant(store *Store, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plant, err := store.CreatePlant(r.Context(), sanitized)
+	plant, err := store.CreatePlant(r.Context(), userID, sanitized)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -113,6 +166,12 @@ func handleCreatePlant(store *Store, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUpdatePlant(store *Store, id string, partial bool, w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
 	var input PlantInput
 	if err := decodeJSON(r, &input); err != nil {
 		badRequest(w, err.Error(), nil)
@@ -126,7 +185,7 @@ func handleUpdatePlant(store *Store, id string, partial bool, w http.ResponseWri
 		return
 	}
 
-	plant, found, err := store.UpdatePlant(r.Context(), id, sanitized)
+	plant, found, err := store.UpdatePlant(r.Context(), id, userID, sanitized)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -139,7 +198,13 @@ func handleUpdatePlant(store *Store, id string, partial bool, w http.ResponseWri
 }
 
 func handleDeletePlant(store *Store, id string, w http.ResponseWriter, r *http.Request) {
-	deleted, err := store.DeletePlant(r.Context(), id)
+	userID, ok := getUserID(r)
+	if !ok {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		return
+	}
+
+	deleted, err := store.DeletePlant(r.Context(), id, userID)
 	if err != nil {
 		serverError(w, err)
 		return
@@ -160,10 +225,131 @@ func decodeJSON(r *http.Request, dest any) error {
 	return nil
 }
 
+func handleSignup(store *Store, jwtSecret string, w http.ResponseWriter, r *http.Request) {
+	var req SignupRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, err.Error(), nil)
+		return
+	}
+
+	if req.Email == "" || req.Password == "" {
+		badRequest(w, "Email and password are required", nil)
+		return
+	}
+
+	if len(req.Password) < 6 {
+		badRequest(w, "Password must be at least 6 characters", nil)
+		return
+	}
+
+	// Check if user already exists
+	_, exists, err := store.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	if exists {
+		badRequest(w, "User with this email already exists", nil)
+		return
+	}
+
+	// Hash password
+	passwordHash, err := HashPassword(req.Password)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	// Create user
+	user, err := store.CreateUser(r.Context(), req.Email, passwordHash)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	// Generate JWT
+	token, err := GenerateJWT(user.ID, jwtSecret)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, LoginResponse{
+		Token: token,
+		User:  user,
+	})
+}
+
+func handleLogin(store *Store, jwtSecret string, w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
+	if err := decodeJSON(r, &req); err != nil {
+		badRequest(w, err.Error(), nil)
+		return
+	}
+
+	if req.Email == "" || req.Password == "" {
+		badRequest(w, "Email and password are required", nil)
+		return
+	}
+
+	// Get user by email
+	user, exists, err := store.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+	if !exists {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid email or password"})
+		return
+	}
+
+	// Verify password
+	if err := VerifyPassword(user.PasswordHash, req.Password); err != nil {
+		respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid email or password"})
+		return
+	}
+
+	// Generate JWT
+	token, err := GenerateJWT(user.ID, jwtSecret)
+	if err != nil {
+		serverError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, LoginResponse{
+		Token: token,
+		User:  user,
+	})
+}
+
 func respondJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+// corsMiddleware adds permissive CORS headers (Origin = *).
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+		w.Header().Set("Access-Control-Max-Age", "600")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// handlePreflight returns true if the request was an OPTIONS preflight and writes the response.
+func handlePreflight(w http.ResponseWriter, r *http.Request, allowed []string) bool {
+	if r.Method != http.MethodOptions {
+		return false
+	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", strings.Join(allowed, ","))
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+	w.Header().Set("Access-Control-Max-Age", "600")
+	w.WriteHeader(http.StatusNoContent)
+	return true
 }
 
 func badRequest(w http.ResponseWriter, message string, details any) {
