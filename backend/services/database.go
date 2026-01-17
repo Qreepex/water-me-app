@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"plants-backend/types"
+	"plants-backend/validation"
 	"strings"
 	"time"
 
@@ -14,12 +16,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Store wraps database access.
-type Store struct {
+// Database wraps database access.
+type Database struct {
 	pool *pgxpool.Pool
 }
 
-func NewStore(ctx context.Context, connString string) (*Store, error) {
+func NewDatabase(ctx context.Context, connString string) (*Database, error) {
 	cfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("parse postgres config: %w", err)
@@ -30,7 +32,7 @@ func NewStore(ctx context.Context, connString string) (*Store, error) {
 		return nil, fmt.Errorf("connect postgres: %w", err)
 	}
 
-	s := &Store{pool: pool}
+	s := &Database{pool: pool}
 	if err := s.ensureSchema(ctx); err != nil {
 		pool.Close()
 		return nil, err
@@ -39,13 +41,13 @@ func NewStore(ctx context.Context, connString string) (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) Close() {
+func (s *Database) Close() {
 	if s.pool != nil {
 		s.pool.Close()
 	}
 }
 
-func (s *Store) ensureSchema(ctx context.Context) error {
+func (s *Database) ensureSchema(ctx context.Context) error {
 	const ddl = `
 	CREATE TABLE IF NOT EXISTS users (
 		id TEXT PRIMARY KEY,
@@ -84,7 +86,7 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) ListPlants(ctx context.Context, userID string) ([]Plant, error) {
+func (s *Database) ListPlants(ctx context.Context, userID string) ([]types.Plant, error) {
 	const query = `
 	SELECT id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
@@ -100,7 +102,7 @@ func (s *Store) ListPlants(ctx context.Context, userID string) ([]Plant, error) 
 	}
 	defer rows.Close()
 
-	plants := make([]Plant, 0)
+	plants := make([]types.Plant, 0)
 	for rows.Next() {
 		plant, err := scanPlant(rows)
 		if err != nil {
@@ -116,7 +118,7 @@ func (s *Store) ListPlants(ctx context.Context, userID string) ([]Plant, error) 
 	return plants, nil
 }
 
-func (s *Store) GetPlant(ctx context.Context, id string, userID string) (Plant, bool, error) {
+func (s *Database) GetPlant(ctx context.Context, id string, userID string) (types.Plant, bool, error) {
 	const query = `
 	SELECT id, user_id, species, name, sun_light, prefered_temperature,
 		watering_interval_days, last_watered, fertilizing_interval_days,
@@ -129,14 +131,14 @@ func (s *Store) GetPlant(ctx context.Context, id string, userID string) (Plant, 
 	plant, err := scanPlant(row)
 	if err != nil {
 		if errors.Is(err, errNotFound) {
-			return Plant{}, false, nil
+			return types.Plant{}, false, nil
 		}
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 	return plant, true, nil
 }
 
-func (s *Store) CreatePlant(ctx context.Context, userID string, input PlantInput) (Plant, error) {
+func (s *Database) CreatePlant(ctx context.Context, userID string, input types.PlantInput) (types.Plant, error) {
 	now := time.Now().UTC()
 	id := generateID(input.ID)
 
@@ -144,7 +146,7 @@ func (s *Store) CreatePlant(ctx context.Context, userID string, input PlantInput
 	if input.LastWatered != nil {
 		parsed, err := parseTime(*input.LastWatered)
 		if err != nil {
-			return Plant{}, fmt.Errorf("invalid lastWatered: %w", err)
+			return types.Plant{}, fmt.Errorf("invalid lastWatered: %w", err)
 		}
 		lastWatered = parsed
 	}
@@ -153,14 +155,14 @@ func (s *Store) CreatePlant(ctx context.Context, userID string, input PlantInput
 	if input.LastFertilized != nil {
 		parsed, err := parseTime(*input.LastFertilized)
 		if err != nil {
-			return Plant{}, fmt.Errorf("invalid lastFertilized: %w", err)
+			return types.Plant{}, fmt.Errorf("invalid lastFertilized: %w", err)
 		}
 		lastFertilized = parsed
 	}
 
 	notesJSON, flagsJSON, photoJSON, err := marshalCollections(input)
 	if err != nil {
-		return Plant{}, err
+		return types.Plant{}, err
 	}
 
 	spray := interface{}(nil)
@@ -209,29 +211,29 @@ func (s *Store) CreatePlant(ctx context.Context, userID string, input PlantInput
 
 	plant, err := scanPlant(row)
 	if err != nil {
-		return Plant{}, err
+		return types.Plant{}, err
 	}
 	return plant, nil
 }
 
-func (s *Store) UpdatePlant(ctx context.Context, id string, userID string, updates PlantInput) (Plant, bool, error) {
+func (s *Database) UpdatePlant(ctx context.Context, id string, userID string, updates types.PlantInput) (types.Plant, bool, error) {
 	existing, found, err := s.GetPlant(ctx, id, userID)
 	if err != nil || !found {
-		return Plant{}, found, err
+		return types.Plant{}, found, err
 	}
 
 	merged, err := mergePlant(existing, updates)
 	if err != nil {
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 
-	notesJSON, flagsJSON, photoJSON, err := marshalCollections(PlantInput{
+	notesJSON, flagsJSON, photoJSON, err := marshalCollections(types.PlantInput{
 		Notes:    &merged.Notes,
 		Flags:    &merged.Flags,
 		PhotoIDs: &merged.PhotoIDs,
 	})
 	if err != nil {
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 
 	spray := interface{}(nil)
@@ -241,11 +243,11 @@ func (s *Store) UpdatePlant(ctx context.Context, id string, userID string, updat
 
 	lastWateredTime, err := parseTime(merged.LastWatered)
 	if err != nil {
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 	lastFertilizedTime, err := parseTime(merged.LastFertilized)
 	if err != nil {
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 
 	now := time.Now().UTC()
@@ -295,12 +297,12 @@ func (s *Store) UpdatePlant(ctx context.Context, id string, userID string, updat
 
 	plant, err := scanPlant(row)
 	if err != nil {
-		return Plant{}, false, err
+		return types.Plant{}, false, err
 	}
 	return plant, true, nil
 }
 
-func (s *Store) DeletePlant(ctx context.Context, id string, userID string) (bool, error) {
+func (s *Database) DeletePlant(ctx context.Context, id string, userID string) (bool, error) {
 	const query = `DELETE FROM plants WHERE id = $1 AND user_id = $2`
 	cmdTag, err := s.pool.Exec(ctx, query, id, userID)
 	if err != nil {
@@ -311,7 +313,7 @@ func (s *Store) DeletePlant(ctx context.Context, id string, userID string) (bool
 
 var errNotFound = errors.New("plant not found")
 
-func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
+func scanPlant(row interface{ Scan(dest ...any) error }) (types.Plant, error) {
 	var (
 		id             string
 		userID         string
@@ -348,9 +350,9 @@ func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 		&photoBytes,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return Plant{}, errNotFound
+			return types.Plant{}, errNotFound
 		}
-		return Plant{}, err
+		return types.Plant{}, err
 	}
 
 	notes := make([]string, 0)
@@ -362,10 +364,10 @@ func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 	if len(flagsBytes) > 0 {
 		_ = json.Unmarshal(flagsBytes, &flagsStr)
 	}
-	flags := make([]PlantFlag, 0, len(flagsStr))
+	flags := make([]types.PlantFlag, 0, len(flagsStr))
 	for _, f := range flagsStr {
-		flag := PlantFlag(f)
-		if isPlantFlag(flag) {
+		flag := types.PlantFlag(f)
+		if validation.IsPlantFlag(flag) {
 			flags = append(flags, flag)
 		}
 	}
@@ -375,12 +377,12 @@ func scanPlant(row interface{ Scan(dest ...any) error }) (Plant, error) {
 		_ = json.Unmarshal(photoBytes, &photoIDs)
 	}
 
-	plant := Plant{
+	plant := types.Plant{
 		ID:                      id,
 		UserID:                  userID,
 		Species:                 species,
 		Name:                    name,
-		SunLight:                SunlightRequirement(sunLight),
+		SunLight:                types.SunlightRequirement(sunLight),
 		PreferedTemperature:     prefTemp,
 		WateringIntervalDays:    watering,
 		LastWatered:             lastWatered.UTC().Format(time.RFC3339Nano),
@@ -406,12 +408,12 @@ func generateID(provided *string) string {
 	return fmt.Sprintf("plant_%d_%s", time.Now().UnixMilli(), uuid.NewString())
 }
 
-func marshalCollections(input PlantInput) ([]byte, []byte, []byte, error) {
+func marshalCollections(input types.PlantInput) ([]byte, []byte, []byte, error) {
 	notes := []string{}
 	if input.Notes != nil {
 		notes = *input.Notes
 	}
-	flags := []PlantFlag{}
+	flags := []types.PlantFlag{}
 	if input.Flags != nil {
 		flags = *input.Flags
 	}
@@ -436,7 +438,7 @@ func marshalCollections(input PlantInput) ([]byte, []byte, []byte, error) {
 	return notesJSON, flagsJSON, photoJSON, nil
 }
 
-func mergePlant(existing Plant, updates PlantInput) (Plant, error) {
+func mergePlant(existing types.Plant, updates types.PlantInput) (types.Plant, error) {
 	merged := existing
 
 	if updates.Species != nil {
@@ -501,7 +503,7 @@ func valueOrDefault[T any](ptr *T) T {
 
 // User operations
 
-func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (User, error) {
+func (s *Database) CreateUser(ctx context.Context, email, passwordHash string) (types.User, error) {
 	id := fmt.Sprintf("user_%d_%s", time.Now().UnixMilli(), uuid.NewString())
 	now := time.Now().UTC()
 
@@ -510,7 +512,7 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 	VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING id, username, email, language, created_at`
 
-	var user User
+	var user types.User
 	var createdAt time.Time
 
 	err := s.pool.QueryRow(ctx, query, id, "", email, passwordHash, "en", now).Scan(
@@ -521,20 +523,20 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 		&createdAt,
 	)
 	if err != nil {
-		return User{}, fmt.Errorf("create user: %w", err)
+		return types.User{}, fmt.Errorf("create user: %w", err)
 	}
 
 	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
 	return user, nil
 }
 
-func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, error) {
+func (s *Database) GetUserByEmail(ctx context.Context, email string) (types.User, bool, error) {
 	const query = `
 	SELECT id, username, email, password_hash, language, created_at
 	FROM users
 	WHERE email = $1`
 
-	var user User
+	var user types.User
 	var createdAt time.Time
 
 	err := s.pool.QueryRow(ctx, query, email).Scan(
@@ -547,22 +549,22 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, e
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return User{}, false, nil
+			return types.User{}, false, nil
 		}
-		return User{}, false, fmt.Errorf("get user by email: %w", err)
+		return types.User{}, false, fmt.Errorf("get user by email: %w", err)
 	}
 
 	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
 	return user, true, nil
 }
 
-func (s *Store) GetUserByID(ctx context.Context, userID string) (User, bool, error) {
+func (s *Database) GetUserByID(ctx context.Context, userID string) (types.User, bool, error) {
 	const query = `
 	SELECT id, username, email, language, created_at
 	FROM users
 	WHERE id = $1`
 
-	var user User
+	var user types.User
 	var createdAt time.Time
 
 	err := s.pool.QueryRow(ctx, query, userID).Scan(
@@ -574,16 +576,16 @@ func (s *Store) GetUserByID(ctx context.Context, userID string) (User, bool, err
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return User{}, false, nil
+			return types.User{}, false, nil
 		}
-		return User{}, false, fmt.Errorf("get user by id: %w", err)
+		return types.User{}, false, fmt.Errorf("get user by id: %w", err)
 	}
 
 	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
 	return user, true, nil
 }
 
-func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUserRequest) (User, error) {
+func (s *Database) UpdateUser(ctx context.Context, userID string, updates types.UpdateUserRequest) (types.User, error) {
 	var setClauses []string
 	var args []interface{}
 	argIndex := 1
@@ -622,7 +624,7 @@ func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUse
 		argIndex,
 	)
 
-	var user User
+	var user types.User
 	var createdAt time.Time
 
 	err := s.pool.QueryRow(ctx, query, args...).Scan(
@@ -634,16 +636,16 @@ func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUse
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return User{}, fmt.Errorf("user not found")
+			return types.User{}, fmt.Errorf("user not found")
 		}
-		return User{}, fmt.Errorf("update user: %w", err)
+		return types.User{}, fmt.Errorf("update user: %w", err)
 	}
 
 	user.CreatedAt = createdAt.UTC().Format(time.RFC3339Nano)
 	return user, nil
 }
 
-func (s *Store) UpdateUserPassword(ctx context.Context, userID string, newPasswordHash string) error {
+func (s *Database) UpdateUserPassword(ctx context.Context, userID string, newPasswordHash string) error {
 	const query = `
 	UPDATE users
 	SET password_hash = $1

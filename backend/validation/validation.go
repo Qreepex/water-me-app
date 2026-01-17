@@ -1,6 +1,7 @@
-package main
+package validation
 
 import (
+	"plants-backend/types"
 	"strings"
 	"time"
 )
@@ -48,123 +49,123 @@ var constraints = validationConstraints{
 }
 
 // ValidatePlantInput mirrors the TS validation; when partial is true, only provided fields are checked.
-func ValidatePlantInput(input PlantInput, partial bool) []ValidationError {
-	errors := make([]ValidationError, 0)
+func ValidatePlantInput(input types.PlantInput, partial bool) []types.ValidationError {
+	errors := make([]types.ValidationError, 0)
 
 	if !partial {
 		if input.Species == nil {
-			errors = append(errors, ValidationError{Field: "species", Message: "Species is required and must be a non-empty string"})
+			errors = append(errors, types.ValidationError{Field: "species", Message: "Species is required and must be a non-empty string"})
 		}
 		if input.Name == nil {
-			errors = append(errors, ValidationError{Field: "name", Message: "Name is required and must be a non-empty string"})
+			errors = append(errors, types.ValidationError{Field: "name", Message: "Name is required and must be a non-empty string"})
 		}
 		if input.SunLight == nil {
-			errors = append(errors, ValidationError{Field: "sunLight", Message: "SunLight is required"})
+			errors = append(errors, types.ValidationError{Field: "sunLight", Message: "SunLight is required"})
 		}
 		if input.PreferedTemperature == nil {
-			errors = append(errors, ValidationError{Field: "preferedTemperature", Message: "PreferredTemperature must be a number"})
+			errors = append(errors, types.ValidationError{Field: "preferedTemperature", Message: "PreferredTemperature must be a number"})
 		}
 		if input.WateringIntervalDays == nil {
-			errors = append(errors, ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be a positive number"})
+			errors = append(errors, types.ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be a positive number"})
 		}
 		if input.FertilizingIntervalDays == nil {
-			errors = append(errors, ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be a positive number"})
+			errors = append(errors, types.ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be a positive number"})
 		}
 		if input.PreferedHumidity == nil {
-			errors = append(errors, ValidationError{Field: "preferedHumidity", Message: "PreferredHumidity must be a number"})
+			errors = append(errors, types.ValidationError{Field: "preferedHumidity", Message: "PreferredHumidity must be a number"})
 		}
 	}
 
 	if input.Species != nil {
 		val := strings.TrimSpace(*input.Species)
 		if val == "" {
-			errors = append(errors, ValidationError{Field: "species", Message: "Species is required and must be a non-empty string"})
+			errors = append(errors, types.ValidationError{Field: "species", Message: "Species is required and must be a non-empty string"})
 		} else if len(val) > constraints.speciesMaxLength {
-			errors = append(errors, ValidationError{Field: "species", Message: "Species must be 100 characters or less"})
+			errors = append(errors, types.ValidationError{Field: "species", Message: "Species must be 100 characters or less"})
 		}
 	}
 
 	if input.Name != nil {
 		val := strings.TrimSpace(*input.Name)
 		if val == "" {
-			errors = append(errors, ValidationError{Field: "name", Message: "Name is required and must be a non-empty string"})
+			errors = append(errors, types.ValidationError{Field: "name", Message: "Name is required and must be a non-empty string"})
 		} else if len(val) > constraints.nameMaxLength {
-			errors = append(errors, ValidationError{Field: "name", Message: "Name must be 100 characters or less"})
+			errors = append(errors, types.ValidationError{Field: "name", Message: "Name must be 100 characters or less"})
 		}
 	}
 
 	if input.SunLight != nil {
 		if !isSunlightRequirement(*input.SunLight) {
-			errors = append(errors, ValidationError{Field: "sunLight", Message: "SunLight must be one of: Full Sun, Indirect Sun, Partial Shade, Partial to Full Shade, Full Shade"})
+			errors = append(errors, types.ValidationError{Field: "sunLight", Message: "SunLight must be one of: Full Sun, Indirect Sun, Partial Shade, Partial to Full Shade, Full Shade"})
 		}
 	}
 
 	if input.PreferedTemperature != nil {
 		val := *input.PreferedTemperature
 		if val < constraints.temperatureMin || val > constraints.temperatureMax {
-			errors = append(errors, ValidationError{Field: "preferedTemperature", Message: "PreferredTemperature must be between -50 and 100"})
+			errors = append(errors, types.ValidationError{Field: "preferedTemperature", Message: "PreferredTemperature must be between -50 and 100"})
 		}
 	}
 
 	if input.WateringIntervalDays != nil {
 		val := *input.WateringIntervalDays
 		if val < constraints.wateringIntervalMin {
-			errors = append(errors, ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be a positive number"})
+			errors = append(errors, types.ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be a positive number"})
 		} else if val > constraints.wateringIntervalMax {
-			errors = append(errors, ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be 365 or less"})
+			errors = append(errors, types.ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be 365 or less"})
 		}
 	}
 
 	if input.FertilizingIntervalDays != nil {
 		val := *input.FertilizingIntervalDays
 		if val < constraints.fertilizingIntervalMin {
-			errors = append(errors, ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be a positive number"})
+			errors = append(errors, types.ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be a positive number"})
 		} else if val > constraints.fertilizingIntervalMax {
-			errors = append(errors, ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be 365 or less"})
+			errors = append(errors, types.ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be 365 or less"})
 		}
 	}
 
 	if input.PreferedHumidity != nil {
 		val := *input.PreferedHumidity
 		if val < constraints.humidityMin || val > constraints.humidityMax {
-			errors = append(errors, ValidationError{Field: "preferedHumidity", Message: "PreferredHumidity must be between 0 and 100"})
+			errors = append(errors, types.ValidationError{Field: "preferedHumidity", Message: "PreferredHumidity must be between 0 and 100"})
 		}
 	}
 
 	if input.SprayIntervalDays != nil {
 		val := *input.SprayIntervalDays
 		if val < constraints.sprayIntervalMin {
-			errors = append(errors, ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be a positive number"})
+			errors = append(errors, types.ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be a positive number"})
 		} else if val > constraints.sprayIntervalMax {
-			errors = append(errors, ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be 365 or less"})
+			errors = append(errors, types.ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be 365 or less"})
 		}
 	}
 
 	if input.LastWatered != nil {
 		if !isValidISODate(*input.LastWatered) {
-			errors = append(errors, ValidationError{Field: "lastWatered", Message: "LastWatered must be a valid ISO 8601 date string"})
+			errors = append(errors, types.ValidationError{Field: "lastWatered", Message: "LastWatered must be a valid ISO 8601 date string"})
 		}
 	}
 
 	if input.LastFertilized != nil {
 		if !isValidISODate(*input.LastFertilized) {
-			errors = append(errors, ValidationError{Field: "lastFertilized", Message: "LastFertilized must be a valid ISO 8601 date string"})
+			errors = append(errors, types.ValidationError{Field: "lastFertilized", Message: "LastFertilized must be a valid ISO 8601 date string"})
 		}
 	}
 
 	if input.Notes != nil {
 		notes := *input.Notes
 		if len(notes) > constraints.notesMaxItems {
-			errors = append(errors, ValidationError{Field: "notes", Message: "Notes array must contain 100 items or less"})
+			errors = append(errors, types.ValidationError{Field: "notes", Message: "Notes array must contain 100 items or less"})
 		}
 		for _, note := range notes {
 			trimmed := strings.TrimSpace(note)
 			if trimmed == "" {
-				errors = append(errors, ValidationError{Field: "notes", Message: "All notes must be non-empty strings"})
+				errors = append(errors, types.ValidationError{Field: "notes", Message: "All notes must be non-empty strings"})
 				break
 			}
 			if len(trimmed) > constraints.notesMaxItemLength {
-				errors = append(errors, ValidationError{Field: "notes", Message: "Each note must be 500 characters or less"})
+				errors = append(errors, types.ValidationError{Field: "notes", Message: "Each note must be 500 characters or less"})
 				break
 			}
 		}
@@ -173,8 +174,8 @@ func ValidatePlantInput(input PlantInput, partial bool) []ValidationError {
 	if input.Flags != nil {
 		flags := *input.Flags
 		for _, flag := range flags {
-			if !isPlantFlag(flag) {
-				errors = append(errors, ValidationError{Field: "flags", Message: "Flags must be one of: No Draught, Remove Brown Leaves"})
+			if !IsPlantFlag(flag) {
+				errors = append(errors, types.ValidationError{Field: "flags", Message: "Flags must be one of: No Draught, Remove Brown Leaves"})
 				break
 			}
 		}
@@ -183,16 +184,16 @@ func ValidatePlantInput(input PlantInput, partial bool) []ValidationError {
 	if input.PhotoIDs != nil {
 		ids := *input.PhotoIDs
 		if len(ids) > constraints.photoIDsMaxItems {
-			errors = append(errors, ValidationError{Field: "photoIds", Message: "PhotoIds array must contain 100 items or less"})
+			errors = append(errors, types.ValidationError{Field: "photoIds", Message: "PhotoIds array must contain 100 items or less"})
 		}
 		for _, id := range ids {
 			trimmed := strings.TrimSpace(id)
 			if trimmed == "" {
-				errors = append(errors, ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string; non-data IDs must be 255 characters or less"})
+				errors = append(errors, types.ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string; non-data IDs must be 255 characters or less"})
 				break
 			}
 			if !strings.HasPrefix(trimmed, "data:") && len(trimmed) > constraints.photoIDsMaxIDLength {
-				errors = append(errors, ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string; non-data IDs must be 255 characters or less"})
+				errors = append(errors, types.ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string; non-data IDs must be 255 characters or less"})
 				break
 			}
 		}
@@ -202,8 +203,8 @@ func ValidatePlantInput(input PlantInput, partial bool) []ValidationError {
 }
 
 // SanitizePlantInput trims and filters values; only fields present in the request remain set.
-func SanitizePlantInput(input PlantInput) PlantInput {
-	clean := PlantInput{}
+func SanitizePlantInput(input types.PlantInput) types.PlantInput {
+	clean := types.PlantInput{}
 
 	if input.ID != nil {
 		trimmed := strings.TrimSpace(*input.ID)
@@ -282,9 +283,9 @@ func SanitizePlantInput(input PlantInput) PlantInput {
 	}
 
 	if input.Flags != nil {
-		filtered := make([]PlantFlag, 0, len(*input.Flags))
+		filtered := make([]types.PlantFlag, 0, len(*input.Flags))
 		for _, flag := range *input.Flags {
-			if isPlantFlag(flag) {
+			if IsPlantFlag(flag) {
 				filtered = append(filtered, flag)
 			}
 		}
@@ -305,18 +306,18 @@ func SanitizePlantInput(input PlantInput) PlantInput {
 	return clean
 }
 
-func isPlantFlag(flag PlantFlag) bool {
+func IsPlantFlag(flag types.PlantFlag) bool {
 	switch flag {
-	case PlantFlagNoDraught, PlantFlagRemoveBrownLeaves:
+	case types.PlantFlagNoDraught, types.PlantFlagRemoveBrownLeaves:
 		return true
 	default:
 		return false
 	}
 }
 
-func isSunlightRequirement(val SunlightRequirement) bool {
+func isSunlightRequirement(val types.SunlightRequirement) bool {
 	switch val {
-	case SunlightFullSun, SunlightIndirectSun, SunlightPartialShade, SunlightPartialToFullShade, SunlightFullShade:
+	case types.SunlightFullSun, types.SunlightIndirectSun, types.SunlightPartialShade, types.SunlightPartialToFullShade, types.SunlightFullShade:
 		return true
 	default:
 		return false

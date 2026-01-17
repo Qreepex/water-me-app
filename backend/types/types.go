@@ -1,4 +1,6 @@
-package main
+package types
+
+import "github.com/golang-jwt/jwt/v5"
 
 // Plant mirrors the frontend Plant type.
 type Plant struct {
@@ -99,4 +101,9 @@ type UpdateUserRequest struct {
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`
+}
+
+type Claims struct {
+	UserID string `json:"uid"`
+	jwt.RegisteredClaims
 }

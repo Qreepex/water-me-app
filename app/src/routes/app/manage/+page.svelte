@@ -52,12 +52,123 @@
 	};
 
 	let newNote = '';
-	let photoPreview: string[] = [];
+	let photoPreview: { data: string; key?: string }[] = []; // data URL or S3 key
 	let fileInput: HTMLInputElement;
+	let photoUploadProgress: Record<number, number> = {};
 
 	function handleLogout() {
 		authStore.logout();
 		goto(resolve('/'));
+	}
+
+	// Compress image to max 2MB using canvas
+	async function compressImage(file: File): Promise<Blob> {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				const img = new Image();
+				img.onload = () => {
+					const canvas = document.createElement('canvas');
+					let { width, height } = img;
+
+					// Scale down if too large
+					const maxDimension = 2048;
+					if (width > maxDimension || height > maxDimension) {
+						const scale = Math.min(maxDimension / width, maxDimension / height);
+						width = Math.floor(width * scale);
+						height = Math.floor(height * scale);
+					}
+
+					canvas.width = width;
+					canvas.height = height;
+					const ctx = canvas.getContext('2d')!;
+					ctx.drawImage(img, 0, 0, width, height);
+
+					// Compress with decreasing quality until under 2MB
+					let quality = 0.9;
+					const targetSize = 2 * 1024 * 1024; // 2MB
+					canvas.toBlob(
+						(blob) => {
+							if (blob && blob.size <= targetSize) {
+								resolve(blob);
+							} else if (quality > 0.1) {
+								quality -= 0.1;
+								canvas.toBlob((b) => b && resolve(b), 'image/jpeg', quality);
+							} else {
+								resolve(blob || new Blob());
+							}
+						},
+						'image/jpeg',
+						quality
+					);
+				};
+				img.onerror = () => reject(new Error('Failed to load image'));
+				img.src = e.target?.result as string;
+			};
+			reader.onerror = () => reject(new Error('Failed to read file'));
+			reader.readAsDataURL(file);
+		});
+	}
+
+	// Request presigned URLs from backend
+	async function getPresignedUrls(files: File[]): Promise<{ key: string; url: string; headers: Record<string, string> }[]> {
+		if (!token) throw new Error('Unauthorized');
+
+		const body = {
+			files: files.map((f) => ({
+				filename: f.name,
+				contentType: f.type
+			}))
+		};
+
+		const response = await fetch(API_BASE_URL + '/api/uploads/presign', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`
+			},
+			body: JSON.stringify(body)
+		});
+
+		if (!response.ok) {
+			const data = await response.json();
+			throw new Error(data.error || `HTTP ${response.status}`);
+		}
+
+		const result = await response.json();
+		return result.items;
+	}
+
+	// Upload file to S3 via presigned URL
+	async function uploadToS3(
+		blob: Blob,
+		url: string,
+		headers: Record<string, string>,
+		index: number
+	): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const xhr = new XMLHttpRequest();
+
+			xhr.upload.addEventListener('progress', (e) => {
+				if (e.lengthComputable) {
+					photoUploadProgress[index] = Math.round((e.loaded / e.total) * 100);
+				}
+			});
+
+			xhr.addEventListener('load', () => {
+				if (xhr.status >= 200 && xhr.status < 300) {
+					resolve(xhr.responseText || '');
+				} else {
+					reject(new Error(`Upload failed: ${xhr.status}`));
+				}
+			});
+
+			xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+
+			xhr.open('PUT', url);
+			Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+			xhr.send(blob);
+		});
 	}
 
 	onMount(() => {
@@ -121,9 +232,10 @@
 
 	function startEdit(plant: Plant): void {
 		formData = {
-			...plant
+			...plant,
+			photoIds: plant.photoIds // S3 keys from DB
 		};
-		photoPreview = [...plant.photoIds];
+		photoPreview = plant.photoIds.map((key) => ({ data: '', key })) as { data: string; key?: string }[];
 		showForm = true;
 		editingId = plant.id;
 	}
@@ -152,22 +264,54 @@
 		const files = target.files;
 		if (!files) return;
 
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i];
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				if (typeof e.target?.result === 'string') {
-					photoPreview = [...photoPreview, e.target.result];
-					formData.photoIds = [...photoPreview];
+		// Process files: compress and upload to S3
+		const fileArray = Array.from(files);
+		error = null;
+
+		(async () => {
+			try {
+				// Compress all files
+				const compressed: Blob[] = [];
+				for (const file of fileArray) {
+					const blob = await compressImage(file);
+					if (blob.size > 2 * 1024 * 1024) {
+						throw new Error(`${file.name} is too large even after compression`);
+					}
+					compressed.push(blob);
 				}
-			};
-			reader.readAsDataURL(file);
-		}
+
+				// Get presigned URLs
+				success = `Uploading ${fileArray.length} photo(s)...`;
+				const presigns = await getPresignedUrls(fileArray);
+
+				// Upload each file to S3
+				const uploadedKeys: string[] = [];
+				for (let i = 0; i < compressed.length; i++) {
+					await uploadToS3(compressed[i], presigns[i].url, presigns[i].headers, i);
+					uploadedKeys.push(presigns[i].key);
+					delete photoUploadProgress[i];
+				}
+
+				// Add to preview and formData
+				photoPreview = [
+					...photoPreview,
+					...uploadedKeys.map((key) => ({ data: '', key }))
+				];
+				formData.photoIds = [...formData.photoIds, ...uploadedKeys];
+				success = `Uploaded ${uploadedKeys.length} photo(s) successfully!`;
+
+				// Reset file input
+				if (fileInput) fileInput.value = '';
+			} catch (err) {
+				error = err instanceof Error ? err.message : 'Upload failed';
+				photoUploadProgress = {};
+			}
+		})();
 	}
 
 	function removePhoto(index: number): void {
 		photoPreview = photoPreview.filter((_, i) => i !== index);
-		formData.photoIds = photoPreview;
+		formData.photoIds = photoPreview.map((p) => p.key || p.data).filter(Boolean);
 	}
 
 	async function submitForm(): Promise<void> {
@@ -192,7 +336,7 @@
 
 			const payload = {
 				...formData,
-				photoIds: photoPreview
+				photoIds: formData.photoIds.filter(Boolean) // S3 keys
 			};
 
 			const response = await fetch(API_BASE_URL + url, {
@@ -462,35 +606,45 @@
 			<!-- Form Extended Content -->
 			{#if showForm}
 				<div class="space-y-6 lg:col-span-2">
-					<!-- Photos Section -->
-					<div
-						class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
-					>
-						<h3 class="mb-4 text-xl font-bold text-green-800">📸 Photos</h3>
+				<!-- Photos Section -->
+				<div
+					class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
+				>
+					<h3 class="mb-4 text-xl font-bold text-green-800">📸 Photos</h3>
 
-						<div class="mb-4">
-							<span class="mb-2 block text-sm font-semibold text-gray-700">
-								Upload Photos (first will be shown on overview)
-							</span>
-							<input
-								type="file"
-								bind:this={fileInput}
-								on:change={handlePhotoUpload}
-								multiple
-								accept="image/*"
-								class="w-full rounded-lg border-2 border-dashed border-emerald-300 bg-white/70 px-3 py-2"
-							/>
-						</div>
+					<div class="mb-4">
+						<span class="mb-2 block text-sm font-semibold text-gray-700">
+							Upload Photos (auto-compressed to ≤2MB, first will show on overview)
+						</span>
+						<input
+							type="file"
+							bind:this={fileInput}
+							on:change={handlePhotoUpload}
+							multiple
+							accept="image/*"
+							class="w-full rounded-lg border-2 border-dashed border-emerald-300 bg-white/70 px-3 py-2"
+						/>
+					</div>
 
 						{#if photoPreview.length > 0}
 							<div class="grid grid-cols-2 gap-4">
 								{#each photoPreview as photo, i (i)}
 									<div class="relative">
-										<img
-											src={photo}
-											alt="Preview {i + 1}"
-											class="h-32 w-full rounded-lg object-cover"
-										/>
+										{#if photo.key}
+											<!-- S3 key: show placeholder or presigned URL preview -->
+											<div
+												class="flex h-32 w-full items-center justify-center rounded-lg bg-green-100 text-center text-sm text-green-700"
+											>
+												📸 {photo.key.substring(0, 20)}...
+											</div>
+										{:else if photo.data}
+											<!-- Local data URL -->
+											<img
+												src={photo.data}
+												alt="Preview {i + 1}"
+												class="h-32 w-full rounded-lg object-cover"
+											/>
+										{/if}
 										<button
 											on:click={() => removePhoto(i)}
 											class="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow hover:bg-red-600"
@@ -503,6 +657,11 @@
 											>
 												Primary
 											</span>
+										{/if}
+										{#if i in photoUploadProgress}
+											<div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+												<span class="text-sm text-white">{photoUploadProgress[i]}%</span>
+											</div>
 										{/if}
 									</div>
 								{/each}
@@ -567,11 +726,11 @@
 						>
 							<div class="flex flex-1 items-center gap-4">
 								{#if plant.photoIds.length > 0}
-									<img
-										src={plant.photoIds[0]}
-										alt={plant.name}
-										class="h-12 w-12 rounded-lg object-cover"
-									/>
+									<div
+										class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-200 text-lg font-bold"
+									>
+										📸
+									</div>
 								{:else}
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-200 text-xl"

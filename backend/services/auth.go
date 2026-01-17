@@ -1,10 +1,11 @@
-package main
+package services
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"plants-backend/util"
 	"strings"
 	"time"
 
@@ -59,7 +60,6 @@ func VerifyJWT(tokenString string, secret string) (string, error) {
 		}
 		return []byte(secret), nil
 	})
-
 	if err != nil {
 		return "", fmt.Errorf("parse JWT: %w", err)
 	}
@@ -82,20 +82,20 @@ func authMiddleware(secret string, next http.HandlerFunc) http.HandlerFunc {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Missing authorization header"})
+			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Missing authorization header"})
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid authorization header format"})
+			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid authorization header format"})
 			return
 		}
 
 		tokenString := parts[1]
 		userID, err := VerifyJWT(tokenString, secret)
 		if err != nil {
-			respondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
+			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
 			return
 		}
 

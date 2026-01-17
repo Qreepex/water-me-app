@@ -1,0 +1,147 @@
+package services
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go/logging"
+	"github.com/google/uuid"
+)
+
+type S3Service struct {
+	Client    *s3.Client
+	Presigner *s3.PresignClient
+	Bucket    string
+	URLExpire time.Duration
+	PublicURL string // optional CDN/base URL for viewing
+}
+
+func NewS3Service(ctx context.Context) (*S3Service, error) {
+	bucket := getenv("S3_BUCKET", "plants-app-images")
+
+	var cfg aws.Config
+	var err error
+
+	cfg, err = config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("load aws config: %w", err)
+	}
+	cfg.Logger = logging.NewStandardLogger(os.Stderr)
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+	})
+
+	return &S3Service{
+		Client:    client,
+		Presigner: s3.NewPresignClient(client, s3.WithPresignExpires(15*time.Minute)),
+		Bucket:    bucket,
+		URLExpire: 15 * time.Minute,
+		PublicURL: os.Getenv("S3_PUBLIC_URL"),
+	}, nil
+}
+
+// GenerateObjectKey builds a unique, user-scoped object key.
+func (s *S3Service) GenerateObjectKey(userID, filename string) string {
+	id := uuid.New().String()
+	return fmt.Sprintf("users/%s/%s_%s", userID, id, sanitizeFilename(filename))
+}
+
+// KeyBelongsToUser checks if an object key is scoped under the user's prefix.
+func KeyBelongsToUser(key, userID string) bool {
+	prefix := fmt.Sprintf("users/%s/", userID)
+	return strings.HasPrefix(key, prefix)
+}
+
+// PresignPutURL generates a pre-signed PUT URL for direct upload.
+// Note: Size limits cannot be enforced with PUT pre-signing; enforce client-side
+// and validate with HeadObject after upload.
+func (s *S3Service) PresignPutURL(ctx context.Context, key, contentType string, userID string) (string, map[string]string, error) {
+	params := &s3.PutObjectInput{
+		Bucket:      &s.Bucket,
+		Key:         &key,
+		ContentType: &contentType,
+		ACL:         types.ObjectCannedACLPrivate,
+		Metadata:    map[string]string{"user": userID},
+	}
+	req, err := s.Presigner.PresignPutObject(ctx, params)
+	if err != nil {
+		return "", nil, fmt.Errorf("presign put: %w", err)
+	}
+	// Headers client must include
+	headers := map[string]string{"Content-Type": contentType}
+	return req.URL, headers, nil
+}
+
+// ObjectURL returns a public or s3 URL for viewing (if PublicURL is configured).
+func (s *S3Service) ObjectURL(key string) string {
+	if s.PublicURL != "" {
+		u, _ := url.JoinPath(s.PublicURL, key)
+		return u
+	}
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.Bucket, key)
+}
+
+// PresignGetURL generates a short-lived URL to view a private object.
+func (s *S3Service) PresignGetURL(ctx context.Context, key string) (string, error) {
+	params := &s3.GetObjectInput{Bucket: &s.Bucket, Key: &key}
+	req, err := s.Presigner.PresignGetObject(ctx, params)
+	if err != nil {
+		return "", fmt.Errorf("presign get: %w", err)
+	}
+	return req.URL, nil
+}
+
+// HeadObjectSize returns object size and verifies its existence.
+func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, error) {
+	out, err := s.Client.HeadObject(ctx, &s3.HeadObjectInput{Bucket: &s.Bucket, Key: &key})
+	if err != nil {
+		return 0, fmt.Errorf("head object: %w", err)
+	}
+	return aws.ToInt64(out.ContentLength), nil
+}
+
+// GetUserUsage returns total bytes and object count for a user's prefix.
+func (s *S3Service) GetUserUsage(ctx context.Context, userID string) (total int64, count int, err error) {
+	prefix := fmt.Sprintf("users/%s/", userID)
+	var token *string
+	for {
+		out, err := s.Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket:            &s.Bucket,
+			Prefix:            &prefix,
+			ContinuationToken: token,
+		})
+		if err != nil {
+			return 0, 0, fmt.Errorf("list objects: %w", err)
+		}
+		for _, obj := range out.Contents {
+			total += aws.ToInt64(obj.Size)
+			count++
+		}
+		if aws.ToBool(out.IsTruncated) && out.NextContinuationToken != nil {
+			token = out.NextContinuationToken
+		} else {
+			break
+		}
+	}
+	return total, count, nil
+}
+
+func sanitizeFilename(name string) string {
+	// Basic sanitization; could expand if needed
+	return url.PathEscape(name)
+}
+
+func getenv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
