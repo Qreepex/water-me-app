@@ -1,9 +1,31 @@
 <script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import BurgerMenu from '$lib/components/BurgerMenu.svelte';
+	import { initializePushNotifications, cleanupPushNotifications, getNotificationToken } from '$lib/notifications';
+	import { browser } from '$app/environment';
 
 	let { children } = $props();
+	let fcmToken = $state<string | null>(null);
+
+	onMount(async () => {
+		if (browser) {
+			// Initialize push notifications
+			const result = await initializePushNotifications();
+			fcmToken = result.token;
+			
+			if (fcmToken) {
+				console.log('✅ FCM Token registered:', fcmToken);
+			}
+		}
+	});
+
+	onDestroy(() => {
+		if (browser) {
+			cleanupPushNotifications();
+		}
+	});
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>

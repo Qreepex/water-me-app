@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import NotificationDebug from './NotificationDebug.svelte';
 
 	let isOpen = $state(false);
 	let selectedLanguage = $state('en');
+	let showNotificationDebug = $state(false);
 
 	function toggleMenu() {
 		isOpen = !isOpen;
@@ -11,6 +13,7 @@
 
 	function closeMenu() {
 		isOpen = false;
+		showNotificationDebug = false;
 	}
 
 	async function handleLogout() {
@@ -27,6 +30,10 @@
 	function navigateTo(path: string) {
 		goto(path);
 		closeMenu();
+	}
+
+	function toggleNotificationDebug() {
+		showNotificationDebug = !showNotificationDebug;
 	}
 </script>
 
@@ -171,6 +178,29 @@
 							ES
 						</button>
 					</div>
+			</div>
+
+			<!-- Notification Debug -->
+			<div class="px-6 py-4 border-t border-emerald-200">
+				<button
+					onclick={toggleNotificationDebug}
+					class="w-full text-left px-4 py-3 text-base text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-between"
+				>
+					<span>🔔 Push Notifications (Debug)</span>
+					<svg
+						class="w-4 h-4 transition-transform {showNotificationDebug ? 'rotate-180' : ''}"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+					</svg>
+				</button>
+				{#if showNotificationDebug}
+					<div class="mt-3">
+						<NotificationDebug />
+					</div>
+				{/if}
 			</div>
 
 			<!-- Footer Links -->
