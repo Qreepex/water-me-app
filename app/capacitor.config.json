@@ -1,5 +1,10 @@
 {
 	"appId": "bio.waterme.app",
 	"appName": "Water Me",
-	"webDir": "www"
+	"webDir": "www",
+	"plugins": {
+		"SplashScreen": {
+			"launchAutoHide": false
+		}
+	}
 }

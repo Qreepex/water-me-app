@@ -1,0 +1,21 @@
+{
+	"myPlants": "Meine Pflanzen",
+	"sortBy": "Sortieren nach",
+	"plantName": "Pflanzenname",
+	"lastWatered": "Zuletzt bewässert",
+	"lastFertilized": "Zuletzt gedüngt",
+	"wateringFrequency": "Bewässerungshäufigkeit",
+	"sprayFrequency": "Sprühhäufigkeit",
+	"plants": "Pflanzen",
+	"plant": "Pflanze",
+	"managePlants": "Pflanzen verwalten",
+	"loadingPlants": "Pflanzen werden geladen...",
+	"errorLoadingPlants": "Fehler beim Laden von Pflanzen",
+	"noPlants": "Du hast noch keine Pflanzen",
+	"startAddingPlants": "Beginne damit, deine Pflanzen zu verwalten",
+	"needsWater": "Benötigt Wasser",
+	"waterSoon": "Bald bewässern",
+	"watered": "Bewässert",
+	"every": "Alle",
+	"days": "Tage"
+}

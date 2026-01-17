@@ -5,6 +5,7 @@
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import { API_BASE_URL } from '$lib/constants';
+	import { resolve } from '$app/paths';
 
 	interface FormData {
 		id?: string;
@@ -56,16 +57,16 @@
 
 	function handleLogout() {
 		authStore.logout();
-		goto('/');
+		goto(resolve('/'));
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		// Wait for auth to initialize
 		const checkAuth = setInterval(() => {
 			if (isInitialized) {
 				clearInterval(checkAuth);
 				if (!token) {
-					goto('/');
+					goto(resolve('/'));
 					return;
 				}
 				loadPlants();
@@ -81,7 +82,7 @@
 
 			if (response.status === 401) {
 				authStore.logout();
-				goto('/');
+				goto(resolve('/'));
 				return;
 			}
 
@@ -120,7 +121,6 @@
 
 	function startEdit(plant: Plant): void {
 		formData = {
-			id: plant.id,
 			...plant
 		};
 		photoPreview = [...plant.photoIds];
@@ -173,7 +173,7 @@
 	async function submitForm(): Promise<void> {
 		if (!token) {
 			authStore.logout();
-			goto('/');
+			goto(resolve('/'));
 			return;
 		}
 
@@ -245,7 +245,7 @@
 				<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">🌿 Manage Plants</h1>
 				<div class="flex items-center gap-3">
 					<a
-						href="/overview"
+						href={resolve('/app')}
 						class="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 font-medium text-white shadow-sm transition hover:from-green-700 hover:to-emerald-700"
 					>
 						← Back to Overview
@@ -296,9 +296,12 @@
 						<div class="space-y-4">
 							<!-- Name -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">Plant Name *</label>
+								<label for="plant-name" class="mb-1 block text-sm font-semibold text-gray-700"
+									>Plant Name *</label
+								>
 								<input
 									type="text"
+									id="plant-name"
 									bind:value={formData.name}
 									placeholder="e.g., My Monstera"
 									class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
@@ -307,9 +310,12 @@
 
 							<!-- Species -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">Species *</label>
+								<label for="species" class="mb-1 block text-sm font-semibold text-gray-700"
+									>Species *</label
+								>
 								<input
 									type="text"
+									id="species"
 									bind:value={formData.species}
 									placeholder="e.g., Monstera deliciosa"
 									class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
@@ -318,12 +324,15 @@
 
 							<!-- Sun Light -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">Sunlight</label>
+								<label for="sunlight" class="mb-1 block text-sm font-semibold text-gray-700"
+									>Sunlight</label
+								>
 								<select
+									id="sunlight"
 									bind:value={formData.sunLight}
 									class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 								>
-									{#each Object.values(SunlightRequirement) as req}
+									{#each Object.values(SunlightRequirement) as req (req)}
 										<option value={req}>{req}</option>
 									{/each}
 								</select>
@@ -331,11 +340,12 @@
 
 							<!-- Temperature -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">
+								<label for="temperature" class="mb-1 block text-sm font-semibold text-gray-700">
 									Temperature (°C): {formData.preferedTemperature}
 								</label>
 								<input
 									type="range"
+									id="temperature"
 									min="-50"
 									max="100"
 									bind:value={formData.preferedTemperature}
@@ -345,11 +355,12 @@
 
 							<!-- Humidity -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">
+								<label for="humidity" class="mb-1 block text-sm font-semibold text-gray-700">
 									Humidity (%): {formData.preferedHumidity}
 								</label>
 								<input
 									type="range"
+									id="humidity"
 									min="0"
 									max="100"
 									bind:value={formData.preferedHumidity}
@@ -359,11 +370,15 @@
 
 							<!-- Watering -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">
+								<label
+									for="watering-interval"
+									class="mb-1 block text-sm font-semibold text-gray-700"
+								>
 									Watering Interval (days)
 								</label>
 								<input
 									type="number"
+									id="watering-interval"
 									min="1"
 									bind:value={formData.wateringIntervalDays}
 									class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
@@ -372,11 +387,15 @@
 
 							<!-- Fertilizing -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">
+								<label
+									for="fertilizing-interval"
+									class="mb-1 block text-sm font-semibold text-gray-700"
+								>
 									Fertilizing Interval (days)
 								</label>
 								<input
 									type="number"
+									id="fertilizing-interval"
 									min="1"
 									bind:value={formData.fertilizingIntervalDays}
 									class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
@@ -385,11 +404,12 @@
 
 							<!-- Spray -->
 							<div>
-								<label class="mb-1 block text-sm font-semibold text-gray-700">
+								<label for="spray-interval" class="mb-1 block text-sm font-semibold text-gray-700">
 									Spray Interval (days, optional)
 								</label>
 								<input
 									type="number"
+									id="spray-interval"
 									min="1"
 									bind:value={formData.sprayIntervalDays}
 									placeholder="Leave empty if not needed"
@@ -399,9 +419,9 @@
 
 							<!-- Flags -->
 							<div>
-								<label class="mb-2 block text-sm font-semibold text-gray-700">Flags</label>
+								<span class="mb-2 block text-sm font-semibold text-gray-700">Flags</span>
 								<div class="space-y-2">
-									{#each Object.values(PlantFlag) as flag}
+									{#each Object.values(PlantFlag) as flag (flag)}
 										<label class="flex items-center">
 											<input
 												type="checkbox"
@@ -449,9 +469,9 @@
 						<h3 class="mb-4 text-xl font-bold text-green-800">📸 Photos</h3>
 
 						<div class="mb-4">
-							<label class="mb-2 block text-sm font-semibold text-gray-700">
+							<span class="mb-2 block text-sm font-semibold text-gray-700">
 								Upload Photos (first will be shown on overview)
-							</label>
+							</span>
 							<input
 								type="file"
 								bind:this={fileInput}
@@ -464,7 +484,7 @@
 
 						{#if photoPreview.length > 0}
 							<div class="grid grid-cols-2 gap-4">
-								{#each photoPreview as photo, i}
+								{#each photoPreview as photo, i (i)}
 									<div class="relative">
 										<img
 											src={photo}
@@ -516,7 +536,7 @@
 
 						{#if formData.notes.length > 0}
 							<div class="space-y-2">
-								{#each formData.notes as note, i}
+								{#each formData.notes as note, i (i)}
 									<div class="flex items-start justify-between rounded-lg bg-blue-50 p-3">
 										<p class="flex-1 text-sm text-gray-800">{note}</p>
 										<button

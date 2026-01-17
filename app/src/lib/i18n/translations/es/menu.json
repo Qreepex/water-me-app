@@ -1,0 +1,11 @@
+{
+	"menu": "Menú",
+	"userProfile": "Perfil de Usuario",
+	"managePlants": "Gestionar Plantas",
+	"website": "Sitio Web",
+	"privacyPolicy": "Política de Privacidad",
+	"impressum": "Aviso Legal",
+	"build": "Compilación",
+	"version": "Versión",
+	"pushNotifications": "Notificaciones Push (Debug)"
+}

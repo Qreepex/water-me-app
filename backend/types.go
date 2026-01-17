@@ -66,6 +66,7 @@ type User struct {
 	Username     string `json:"username"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"-"`
+	Language     string `json:"language"`
 	CreatedAt    string `json:"createdAt"`
 }
 
@@ -91,6 +92,7 @@ type LoginResponse struct {
 type UpdateUserRequest struct {
 	Username *string `json:"username,omitempty"`
 	Email    *string `json:"email,omitempty"`
+	Language *string `json:"language,omitempty"`
 }
 
 // ChangePasswordRequest is for changing user password.

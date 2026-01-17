@@ -2,10 +2,9 @@
 	import { onMount, onDestroy } from 'svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import BurgerMenu from '$lib/components/BurgerMenu.svelte';
-	import {
-		initializePushNotifications,
-		cleanupPushNotifications	} from '$lib/notifications';
+	import { initializePushNotifications, cleanupPushNotifications } from '$lib/notifications';
+	import { initializeI18n } from '$lib/i18n';
+	import { initializeLanguage } from '$lib/stores/language';
 	import { browser } from '$app/environment';
 
 	let { children } = $props();
@@ -13,6 +12,12 @@
 
 	onMount(async () => {
 		if (browser) {
+			// Initialize language from user profile or preferences
+			await initializeLanguage();
+
+			// Initialize i18n translations for the selected language
+			await initializeI18n();
+
 			// Initialize push notifications
 			const result = await initializePushNotifications();
 			fcmToken = result.token;
@@ -33,13 +38,6 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
-	<!-- Floating Burger Menu -->
-	<div class="pt-safe pr-safe fixed top-0 right-0 z-50">
-		<div class="p-4">
-			<BurgerMenu />
-		</div>
-	</div>
-
 	<main class="pt-safe pb-safe px-4">
 		{@render children()}
 	</main>
@@ -55,8 +53,5 @@
 	}
 	.pb-safe {
 		padding-bottom: env(safe-area-inset-bottom);
-	}
-	.pl-safe {
-		padding-left: env(safe-area-inset-left);
 	}
 </style>

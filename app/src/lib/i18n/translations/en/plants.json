@@ -1,0 +1,21 @@
+{
+	"myPlants": "My Plants",
+	"sortBy": "Sort by",
+	"plantName": "Plant Name",
+	"lastWatered": "Last Watered",
+	"lastFertilized": "Last Fertilized",
+	"wateringFrequency": "Watering Frequency",
+	"sprayFrequency": "Spray Frequency",
+	"plants": "plants",
+	"plant": "plant",
+	"managePlants": "Manage Plants",
+	"loadingPlants": "Loading your plants...",
+	"errorLoadingPlants": "Error loading plants",
+	"noPlants": "No plants yet!",
+	"startAddingPlants": "Start adding your plants to track their care.",
+	"needsWater": "🌵 Needs water!",
+	"waterSoon": "⚠️ Water soon",
+	"watered": "Watered",
+	"every": "Every",
+	"days": "days"
+}

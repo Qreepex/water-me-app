@@ -52,6 +52,7 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 		username TEXT,
 		email TEXT NOT NULL UNIQUE,
 		password_hash TEXT NOT NULL,
+		language TEXT NOT NULL DEFAULT 'en',
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);
 
@@ -505,17 +506,18 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 	now := time.Now().UTC()
 
 	const query = `
-	INSERT INTO users (id, username, email, password_hash, created_at)
-	VALUES ($1, $2, $3, $4, $5)
-	RETURNING id, username, email, created_at`
+	INSERT INTO users (id, username, email, password_hash, language, created_at)
+	VALUES ($1, $2, $3, $4, $5, $6)
+	RETURNING id, username, email, language, created_at`
 
 	var user User
 	var createdAt time.Time
 
-	err := s.pool.QueryRow(ctx, query, id, "", email, passwordHash, now).Scan(
+	err := s.pool.QueryRow(ctx, query, id, "", email, passwordHash, "en", now).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.Language,
 		&createdAt,
 	)
 	if err != nil {
@@ -528,7 +530,7 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash string) (Use
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, error) {
 	const query = `
-	SELECT id, username, email, password_hash, created_at
+	SELECT id, username, email, password_hash, language, created_at
 	FROM users
 	WHERE email = $1`
 
@@ -540,6 +542,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, e
 		&user.Username,
 		&user.Email,
 		&user.PasswordHash,
+		&user.Language,
 		&createdAt,
 	)
 	if err != nil {
@@ -555,7 +558,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (User, bool, e
 
 func (s *Store) GetUserByID(ctx context.Context, userID string) (User, bool, error) {
 	const query = `
-	SELECT id, username, email, created_at
+	SELECT id, username, email, language, created_at
 	FROM users
 	WHERE id = $1`
 
@@ -566,6 +569,7 @@ func (s *Store) GetUserByID(ctx context.Context, userID string) (User, bool, err
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.Language,
 		&createdAt,
 	)
 	if err != nil {
@@ -596,6 +600,12 @@ func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUse
 		argIndex++
 	}
 
+	if updates.Language != nil {
+		setClauses = append(setClauses, fmt.Sprintf("language = $%d", argIndex))
+		args = append(args, *updates.Language)
+		argIndex++
+	}
+
 	if len(setClauses) == 0 {
 		// No updates provided, just return current user
 		user, _, err := s.GetUserByID(ctx, userID)
@@ -607,7 +617,7 @@ func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUse
 	UPDATE users
 	SET %s
 	WHERE id = $%d
-	RETURNING id, username, email, created_at`,
+	RETURNING id, username, email, language, created_at`,
 		strings.Join(setClauses, ", "),
 		argIndex,
 	)
@@ -619,6 +629,7 @@ func (s *Store) UpdateUser(ctx context.Context, userID string, updates UpdateUse
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.Language,
 		&createdAt,
 	)
 	if err != nil {

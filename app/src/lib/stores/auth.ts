@@ -6,6 +6,7 @@ export interface User {
 	id: string;
 	username?: string;
 	email: string;
+	language?: string;
 	createdAt: string;
 }
 
@@ -18,7 +19,7 @@ export interface AuthState {
 
 function createAuthStore() {
 	// Initialize with uninitialized state
-	let initial: AuthState = {
+	const initial: AuthState = {
 		user: null,
 		token: null,
 		isAuthenticated: false,

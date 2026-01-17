@@ -4,9 +4,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	root: './src',
 	build: {
-		outDir: '../dist',
 		minify: false,
 		emptyOutDir: true
 	},

@@ -9,7 +9,7 @@ export interface NotificationState {
 	isSupported: boolean;
 }
 
-let notificationState: NotificationState = {
+const notificationState: NotificationState = {
 	token: null,
 	isRegistered: false,
 	isSupported: false

@@ -1,0 +1,12 @@
+{
+	"app": "Mi Plantas",
+	"appDescription": "Gestiona tu colección de plantas",
+	"language": "Idioma",
+	"logout": "Cerrar sesión",
+	"loading": "Cargando...",
+	"error": "Error",
+	"success": "Éxito",
+	"cancel": "Cancelar",
+	"save": "Guardar",
+	"close": "Cerrar"
+}

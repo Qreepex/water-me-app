@@ -4,6 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
 	import { API_BASE_URL } from '$lib/constants';
+	import { resolve } from '$app/paths';
+	import { tStore } from '$lib/i18n';
 
 	type SortOption =
 		| 'name'
@@ -17,22 +19,20 @@
 	let error: string | null = null;
 	let sortBy: SortOption = 'name';
 	let token: string | null = null;
-	let userEmail: string | null = null;
 	let isInitialized = false;
 
 	authStore.subscribe((state) => {
 		token = state.token;
-		userEmail = state.user?.email || null;
 		isInitialized = state.initialized;
 	});
 
-	onMount(async () => {
+	onMount(() => {
 		// Wait for auth to initialize
 		const checkAuth = setInterval(() => {
 			if (isInitialized) {
 				clearInterval(checkAuth);
 				if (!token) {
-					goto('/');
+					goto(resolve('/'));
 					return;
 				}
 				loadPlants();
@@ -50,7 +50,7 @@
 
 			if (response.status === 401) {
 				authStore.logout();
-				goto('/');
+				goto(resolve('/'));
 				return;
 			}
 
@@ -61,11 +61,6 @@
 		} finally {
 			loading = false;
 		}
-	}
-
-	function handleLogout() {
-		authStore.logout();
-		goto('/');
 	}
 
 	function getSortedPlants(): Plant[] {
@@ -117,17 +112,17 @@
 			<div class="mb-4 flex items-center justify-between">
 				<div>
 					<h1 class="mb-2 flex items-center gap-3 text-5xl font-bold text-green-800">
-						🌱 My Plants
+						{$tStore('common.app')}
 					</h1>
-					<p class="text-lg text-green-700">Take care of your green friends</p>
+					<p class="text-lg text-green-700">{$tStore('common.appDescription')}</p>
 				</div>
 			</div>
 			<div class="flex gap-3">
 				<button
-					on:click={() => goto('/manage')}
+					on:click={() => goto(resolve('/app/manage'))}
 					class="rounded-lg bg-green-600 px-5 py-2 text-white transition hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
 				>
-					Manage Plants
+					{$tStore('menu.managePlants')}
 				</button>
 			</div>
 		</div>
@@ -170,8 +165,8 @@
 		{:else if plants.length === 0}
 			<div class="py-16 text-center">
 				<div class="mb-4 text-8xl">🪴</div>
-				<p class="text-xl font-medium text-green-800">No plants yet!</p>
-				<p class="mt-2 text-green-700">Start adding your plants to track their care.</p>
+				<p class="text-xl font-medium text-green-800">{$tStore('plants.noPlants')}</p>
+				<p class="mt-2 text-green-700">{$tStore('plants.startAddingPlants')}</p>
 			</div>
 		{:else}
 			<!-- Plant Grid -->
@@ -252,7 +247,7 @@
 							<!-- Flags -->
 							{#if plant.flags.length > 0}
 								<div class="mb-3 flex flex-wrap gap-2">
-									{#each plant.flags as flag}
+									{#each plant.flags as flag (flag)}
 										<span
 											class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800"
 										>

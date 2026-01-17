@@ -1,0 +1,20 @@
+{
+	"userProfile": "Benutzerprofil",
+	"profileInformation": "Profilinformationen",
+	"username": "Benutzername",
+	"email": "E-Mail",
+	"language": "Sprache",
+	"updateProfile": "Profil aktualisieren",
+	"updating": "Wird aktualisiert...",
+	"changePassword": "Passwort ändern",
+	"currentPassword": "Aktuelles Passwort",
+	"newPassword": "Neues Passwort",
+	"confirmPassword": "Passwort bestätigen",
+	"changePasswordButton": "Passwort ändern",
+	"changing": "Wird geändert...",
+	"profileUpdated": "Profil aktualisiert",
+	"passwordChanged": "Passwort geändert",
+	"passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+	"passwordTooShort": "Passwort muss mindestens 6 Zeichen lang sein",
+	"currentPasswordIncorrect": "Aktuelles Passwort ist falsch"
+}

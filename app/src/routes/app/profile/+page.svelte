@@ -1,14 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { setLanguage } from '$lib/stores/language';
+	import { tSync } from '$lib/i18n';
 	import { API_BASE_URL } from '$lib/constants';
+	import { resolve } from '$app/paths';
 
-	let user = $state($authStore.user);
 	let token = $state($authStore.token);
+	let language = $state('en' as 'en' | 'de' | 'es');
 
-	let username = $state(user?.username || '');
-	let email = $state(user?.email || '');
+	let username = $state('');
+	let email = $state('');
 	let currentPassword = $state('');
 	let newPassword = $state('');
 	let confirmPassword = $state('');
@@ -19,31 +22,40 @@
 
 	let initialized = $state(false);
 
+	let checkAuthInterval: NodeJS.Timeout;
+
 	onMount(() => {
-		const checkAuth = setInterval(() => {
+		checkAuthInterval = setInterval(() => {
 			if ($authStore.initialized) {
-				clearInterval(checkAuth);
+				clearInterval(checkAuthInterval);
 				initialized = true;
 
 				if (!$authStore.isAuthenticated) {
-					goto('/');
+					goto(resolve('/'));
+					return;
 				}
 
-				user = $authStore.user;
 				token = $authStore.token;
-				if (user) {
-					username = user.username || '';
-					email = user.email || '';
+				if ($authStore.user) {
+					username = $authStore.user.username || '';
+					email = $authStore.user.email || '';
+					if ($authStore.user.language) {
+						language = $authStore.user.language as 'en' | 'de' | 'es';
+					}
 				}
 			}
 		}, 50);
+	});
 
-		return () => clearInterval(checkAuth);
+	onDestroy(() => {
+		if (checkAuthInterval) {
+			clearInterval(checkAuthInterval);
+		}
 	});
 
 	async function handleUpdateProfile() {
 		if (!token) {
-			message = 'Not authenticated';
+			message = tSync('common.error', language);
 			messageType = 'error';
 			return;
 		}
@@ -60,28 +72,33 @@
 				},
 				body: JSON.stringify({
 					username,
-					email
+					email,
+					language
 				})
 			});
 
 			if (!response.ok) {
 				if (response.status === 401) {
 					await authStore.logout();
-					goto('/');
+					goto(resolve('/'));
 					return;
 				}
 				const error = await response.json();
-				throw new Error(error.error || 'Failed to update profile');
+				throw new Error(error.error || tSync('common.error', language));
 			}
 
 			const updatedUser = await response.json();
 			await authStore.setUser(updatedUser);
 
-			user = updatedUser;
-			message = 'Profile updated successfully';
+			if (updatedUser.language) {
+				language = updatedUser.language as 'en' | 'de' | 'es';
+				await setLanguage(language);
+			}
+
+			message = tSync('profile.profileUpdated', language);
 			messageType = 'success';
 		} catch (err) {
-			message = err instanceof Error ? err.message : 'An error occurred';
+			message = err instanceof Error ? err.message : tSync('common.error', language);
 			messageType = 'error';
 		} finally {
 			loading = false;
@@ -93,19 +110,19 @@
 
 	async function handleChangePassword() {
 		if (!token) {
-			message = 'Not authenticated';
+			message = tSync('common.error', language);
 			messageType = 'error';
 			return;
 		}
 
 		if (newPassword !== confirmPassword) {
-			message = 'Passwords do not match';
+			message = tSync('profile.passwordsDoNotMatch', language);
 			messageType = 'error';
 			return;
 		}
 
 		if (newPassword.length < 6) {
-			message = 'Password must be at least 6 characters';
+			message = tSync('profile.passwordTooShort', language);
 			messageType = 'error';
 			return;
 		}
@@ -129,20 +146,20 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					const error = await response.json();
-					throw new Error(error.error || 'Incorrect current password');
+					throw new Error(error.error || tSync('profile.currentPasswordIncorrect', language));
 				}
 				const error = await response.json();
-				throw new Error(error.error || 'Failed to change password');
+				throw new Error(error.error || tSync('common.error', language));
 			}
 
 			currentPassword = '';
 			newPassword = '';
 			confirmPassword = '';
 
-			message = 'Password changed successfully';
+			message = tSync('profile.passwordChanged', language);
 			messageType = 'success';
 		} catch (err) {
-			message = err instanceof Error ? err.message : 'An error occurred';
+			message = err instanceof Error ? err.message : tSync('common.error', language);
 			messageType = 'error';
 		} finally {
 			loading = false;
@@ -155,7 +172,9 @@
 
 {#if initialized}
 	<div class="mx-auto max-w-2xl">
-		<h1 class="mb-8 text-3xl font-bold text-emerald-900">User Profile</h1>
+		<h1 class="mb-8 text-3xl font-bold text-emerald-900">
+			{tSync('profile.userProfile', language)}
+		</h1>
 
 		{#if message}
 			<div
@@ -170,12 +189,14 @@
 		{/if}
 
 		<div class="mb-8 rounded-lg border border-emerald-200 bg-white p-6 shadow-md">
-			<h2 class="mb-6 text-xl font-bold text-emerald-900">Profile Information</h2>
+			<h2 class="mb-6 text-xl font-bold text-emerald-900">
+				{tSync('profile.profileInformation', language)}
+			</h2>
 
 			<div class="space-y-4">
 				<div>
 					<label for="username" class="mb-2 block text-sm font-semibold text-emerald-800">
-						Username
+						{tSync('profile.username', language)}
 					</label>
 					<input
 						id="username"
@@ -188,7 +209,7 @@
 
 				<div>
 					<label for="email" class="mb-2 block text-sm font-semibold text-emerald-800">
-						Email
+						{tSync('profile.email', language)}
 					</label>
 					<input
 						id="email"
@@ -199,23 +220,40 @@
 					/>
 				</div>
 
+				<div>
+					<label for="language" class="mb-2 block text-sm font-semibold text-emerald-800">
+						{tSync('profile.language', language)}
+					</label>
+					<select
+						id="language"
+						bind:value={language}
+						class="w-full rounded-lg border border-emerald-300 px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+					>
+						<option value="en">English</option>
+						<option value="de">Deutsch</option>
+						<option value="es">Español</option>
+					</select>
+				</div>
+
 				<button
 					onclick={handleUpdateProfile}
 					disabled={loading}
 					class="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{loading ? 'Updating...' : 'Update Profile'}
+					{loading ? tSync('profile.updating', language) : tSync('profile.updateProfile', language)}
 				</button>
 			</div>
 		</div>
 
 		<div class="rounded-lg border border-emerald-200 bg-white p-6 shadow-md">
-			<h2 class="mb-6 text-xl font-bold text-emerald-900">Change Password</h2>
+			<h2 class="mb-6 text-xl font-bold text-emerald-900">
+				{tSync('profile.changePassword', language)}
+			</h2>
 
 			<div class="space-y-4">
 				<div>
 					<label for="currentPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
-						Current Password
+						{tSync('profile.currentPassword', language)}
 					</label>
 					<input
 						id="currentPassword"
@@ -228,7 +266,7 @@
 
 				<div>
 					<label for="newPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
-						New Password
+						{tSync('profile.newPassword', language)}
 					</label>
 					<input
 						id="newPassword"
@@ -241,7 +279,7 @@
 
 				<div>
 					<label for="confirmPassword" class="mb-2 block text-sm font-semibold text-emerald-800">
-						Confirm New Password
+						{tSync('profile.confirmPassword', language)}
 					</label>
 					<input
 						id="confirmPassword"
@@ -257,7 +295,9 @@
 					disabled={loading}
 					class="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{loading ? 'Changing...' : 'Change Password'}
+					{loading
+						? tSync('profile.changing', language)
+						: tSync('profile.changePasswordButton', language)}
 				</button>
 			</div>
 		</div>

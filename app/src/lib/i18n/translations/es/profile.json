@@ -1,0 +1,20 @@
+{
+	"userProfile": "Perfil de Usuario",
+	"profileInformation": "Información de Perfil",
+	"username": "Nombre de usuario",
+	"email": "Correo electrónico",
+	"language": "Idioma",
+	"updateProfile": "Actualizar Perfil",
+	"updating": "Actualizando...",
+	"changePassword": "Cambiar Contraseña",
+	"currentPassword": "Contraseña actual",
+	"newPassword": "Nueva contraseña",
+	"confirmPassword": "Confirmar contraseña",
+	"changePasswordButton": "Cambiar Contraseña",
+	"changing": "Cambiando...",
+	"profileUpdated": "Perfil actualizado",
+	"passwordChanged": "Contraseña cambiada",
+	"passwordsDoNotMatch": "Las contraseñas no coinciden",
+	"passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+	"currentPasswordIncorrect": "La contraseña actual es incorrecta"
+}

@@ -1,0 +1,20 @@
+{
+	"userProfile": "User Profile",
+	"profileInformation": "Profile Information",
+	"username": "Username",
+	"email": "Email",
+	"language": "Language",
+	"updateProfile": "Update Profile",
+	"updating": "Updating...",
+	"changePassword": "Change Password",
+	"currentPassword": "Current Password",
+	"newPassword": "New Password",
+	"confirmPassword": "Confirm New Password",
+	"changePasswordButton": "Change Password",
+	"changing": "Changing...",
+	"profileUpdated": "Profile updated successfully",
+	"passwordChanged": "Password changed successfully",
+	"passwordsDoNotMatch": "Passwords do not match",
+	"passwordTooShort": "Password must be at least 12 characters",
+	"currentPasswordIncorrect": "Current password is incorrect"
+}

@@ -3,21 +3,35 @@
 	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/auth';
 	import type { User } from '$lib/auth/auth';
-	import { API_BASE_URL } from '$lib/constants';
+	import {
+		API_BASE_URL,
+		IMPRINT_URL,
+		PRIVACY_POLICY_URL,
+		SOURCE_CODE_URL,
+		WEBSITE_URL
+	} from '$lib/constants';
+	import { tStore } from '$lib/i18n';
+	import { resolve } from '$app/paths';
+	import { openExternalLink } from '$lib/os/browser';
+	import { SplashScreen } from '@capacitor/splash-screen';
 
 	let mode: 'login' | 'signup' = 'login';
 	let email = '';
 	let password = '';
 	let loading = false;
 	let error: string | null = null;
-	let isInitialized = false;
 
-	onMount(async () => {
+	async function hideSplashScreen() {
+		await SplashScreen.hide();
+	}
+
+	onMount(() => {
+		hideSplashScreen();
+
 		// Wait for auth store to initialize from Capacitor preferences
 		const unsubscribe = authStore.subscribe((state) => {
-			isInitialized = state.initialized;
 			if (state.isAuthenticated) {
-				goto('/overview');
+				goto(resolve('/app'));
 			}
 		});
 
@@ -49,7 +63,7 @@
 			const token: string = data.token;
 
 			authStore.login(user, token);
-			goto('/overview');
+			goto(resolve('/app'));
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
 		} finally {
@@ -69,8 +83,8 @@
 	<div class="w-full max-w-md">
 		<!-- Logo/Title -->
 		<div class="mb-8 text-center">
-			<h1 class="mb-2 text-5xl font-bold text-green-800">🌱 PlantCare</h1>
-			<p class="text-green-700">Take care of your green friends</p>
+			<h1 class="mb-2 text-5xl font-bold text-green-800">{$tStore('app')}</h1>
+			<p class="text-green-700">{$tStore('appDescription')}</p>
 		</div>
 
 		<!-- Card -->
@@ -78,25 +92,26 @@
 			<!-- Mode Indicator -->
 			<div class="mb-8">
 				<h2 class="mb-4 text-2xl font-bold text-green-800">
-					{mode === 'login' ? 'Welcome Back' : 'Create Account'}
+					{mode === 'login' ? $tStore('auth.signIn') : $tStore('auth.signUp')}
 				</h2>
 				<p class="text-gray-600">
-					{mode === 'login'
-						? 'Sign in to manage your plants'
-						: 'Join us to start tracking your plants'}
+					{mode === 'login' ? $tStore('auth.subtitle') : $tStore('auth.createAccountSubtitle')}
 				</p>
 			</div>
 
 			<!-- Form -->
-			<form on:submit={handleSubmit} class="space-y-5">
+			<form onsubmit={handleSubmit} class="space-y-5">
 				<!-- Email Input -->
 				<div>
-					<label for="email" class="mb-2 block text-sm font-semibold text-green-800"> Email </label>
+					<label for="email" class="mb-2 block text-sm font-semibold text-green-800"
+						>{$tStore('auth.email')}</label
+					>
 					<input
 						type="email"
 						id="email"
 						bind:value={email}
 						placeholder="you@example.com"
+						autocomplete="email"
 						required
 						disabled={loading}
 						class="w-full rounded-lg border-2 border-green-300 px-4 py-3 transition hover:border-green-400 focus:border-green-500 focus:outline-none disabled:bg-gray-100"
@@ -106,10 +121,11 @@
 				<!-- Password Input -->
 				<div>
 					<label for="password" class="mb-2 block text-sm font-semibold text-green-800">
-						Password
+						{$tStore('auth.password')}
 					</label>
 					<input
 						type="password"
+						autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
 						id="password"
 						bind:value={password}
 						placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••'}
@@ -154,10 +170,10 @@
 									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 								></path>
 							</svg>
-							{mode === 'login' ? 'Signing in...' : 'Creating account...'}
+							{mode === 'login' ? $tStore('auth.signingIn') : $tStore('auth.creatingAccount')}
 						</span>
 					{:else}
-						{mode === 'login' ? 'Sign In' : 'Sign Up'}
+						{mode === 'login' ? $tStore('auth.signIn') : $tStore('auth.signUp')}
 					{/if}
 				</button>
 			</form>
@@ -165,28 +181,38 @@
 			<!-- Toggle Mode -->
 			<div class="mt-6 text-center">
 				<p class="text-gray-600">
-					{mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
+					{mode === 'login' ? $tStore('auth.dontHaveAccount') : $tStore('auth.alreadyHaveAccount')}
 					<button
 						type="button"
-						on:click={toggleMode}
+						onclick={toggleMode}
 						class="font-semibold text-green-600 transition hover:text-green-700"
 					>
-						{mode === 'login' ? 'Sign Up' : 'Sign In'}
+						{mode === 'login' ? $tStore('auth.signUp') : $tStore('auth.signIn')}
 					</button>
-				</p>
-			</div>
-
-			<!-- Demo Note -->
-			<div class="mt-8 rounded-lg border border-emerald-300 bg-emerald-50 p-4">
-				<p class="text-xs text-emerald-800">
-					💡 <strong>Demo tip:</strong> Use any email and password (min 6 chars) to get started!
 				</p>
 			</div>
 		</div>
 
 		<!-- Footer -->
 		<div class="mt-8 text-center text-sm text-gray-600">
-			<p>Made with 🌿 for plant lovers</p>
+			<p>{$tStore('common.madeWith')}</p>
+			<p>
+				<button class="underline" onclick={() => openExternalLink(WEBSITE_URL)}
+					>{$tStore('menu.website')}</button
+				>
+				|
+				<button class="underline" onclick={() => openExternalLink(SOURCE_CODE_URL)}
+					>{$tStore('menu.sourceCode')}</button
+				>
+				|
+				<button class="underline" onclick={() => openExternalLink(PRIVACY_POLICY_URL)}
+					>{$tStore('menu.privacyPolicy')}</button
+				>
+				|
+				<button class="underline" onclick={() => openExternalLink(IMPRINT_URL)}
+					>{$tStore('menu.imprint')}</button
+				>
+			</p>
 		</div>
 	</div>
 </div>

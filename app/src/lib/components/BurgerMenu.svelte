@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { IMPRINT_URL, PRIVACY_POLICY_URL, WEBSITE_URL } from '$lib/constants';
+	import { IMPRINT_URL, PRIVACY_POLICY_URL, WEBSITE_URL, API_BASE_URL } from '$lib/constants';
 	import { openExternalLink } from '$lib/os/browser';
 	import { authStore } from '$lib/stores/auth';
+	import { languageStore, setLanguage } from '$lib/stores/language';
+	import { tStore } from '$lib/i18n';
 	import NotificationDebug from './NotificationDebug.svelte';
+	import { resolve } from '$app/paths';
 
 	let isOpen = $state(false);
-	let selectedLanguage = $state('en');
 	let showNotificationDebug = $state(false);
 
 	function toggleMenu() {
@@ -23,14 +25,34 @@
 		closeMenu();
 	}
 
-	function handleLanguageChange(lang: string) {
-		selectedLanguage = lang;
-		// TODO: Implement language switching
-		console.log('Language changed to:', lang);
+	async function handleLanguageChange(lang: 'en' | 'de' | 'es') {
+		await setLanguage(lang);
+		// Update user language in profile if logged in
+		if ($authStore.user && $authStore.token) {
+			try {
+				const response = await fetch(API_BASE_URL + '/api/user', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${$authStore.token}`
+					},
+					body: JSON.stringify({
+						language: lang
+					})
+				});
+
+				if (response.ok) {
+					const updatedUser = await response.json();
+					await authStore.setUser(updatedUser);
+				}
+			} catch (err) {
+				console.error('Failed to update language preference:', err);
+			}
+		}
 	}
 
-	function navigateTo(path: string) {
-		goto(path);
+	function navigateTo(path: '/app' | '/app/profile' | '/app/manage') {
+		goto(resolve(path));
 		closeMenu();
 	}
 
@@ -110,7 +132,7 @@
 			<!-- Menu Items -->
 			<div class="space-y-2 p-6">
 				<button
-					onclick={() => navigateTo('/overview')}
+					onclick={() => navigateTo('/app')}
 					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +147,7 @@
 				</button>
 
 				<button
-					onclick={() => navigateTo('/profile')}
+					onclick={() => navigateTo('/app/profile')}
 					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +162,7 @@
 				</button>
 
 				<button
-					onclick={() => navigateTo('/manage')}
+					onclick={() => navigateTo('/app/manage')}
 					class="flex w-full items-center gap-3 rounded-xl px-6 py-4 text-left text-lg transition-colors hover:bg-emerald-50"
 				>
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,18 +173,20 @@
 							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 						></path>
 					</svg>
-					<span class="font-medium text-emerald-900">Manage Plants</span>
+					<span class="font-medium text-emerald-900">{$tStore('menu.managePlants')}</span>
 				</button>
 			</div>
 
 			<!-- Language Picker -->
 			<div class="border-t border-emerald-200 px-6 py-4">
-				<p class="mb-3 text-sm font-semibold text-emerald-700">Language</p>
+				<p class="mb-3 text-sm font-semibold text-emerald-700">
+					{$tStore('common.language')}
+				</p>
 				<div class="flex gap-3">
 					<button
 						onclick={() => handleLanguageChange('en')}
 						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
-							selectedLanguage === 'en'
+							$languageStore === 'en'
 								? 'bg-emerald-600 text-white'
 								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
 						}`}
@@ -172,7 +196,7 @@
 					<button
 						onclick={() => handleLanguageChange('de')}
 						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
-							selectedLanguage === 'de'
+							$languageStore === 'de'
 								? 'bg-emerald-600 text-white'
 								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
 						}`}
@@ -182,7 +206,7 @@
 					<button
 						onclick={() => handleLanguageChange('es')}
 						class={`rounded-lg px-6 py-3 text-base font-medium transition-colors ${
-							selectedLanguage === 'es'
+							$languageStore === 'es'
 								? 'bg-emerald-600 text-white'
 								: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
 						}`}
