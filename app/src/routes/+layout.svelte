@@ -2,16 +2,14 @@
 	import { onMount, onDestroy } from 'svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import { initializePushNotifications, cleanupPushNotifications } from '$lib/notifications';
 	import { initializeI18n } from '$lib/i18n';
 	import { initializeLanguage } from '$lib/stores/language';
-	import { browser } from '$app/environment';
 	import Auth from '$lib/auth/Auth.svelte';
 	import { Capacitor } from '@capacitor/core';
 	import { SplashScreen } from '@capacitor/splash-screen';
+	import BurgerMenu from '$lib/components/BurgerMenu.svelte';
 
 	let { children } = $props();
-	let fcmToken = $state<string | null>(null);
 
 	onMount(async () => {
 		// hide splash screen once the app is ready
@@ -25,19 +23,12 @@
 		// Initialize i18n translations for the selected language
 		await initializeI18n();
 
-		// Initialize push notifications
-		const result = await initializePushNotifications();
-		fcmToken = result.token;
-
-		if (fcmToken) {
-			console.log('✅ FCM Token registered:', fcmToken);
-		}
+		// Do not auto-request notification permissions on startup.
+		// Use $lib/notifications.requestNotificationPermissions() when user opts in.
 	});
 
 	onDestroy(() => {
-		if (browser) {
-			cleanupPushNotifications();
-		}
+		// no-op for now
 	});
 </script>
 
@@ -46,6 +37,12 @@
 <div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
 	<main class="pt-safe pb-safe px-4">
 		<Auth>
+			<!-- Floating Burger Menu: only visible when authenticated (inside Auth slot) -->
+			<div class="pt-safe pr-safe fixed top-0 right-0 z-50">
+				<div class="p-4">
+					<BurgerMenu />
+				</div>
+			</div>
 			{@render children()}
 		</Auth>
 	</main>
@@ -58,5 +55,8 @@
 	}
 	.pb-safe {
 		padding-bottom: env(safe-area-inset-bottom);
+	}
+	.pr-safe {
+		padding-right: env(safe-area-inset-right);
 	}
 </style>

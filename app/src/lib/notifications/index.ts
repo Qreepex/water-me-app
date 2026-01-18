@@ -1,5 +1,6 @@
 export {
 	initializePushNotifications,
+	requestNotificationPermissions,
 	getNotificationToken,
 	getNotificationState,
 	checkNotificationPermissions,

@@ -21,6 +21,59 @@ let listenersAdded = false;
  * Initialize push notifications
  * Request permissions, register for notifications, and set up listeners
  */
+async function addPushListeners() {
+	if (listenersAdded) return;
+
+	// Listen for registration success
+	await PushNotifications.addListener('registration', async (token: Token) => {
+		console.log('Push registration success, token:', token.value);
+		notificationState.token = token.value;
+		notificationState.isRegistered = true;
+
+		// Store token in Capacitor Preferences for debugging
+		try {
+			await Preferences.set({ key: 'fcm_token', value: token.value });
+		} catch (err) {
+			console.error('Failed to store token:', err);
+		}
+	});
+
+	// Listen for registration errors
+	await PushNotifications.addListener('registrationError', (error: any) => {
+		console.error('Push registration error:', error);
+
+		// Check for common Firebase initialization error
+		if (error && error.error && error.error.includes('FirebaseApp is not initialized')) {
+			console.error(
+				'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
+			);
+			console.error('📖 See: https://firebase.google.com/docs/android/setup');
+		}
+	});
+
+	// Listen for push notifications received while app is in foreground
+	await PushNotifications.addListener(
+		'pushNotificationReceived',
+		(notification: PushNotificationSchema) => {
+			console.log('Push notification received (foreground):', notification);
+			console.log(`Title: ${notification.title}, Body: ${notification.body}`);
+		}
+	);
+
+	// Listen for push notifications when user taps on them
+	await PushNotifications.addListener(
+		'pushNotificationActionPerformed',
+		(action: ActionPerformed) => {
+			console.log('Push notification action performed:', action);
+			const data = action.notification.data;
+			console.log('Notification data:', data);
+		}
+	);
+
+	listenersAdded = true;
+	console.log('Push notification listeners added');
+}
+
 export async function initializePushNotifications(): Promise<NotificationState> {
 	// Check if push notifications are supported on this platform
 	if (!Capacitor.isNativePlatform()) {
@@ -30,61 +83,7 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 	notificationState.isSupported = true;
 
 	try {
-		// Add listeners only once
-		if (!listenersAdded) {
-			// Listen for registration success
-			await PushNotifications.addListener('registration', async (token: Token) => {
-				console.log('Push registration success, token:', token.value);
-				notificationState.token = token.value;
-				notificationState.isRegistered = true;
-
-				// Store token in Capacitor Preferences for debugging
-				try {
-					await Preferences.set({ key: 'fcm_token', value: token.value });
-				} catch (err) {
-					console.error('Failed to store token:', err);
-				}
-			});
-
-			// Listen for registration errors
-			await PushNotifications.addListener('registrationError', (error: any) => {
-				console.error('Push registration error:', error);
-
-				// Check for common Firebase initialization error
-				if (error && error.error && error.error.includes('FirebaseApp is not initialized')) {
-					console.error(
-						'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
-					);
-					console.error('📖 See: https://firebase.google.com/docs/android/setup');
-				}
-			});
-
-			// Listen for push notifications received while app is in foreground
-			await PushNotifications.addListener(
-				'pushNotificationReceived',
-				(notification: PushNotificationSchema) => {
-					console.log('Push notification received (foreground):', notification);
-
-					// You can show a custom UI or alert here
-					console.log(`Title: ${notification.title}, Body: ${notification.body}`);
-				}
-			);
-
-			// Listen for push notifications when user taps on them
-			await PushNotifications.addListener(
-				'pushNotificationActionPerformed',
-				(action: ActionPerformed) => {
-					console.log('Push notification action performed:', action);
-
-					// Handle notification tap - navigate to specific screen, etc.
-					const data = action.notification.data;
-					console.log('Notification data:', data);
-				}
-			);
-
-			listenersAdded = true;
-			console.log('Push notification listeners added');
-		}
+		await addPushListeners();
 
 		// Request permission to use push notifications
 		const permStatus = await PushNotifications.requestPermissions();
@@ -118,6 +117,40 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 		return notificationState;
 	} catch (error) {
 		console.error('Error initializing push notifications:', error);
+		return notificationState;
+	}
+}
+
+/**
+ * Request notification permissions and register without auto-triggering on app start.
+ * Call this when the user opts in (e.g., opens notifications page or creates a plant).
+ */
+export async function requestNotificationPermissions(): Promise<NotificationState> {
+	if (!Capacitor.isNativePlatform()) {
+		return notificationState;
+	}
+
+	notificationState.isSupported = true;
+
+	try {
+		await addPushListeners();
+
+		const permStatus = await PushNotifications.requestPermissions();
+		if (permStatus.receive === 'granted') {
+			try {
+				await PushNotifications.register();
+				notificationState.isRegistered = true;
+			} catch (registerError: any) {
+				console.error('Failed to register for push notifications:', registerError);
+				return notificationState;
+			}
+		} else {
+			console.log('User denied push notification permissions');
+		}
+
+		return notificationState;
+	} catch (error) {
+		console.error('Error requesting notification permissions:', error);
 		return notificationState;
 	}
 }
