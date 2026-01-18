@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"os"
 	"plants-backend/middlewares"
+	"plants-backend/routes"
 	"plants-backend/services"
-	"plants-backend/types"
-	"plants-backend/validation"
-	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -17,18 +15,28 @@ import (
 
 func main() {
 	ctx := context.Background()
-	connString := getenv("DATABASE_URL", "postgres://postgres:pw@localhost:5432/plants?sslmode=disable")
-	jwtSecret := getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
+	connString := getenv("DATABASE_URL", "mongodb://localhost:27017/plants")
 
-	db, err := services.NewDatabase(ctx, connString)
+	db, err := services.Connect(connString, "plants", "test2", "test")
 	if err != nil {
-		log.Fatalf("failed to initialize store: %v", err)
+		log.Fatalf("failed to initialize database: %v", err)
 	}
 	defer db.Close()
+
+	firebase, err := services.NewFirebaseService()
+	if err != nil {
+		log.Fatalf("failed to initialize firebase: %v", err)
+	}
+
+	// Protected S3 & plant routes
+	s3svc, err := services.NewS3Service(ctx)
+	if err != nil {
+		log.Fatalf("failed to init s3: %v", err)
+	}
+
 	allowedOrigins := []string{
 		"*",
 	}
-
 	cors := handlers.CORS(
 		handlers.AllowedOrigins(allowedOrigins),
 		handlers.AllowedHeaders([]string{"Authorization", "Content-Type"}),
@@ -42,64 +50,13 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(cors)
 
-	mux := http.NewServeMux()
+	routes.RegisterRoutes(r, db, s3svc)
 
-	// Public routes
-	mux.HandleFunc("/api/signup", func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleSignup(store, jwtSecret, w, r)
-	})
-	mux.HandleFunc("/api/login", func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleLogin(store, jwtSecret, w, r)
-	})
+	r.Use(middlewares.AuthMiddleware(firebase))
 
-	// Protected user routes
-	mux.HandleFunc("/api/user", middlewares.AuthMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			routes.HandleGetUser(store, w, r)
-		case http.MethodPut:
-			routes.HandleUpdateUserProfile(store, w, r)
-		default:
-			routes.MethodNotAllowed(w)
-		}
-	}))
-
-	mux.HandleFunc("/api/user/password", middlewares.AuthMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleChangePassword(store, w, r)
-	}))
-
-	// Protected S3 & plant routes
-	s3svc, err := services.NewS3Service(ctx)
-	if err != nil {
-		log.Fatalf("failed to init s3: %v", err)
-	}
-
-	// Uploads router (presign)
-	mux.Handle("/api/uploads/", middlewares.AuthMiddleware(jwtSecret, func(w http.ResponseWriter, r *http.Request) {
-		routes.UploadsRouter(s3svc).ServeHTTP(w, r)
-	}))
-
-	// Plants router (CRUD with S3 integration)
-	plantsHandler := routes.CreatePlantsHandler(db, s3svc,
-		func(input any) any { return validation.SanitizePlantInput(input.(types.PlantInput)) },
-		func(input any, partial bool) []types.ValidationError {
-			return validation.ValidatePlantInput(input.(types.PlantInput), partial)
-		},
-	)
-	mux.Handle("/api/plants", middlewares.AuthMiddleware(jwtSecret, plantsHandler))
-	mux.Handle("/api/plants/", middlewares.AuthMiddleware(jwtSecret, plantsHandler))
-
-	addr := getenv("PORT", "8080")
-	srv := &http.Server{
-		Addr:         ":" + addr,
-		Handler:      middlewares.CORS(mux),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}
-
-	log.Printf("listening on %s", srv.Addr)
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server error: %v", err)
+	log.Println("Starting server on :8080")
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("failed to start server: %v", err)
 	}
 }
 
