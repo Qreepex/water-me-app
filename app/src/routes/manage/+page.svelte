@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Plant } from '$lib/types/types';
 	import { PlantFlag, SunlightRequirement } from '$lib/types/types';
 	import { goto } from '$app/navigation';
-	import { API_BASE_URL } from '$lib/constants';
 	import { resolve } from '$app/paths';
+	import { fetchWithAuth } from '$lib/auth/api';
 
 	interface FormData {
 		id?: string;
@@ -26,13 +25,6 @@
 	let error: string | null = null;
 	let success: string | null = null;
 	let submitting = false;
-	let token: string | null = null;
-	let isInitialized = false;
-
-	// authStore.subscribe((state) => {
-	// 	token = state.token;
-	// 	isInitialized = state.initialized;
-	// });
 
 	let showForm = false;
 	let editingId: string | null = null;
@@ -113,8 +105,6 @@
 	async function getPresignedUrls(
 		files: File[]
 	): Promise<{ key: string; url: string; headers: Record<string, string> }[]> {
-		if (!token) throw new Error('Unauthorized');
-
 		const body = {
 			files: files.map((f) => ({
 				filename: f.name,
@@ -122,12 +112,8 @@
 			}))
 		};
 
-		const response = await fetch(API_BASE_URL + '/api/uploads/presign', {
+		const response = await fetchWithAuth('/api/uploads/presign', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			},
 			body: JSON.stringify(body)
 		});
 
@@ -172,25 +158,9 @@
 		});
 	}
 
-	onMount(() => {
-		// Wait for auth to initialize
-		const checkAuth = setInterval(() => {
-			if (isInitialized) {
-				clearInterval(checkAuth);
-				if (!token) {
-					goto(resolve('/'));
-					return;
-				}
-				loadPlants();
-			}
-		}, 50);
-	});
-
 	async function loadPlants(): Promise<void> {
 		try {
-			const response = await fetch(API_BASE_URL + '/api/plants', {
-				headers: { Authorization: `Bearer ${token}` }
-			});
+			const response = await fetchWithAuth('/api/plants');
 
 			if (response.status === 401) {
 				// authStore.logout();
@@ -316,12 +286,6 @@
 	}
 
 	async function submitForm(): Promise<void> {
-		if (!token) {
-			// authStore.logout();
-			goto(resolve('/'));
-			return;
-		}
-
 		if (!formData.species.trim() || !formData.name.trim()) {
 			error = 'Species and name are required';
 			return;
@@ -340,12 +304,8 @@
 				photoIds: formData.photoIds.filter(Boolean) // S3 keys
 			};
 
-			const response = await fetch(API_BASE_URL + url, {
+			const response = await fetchWithAuth(url, {
 				method,
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				},
 				body: JSON.stringify(payload)
 			});
 
@@ -366,12 +326,11 @@
 	}
 
 	async function deletePlant(id: string): Promise<void> {
-		if (!token || !confirm('Are you sure you want to delete this plant?')) return;
+		if (!confirm('Are you sure you want to delete this plant?')) return;
 
 		try {
-			const response = await fetch(API_BASE_URL + `/api/plants/${id}`, {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${token}` }
+			const response = await fetchWithAuth(`/api/plants/${id}`, {
+				method: 'DELETE'
 			});
 			if (!response.ok) throw new Error('Failed to delete plant');
 			success = 'Plant deleted successfully!';
@@ -390,7 +349,7 @@
 				<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">🌿 Manage Plants</h1>
 				<div class="flex items-center gap-3">
 					<a
-						href={resolve('/app')}
+						href={resolve('/')}
 						class="rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2 font-medium text-white shadow-sm transition hover:from-green-700 hover:to-emerald-700"
 					>
 						← Back to Overview

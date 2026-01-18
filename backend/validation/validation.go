@@ -202,108 +202,135 @@ func ValidatePlantInput(input types.PlantInput, partial bool) []types.Validation
 	return errors
 }
 
-// SanitizePlantInput trims and filters values; only fields present in the request remain set.
-func SanitizePlantInput(input types.PlantInput) types.PlantInput {
-	clean := types.PlantInput{}
+// ValidateCreatePlantRequest validates a CreatePlantRequest for plant creation.
+// Name is required, all other fields are optional.
+func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.ValidationError {
+	errors := make([]types.ValidationError, 0)
 
-	if input.ID != nil {
-		trimmed := strings.TrimSpace(*input.ID)
-		if trimmed != "" {
-			clean.ID = &trimmed
+	// Name is required
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		errors = append(errors, types.ValidationError{Field: "name", Message: "Name is required and must be a non-empty string"})
+	} else if len(name) > constraints.nameMaxLength {
+		errors = append(errors, types.ValidationError{Field: "name", Message: "Name must be 100 characters or less"})
+	}
+
+	// Validate optional fields
+	if req.Species != nil {
+		species := strings.TrimSpace(*req.Species)
+		if species == "" {
+			errors = append(errors, types.ValidationError{Field: "species", Message: "Species must be a non-empty string"})
+		} else if len(species) > constraints.speciesMaxLength {
+			errors = append(errors, types.ValidationError{Field: "species", Message: "Species must be 100 characters or less"})
 		}
 	}
 
-	if input.Species != nil {
-		trimmed := strings.TrimSpace(*input.Species)
-		if trimmed != "" {
-			clean.Species = &trimmed
+	if req.SunLight != nil {
+		if !isSunlightRequirement(*req.SunLight) {
+			errors = append(errors, types.ValidationError{Field: "sunLight", Message: "SunLight must be one of: Full Sun, Indirect Sun, Partial Shade, Partial to Full Shade, Full Shade"})
 		}
 	}
 
-	if input.Name != nil {
-		trimmed := strings.TrimSpace(*input.Name)
-		if trimmed != "" {
-			clean.Name = &trimmed
+	if req.PreferedTemperature != nil {
+		val := *req.PreferedTemperature
+		if val < constraints.temperatureMin || val > constraints.temperatureMax {
+			errors = append(errors, types.ValidationError{Field: "preferedTemperature", Message: "PreferredTemperature must be between -50 and 100"})
 		}
 	}
 
-	if input.SunLight != nil && isSunlightRequirement(*input.SunLight) {
-		val := *input.SunLight
-		clean.SunLight = &val
-	}
-
-	if input.PreferedTemperature != nil {
-		val := *input.PreferedTemperature
-		clean.PreferedTemperature = &val
-	}
-
-	if input.WateringIntervalDays != nil {
-		val := *input.WateringIntervalDays
-		clean.WateringIntervalDays = &val
-	}
-
-	if input.LastWatered != nil {
-		trimmed := strings.TrimSpace(*input.LastWatered)
-		if trimmed != "" {
-			clean.LastWatered = &trimmed
+	if req.WateringIntervalDays != nil {
+		val := *req.WateringIntervalDays
+		if val < constraints.wateringIntervalMin {
+			errors = append(errors, types.ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be a positive number"})
+		} else if val > constraints.wateringIntervalMax {
+			errors = append(errors, types.ValidationError{Field: "wateringIntervalDays", Message: "WateringIntervalDays must be 365 or less"})
 		}
 	}
 
-	if input.FertilizingIntervalDays != nil {
-		val := *input.FertilizingIntervalDays
-		clean.FertilizingIntervalDays = &val
-	}
-
-	if input.LastFertilized != nil {
-		trimmed := strings.TrimSpace(*input.LastFertilized)
-		if trimmed != "" {
-			clean.LastFertilized = &trimmed
+	if req.FertilizingIntervalDays != nil {
+		val := *req.FertilizingIntervalDays
+		if val < constraints.fertilizingIntervalMin {
+			errors = append(errors, types.ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be a positive number"})
+		} else if val > constraints.fertilizingIntervalMax {
+			errors = append(errors, types.ValidationError{Field: "fertilizingIntervalDays", Message: "FertilizingIntervalDays must be 365 or less"})
 		}
 	}
 
-	if input.PreferedHumidity != nil {
-		val := *input.PreferedHumidity
-		clean.PreferedHumidity = &val
+	if req.PreferedHumidity != nil {
+		val := *req.PreferedHumidity
+		if val < constraints.humidityMin || val > constraints.humidityMax {
+			errors = append(errors, types.ValidationError{Field: "preferedHumidity", Message: "PreferredHumidity must be between 0 and 100"})
+		}
 	}
 
-	if input.SprayIntervalDays != nil {
-		val := *input.SprayIntervalDays
-		clean.SprayIntervalDays = &val
+	if req.SprayIntervalDays != nil {
+		val := *req.SprayIntervalDays
+		if val < constraints.sprayIntervalMin {
+			errors = append(errors, types.ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be a positive number"})
+		} else if val > constraints.sprayIntervalMax {
+			errors = append(errors, types.ValidationError{Field: "sprayIntervalDays", Message: "SprayIntervalDays must be 365 or less"})
+		}
 	}
 
-	if input.Notes != nil {
-		filtered := make([]string, 0, len(*input.Notes))
-		for _, note := range *input.Notes {
+	if req.LastWatered != nil {
+		if !isValidISODate(*req.LastWatered) {
+			errors = append(errors, types.ValidationError{Field: "lastWatered", Message: "LastWatered must be a valid ISO 8601 date string"})
+		}
+	}
+
+	if req.LastFertilized != nil {
+		if !isValidISODate(*req.LastFertilized) {
+			errors = append(errors, types.ValidationError{Field: "lastFertilized", Message: "LastFertilized must be a valid ISO 8601 date string"})
+		}
+	}
+
+	if req.Notes != nil {
+		notes := *req.Notes
+		if len(notes) > constraints.notesMaxItems {
+			errors = append(errors, types.ValidationError{Field: "notes", Message: "Notes array must contain 100 items or less"})
+		}
+		for _, note := range notes {
 			trimmed := strings.TrimSpace(note)
-			if trimmed != "" {
-				filtered = append(filtered, trimmed)
+			if trimmed == "" {
+				errors = append(errors, types.ValidationError{Field: "notes", Message: "All notes must be non-empty strings"})
+				break
+			}
+			if len(trimmed) > constraints.notesMaxItemLength {
+				errors = append(errors, types.ValidationError{Field: "notes", Message: "Each note must be 500 characters or less"})
+				break
 			}
 		}
-		clean.Notes = &filtered
 	}
 
-	if input.Flags != nil {
-		filtered := make([]types.PlantFlag, 0, len(*input.Flags))
-		for _, flag := range *input.Flags {
-			if IsPlantFlag(flag) {
-				filtered = append(filtered, flag)
+	if req.Flags != nil {
+		flags := *req.Flags
+		for _, flag := range flags {
+			if !IsPlantFlag(flag) {
+				errors = append(errors, types.ValidationError{Field: "flags", Message: "Flags must be one of: No Draught, Remove Brown Leaves"})
+				break
 			}
 		}
-		clean.Flags = &filtered
 	}
 
-	if input.PhotoIDs != nil {
-		filtered := make([]string, 0, len(*input.PhotoIDs))
-		for _, id := range *input.PhotoIDs {
+	if req.PhotoIDs != nil {
+		ids := *req.PhotoIDs
+		if len(ids) > constraints.photoIDsMaxItems {
+			errors = append(errors, types.ValidationError{Field: "photoIds", Message: "PhotoIds array must contain 100 items or less"})
+		}
+		for _, id := range ids {
 			trimmed := strings.TrimSpace(id)
-			if trimmed != "" {
-				filtered = append(filtered, trimmed)
+			if trimmed == "" {
+				errors = append(errors, types.ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string"})
+				break
+			}
+			if !strings.HasPrefix(trimmed, "data:") && len(trimmed) > constraints.photoIDsMaxIDLength {
+				errors = append(errors, types.ValidationError{Field: "photoIds", Message: "Each photo ID must be a non-empty string; non-data IDs must be 255 characters or less"})
+				break
 			}
 		}
-		clean.PhotoIDs = &filtered
 	}
 
-	return clean
+	return errors
 }
 
 func IsPlantFlag(flag types.PlantFlag) bool {

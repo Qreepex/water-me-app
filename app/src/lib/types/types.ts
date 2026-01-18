@@ -5,14 +5,14 @@ export type Plant = {
 	sunLight: SunlightRequirement;
 	preferedTemperature: number;
 	wateringIntervalDays: number;
-	lastWatered: string; // ISO date string
+	lastWatered: string | null; // ISO date string
 	fertilizingIntervalDays: number;
-	lastFertilized: string; // ISO date string
+	lastFertilized: string | null; // ISO date string
 	preferedHumidity: number;
 	sprayIntervalDays?: number;
-	notes: string[];
-	flags: PlantFlag[];
-	photoIds: string[];
+	notes: string[] | null;
+	flags: PlantFlag[] | null;
+	photoIds: string[] | null;
 };
 
 export enum PlantFlag {

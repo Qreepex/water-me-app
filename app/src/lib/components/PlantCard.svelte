@@ -7,13 +7,13 @@
 </script>
 
 <div
-	class="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
+	class="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
 >
 	<!-- Image -->
 	<div
 		class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-green-200 to-emerald-300"
 	>
-		{#if plant.photoIds.length > 0}
+		{#if plant.photoIds && plant.photoIds.length > 0}
 			<img
 				src={plant.photoIds[0]}
 				alt={plant.name}
@@ -35,7 +35,7 @@
 			<div class={`mb-2 text-sm font-semibold ${getWateringStatus(plant).color}`}>
 				{getWateringStatus(plant).text}
 			</div>
-			<p class="text-xs text-gray-600">Watered {daysAgo(plant.lastWatered)}</p>
+			<p class="text-xs text-gray-600">Watered {daysAgo(plant.lastWatered ?? '')}</p>
 		</div>
 
 		<!-- Metadata Grid -->
@@ -65,13 +65,13 @@
 					💦 Spray every <span class="font-semibold text-cyan-700">{plant.sprayIntervalDays}</span> days
 				</p>
 				<p class="mt-1 text-xs text-gray-600">
-					Last: <span class="font-semibold">{daysAgo(plant.lastFertilized)}</span>
+					Last: <span class="font-semibold">{daysAgo(plant.lastFertilized ?? '')}</span>
 				</p>
 			</div>
 		{/if}
 
 		<!-- Flags -->
-		{#if plant.flags.length > 0}
+		{#if plant.flags && plant.flags.length > 0}
 			<div class="mb-3 flex flex-wrap gap-2">
 				{#each plant.flags as flag (flag)}
 					<span class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800"
@@ -82,7 +82,7 @@
 		{/if}
 
 		<!-- Notes Preview -->
-		{#if plant.notes.length > 0}
+		{#if plant.notes && plant.notes.length > 0}
 			<div class="border-t border-gray-200 pt-3">
 				<p class="line-clamp-2 text-xs text-gray-600">📝 {plant.notes[0]}</p>
 			</div>
