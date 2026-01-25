@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,9 +17,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func PlantHandler(router *mux.Router, database *services.MongoDB) {
+// PlantHandler registers plant-related routes
+func PlantHandler(router *mux.Router, database *services.MongoDB, s3 *services.S3Service) {
 	router.HandleFunc("/api/plants", func(w http.ResponseWriter, r *http.Request) {
-		getPlants(w, r, database)
+		getPlants(w, r, database, s3)
 	}).Methods(http.MethodGet, http.MethodOptions)
 
 	router.HandleFunc("/api/plants", func(w http.ResponseWriter, r *http.Request) {
@@ -32,13 +34,13 @@ func PlantHandler(router *mux.Router, database *services.MongoDB) {
 	router.HandleFunc("/api/plants/slug/{slug}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		slug := vars["slug"]
-		getPlantBySlug(w, r, database, slug)
+		getPlantBySlug(w, r, database, s3, slug)
 	}).Methods(http.MethodGet, http.MethodOptions)
 
 	router.HandleFunc("/api/plants/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
-		updatePlant(w, r, database, id)
+		updatePlant(w, r, database, s3, id)
 	}).Methods(http.MethodPatch, http.MethodOptions)
 
 	router.HandleFunc("/api/plants/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +52,16 @@ func PlantHandler(router *mux.Router, database *services.MongoDB) {
 	router.HandleFunc("/api/plants/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
-		getPlant(w, r, database, id)
-	})
+		getPlant(w, r, database, s3, id)
+	}).Methods(http.MethodGet, http.MethodOptions)
 }
 
-func getPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
+func getPlants(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+) {
 	userID, ok := getUserID(r)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -66,64 +73,70 @@ func getPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	plants, err := db.GetPlants(r.Context(), userID)
 	if err != nil {
 		log.Printf("Failed to retrieve plants: %v", err)
-
 		http.Error(w, "Failed to retrieve plants", http.StatusInternalServerError)
 		return
 	}
-
-	// Return empty array instead of null if no plants exist
 	if plants == nil {
 		plants = []types.Plant{}
 	}
-
-	util.RespondJSON(w, 200, plants)
+	// Enrich with signed photo URLs
+	for i := range plants {
+		plants[i].PhotoURLs = resolvePhotoURLs(r.Context(), s3, plants[i].PhotoIDs, userID)
+	}
+	util.RespondJSON(w, http.StatusOK, plants)
 }
 
-func getPlantBySlug(w http.ResponseWriter, r *http.Request, db *services.MongoDB, slug string) {
+func getPlantBySlug(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+	slug string,
+) {
 	userID, ok := getUserID(r)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	log.Printf("Getting plant by slug '%s' for user %v", slug, userID)
-
 	plant, err := db.GetPlantBySlug(r.Context(), userID, slug)
 	if err != nil {
 		log.Printf("Failed to retrieve plant by slug: %v", err)
 		http.Error(w, "Failed to retrieve plant", http.StatusInternalServerError)
 		return
 	}
-
 	if plant == nil {
 		util.NotFound(w)
 		return
 	}
-
+	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusOK, plant)
 }
 
-func getPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB, id string) {
+func getPlant(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+	id string,
+) {
 	userID, ok := getUserID(r)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	log.Printf("Getting plant by ID '%s' for user %v", id, userID)
-
 	plant, err := db.GetPlant(r.Context(), userID, id)
 	if err != nil {
 		log.Printf("Failed to retrieve plant by ID: %v", err)
 		http.Error(w, "Failed to retrieve plant", http.StatusInternalServerError)
 		return
 	}
-
 	if plant == nil {
 		util.NotFound(w)
 		return
 	}
-
+	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
 	util.RespondJSON(w, http.StatusOK, plant)
 }
 
@@ -133,26 +146,21 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	var req types.CreatePlantRequest
 	if err := util.DecodeJSON(r, &req); err != nil {
 		util.BadRequest(w, err.Error(), nil)
 		return
 	}
-
 	errors := validation.ValidateCreatePlantRequest(req)
 	if len(errors) > 0 {
 		util.BadRequest(w, "Validation failed", errors)
 		return
 	}
-
-	// Get existing plants to check for slug uniqueness
 	existingPlants, err := db.GetPlants(r.Context(), userID)
 	if err != nil {
 		util.ServerError(w, err)
 		return
 	}
-
 	plant := createPlantFromRequest(req, userID, existingPlants)
 	createdPlant, err := db.CreatePlant(r.Context(), plant)
 	if err != nil {
@@ -162,13 +170,65 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	util.RespondJSON(w, http.StatusCreated, createdPlant)
 }
 
+func updatePlant(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *services.MongoDB,
+	s3 *services.S3Service,
+	id string,
+) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var req types.UpdatePlantRequest
+	if err := util.DecodeJSON(r, &req); err != nil {
+		util.BadRequest(w, err.Error(), nil)
+		return
+	}
+	errors := validation.ValidateUpdatePlantRequest(req)
+	if len(errors) > 0 {
+		util.BadRequest(w, "Validation failed", errors)
+		return
+	}
+	plant, found, err := db.UpdatePlant(r.Context(), id, userID, req)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	if !found {
+		util.NotFound(w)
+		return
+	}
+	plant.PhotoURLs = resolvePhotoURLs(r.Context(), s3, plant.PhotoIDs, userID)
+	util.RespondJSON(w, http.StatusOK, plant)
+}
+
+func deletePlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB, id string) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	deleted, err := db.DeletePlant(r.Context(), id, userID)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+	if !deleted {
+		util.NotFound(w)
+		return
+	}
+	util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
 func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	userID, ok := getUserID(r)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	var req struct {
 		PlantIDs []string `json:"plantIds"`
 	}
@@ -176,35 +236,25 @@ func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		util.BadRequest(w, err.Error(), nil)
 		return
 	}
-
 	if len(req.PlantIDs) == 0 {
 		util.BadRequest(w, "At least one plant ID is required", nil)
 		return
 	}
-
-	count, err := db.WaterPlants(r.Context(), userID, req.PlantIDs)
+	_, err := db.WaterPlants(r.Context(), userID, req.PlantIDs)
 	if err != nil {
 		util.ServerError(w, err)
 		return
 	}
-
-	util.RespondJSON(w, http.StatusOK, map[string]interface{}{
-		"success": true,
-		"updated": count,
-	})
+	util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
 // slugify converts a string to a URL-friendly slug
 func slugify(s string) string {
-	// Convert to lowercase
 	s = strings.ToLower(s)
-	// Replace spaces and special characters with hyphens
 	reg := regexp.MustCompile(`[^a-z0-9]+`)
 	s = reg.ReplaceAllString(s, "-")
-	// Remove consecutive hyphens
 	reg = regexp.MustCompile(`-+`)
 	s = reg.ReplaceAllString(s, "-")
-	// Trim hyphens from start and end
 	s = strings.Trim(s, "-")
 	return s
 }
@@ -219,13 +269,9 @@ func generateUniqueSlug(
 	if baseSlug == "" {
 		baseSlug = "plant"
 	}
-
-	// Check if base slug is unique
 	if !slugExists(baseSlug, existingPlants) {
 		return baseSlug
 	}
-
-	// Try with location if available
 	var locationPart string
 	if location != nil {
 		locationPart = slugify(location.Room)
@@ -239,8 +285,6 @@ func generateUniqueSlug(
 			return slugWithLocation
 		}
 	}
-
-	// Add number suffix
 	counter := 1
 	for {
 		numberedSlug := fmt.Sprintf("%s-%d", baseSlug, counter)
@@ -261,67 +305,13 @@ func slugExists(slug string, plants []types.Plant) bool {
 	return false
 }
 
-func updatePlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB, id string) {
-	userID, ok := getUserID(r)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var req types.UpdatePlantRequest
-	if err := util.DecodeJSON(r, &req); err != nil {
-		util.BadRequest(w, err.Error(), nil)
-		return
-	}
-
-	errors := validation.ValidateUpdatePlantRequest(req)
-	if len(errors) > 0 {
-		util.BadRequest(w, "Validation failed", errors)
-		return
-	}
-
-	plant, found, err := db.UpdatePlant(r.Context(), id, userID, req)
-	if err != nil {
-		util.ServerError(w, err)
-		return
-	}
-	if !found {
-		util.NotFound(w)
-		return
-	}
-	util.RespondJSON(w, http.StatusOK, plant)
-}
-
-func deletePlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB, id string) {
-	userID, ok := getUserID(r)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	deleted, err := db.DeletePlant(r.Context(), id, userID)
-	if err != nil {
-		util.ServerError(w, err)
-		return
-	}
-
-	if !deleted {
-		util.NotFound(w)
-		return
-	}
-	util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
-}
-
 func createPlantFromRequest(
 	req types.CreatePlantRequest,
 	userID string,
 	existingPlants []types.Plant,
 ) types.Plant {
 	now := time.Now()
-
-	// Generate unique slug
 	slug := generateUniqueSlug(req.Name, req.Location, existingPlants)
-
 	plant := types.Plant{
 		UserID:              userID,
 		Slug:                slug,
@@ -344,6 +334,25 @@ func createPlantFromRequest(
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	}
-
 	return plant
+}
+
+// resolvePhotoURLs presigns GET URLs for user's images
+func resolvePhotoURLs(
+	ctx context.Context,
+	s3 *services.S3Service,
+	keys []string,
+	userID string,
+) []string {
+	urls := make([]string, 0, len(keys))
+	for _, k := range keys {
+		if !services.KeyBelongsToUser(k, userID) {
+			continue
+		}
+		url, err := s3.PresignGetURL(ctx, k)
+		if err == nil && url != "" {
+			urls = append(urls, url)
+		}
+	}
+	return urls
 }

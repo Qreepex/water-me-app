@@ -1,9 +1,26 @@
 <script lang="ts">
 	import type { Plant } from '$lib/types/api';
+	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let plant: Plant;
 	export let daysAgo: (dateString: string) => string;
 	export let getWateringStatus: (plant: Plant) => { text: string; color: string };
+
+	let previewUrl: string | null = null;
+
+	onMount(async () => {
+		const firstId = plant.photoIds?.[0];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const firstUrl = (plant as any)?.photoUrls?.[0] as string | undefined;
+		if (firstId && firstUrl) {
+			previewUrl = await getImageObjectURL(firstId, firstUrl);
+		}
+	});
+
+	onDestroy(() => {
+		if (previewUrl) revokeObjectURL(previewUrl);
+	});
 </script>
 
 <div
@@ -13,9 +30,9 @@
 	<div
 		class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-green-200 to-emerald-300"
 	>
-		{#if plant.photoIds && plant.photoIds.length > 0}
+		{#if previewUrl}
 			<img
-				src={plant.photoIds[0]}
+				src={previewUrl}
 				alt={plant.name}
 				class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
 			/>

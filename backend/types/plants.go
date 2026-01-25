@@ -172,11 +172,12 @@ type Plant struct {
 	Soil        *SoilConfig          `json:"soil,omitempty"        bson:"soil,omitempty"`
 	Seasonality *SeasonalAdjustments `json:"seasonality,omitempty" bson:"seasonality,omitempty"`
 
-	PestHistory   []PestInfection `json:"pestHistory"   bson:"pestHistory"`
-	Flags         []PlantFlag     `json:"flags"         bson:"flags"`
-	Notes         []string        `json:"notes"         bson:"notes"`
-	PhotoIDs      []string        `json:"photoIds"      bson:"photoIds"`
-	GrowthHistory []GrowthLog     `json:"growthHistory" bson:"growthHistory"`
+	PestHistory   []PestInfection `json:"pestHistory"         bson:"pestHistory"`
+	Flags         []PlantFlag     `json:"flags"               bson:"flags"`
+	Notes         []string        `json:"notes"               bson:"notes"`
+	PhotoIDs      []string        `json:"photoIds"            bson:"photoIds"`
+	PhotoURLs     []string        `json:"photoUrls,omitempty" bson:"-"`
+	GrowthHistory []GrowthLog     `json:"growthHistory"       bson:"growthHistory"`
 
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`

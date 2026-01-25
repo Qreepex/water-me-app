@@ -103,13 +103,21 @@ func (s *S3Service) PresignGetURL(ctx context.Context, key string) (string, erro
 	return req.URL, nil
 }
 
-// HeadObjectSize returns object size and verifies its existence.
-func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, error) {
+// HeadObjectInfo returns object size and content type, verifying existence.
+func (s *S3Service) HeadObjectInfo(ctx context.Context, key string) (int64, string, error) {
 	out, err := s.Client.HeadObject(ctx, &s3.HeadObjectInput{Bucket: &s.Bucket, Key: &key})
 	if err != nil {
-		return 0, fmt.Errorf("head object: %w", err)
+		return 0, "", fmt.Errorf("head object: %w", err)
 	}
-	return aws.ToInt64(out.ContentLength), nil
+	size := aws.ToInt64(out.ContentLength)
+	ctype := aws.ToString(out.ContentType)
+	return size, ctype, nil
+}
+
+// HeadObjectSize returns object size and verifies its existence. Deprecated: use HeadObjectInfo.
+func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, error) {
+	size, _, err := s.HeadObjectInfo(ctx, key)
+	return size, err
 }
 
 // GetUserUsage returns total bytes and object count for a user's prefix.

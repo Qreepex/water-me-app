@@ -23,6 +23,15 @@
 		// Initialize i18n translations for the selected language
 		await initializeI18n();
 
+		// Register service worker for image caching (web only)
+		if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+			try {
+				await navigator.serviceWorker.register('/sw.js');
+			} catch {
+				// ignore
+			}
+		}
+
 		// Do not auto-request notification permissions on startup.
 		// Use $lib/notifications.requestNotificationPermissions() when user opts in.
 	});

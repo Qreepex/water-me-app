@@ -21,6 +21,166 @@
 	let newNote = '';
 	let soilComponentInput = '';
 
+	// Upload state
+	const MAX_BYTES = 2 * 1024 * 1024; // 2MB
+	const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+	type PhotoItem = {
+		fileName: string;
+		previewUrl: string;
+		status: 'pending' | 'compressing' | 'uploading' | 'uploaded' | 'error';
+		error?: string;
+		key?: string;
+	};
+	let photos: PhotoItem[] = [];
+	let uploadedPhotoKeys: string[] = [];
+
+	function revokePreviews(): void {
+		photos.forEach((p) => p.previewUrl && URL.revokeObjectURL(p.previewUrl));
+	}
+
+	function onFilesSelected(e: Event): void {
+		const input = e.target as HTMLInputElement;
+		const files = input.files ? Array.from(input.files) : [];
+		if (!files.length) return;
+		revokePreviews();
+		photos = files.map((f) => ({
+			fileName: f.name,
+			previewUrl: URL.createObjectURL(f),
+			status: 'pending'
+		}));
+		// Process sequentially to avoid spikes
+		processUploads(files).catch((err) => {
+			error = err instanceof Error ? err.message : 'Upload error';
+		});
+	}
+
+	async function processUploads(files: File[]): Promise<void> {
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
+			const item = photos[i];
+			if (!allowedTypes.has(file.type)) {
+				item.status = 'error';
+				item.error = 'Unsupported file type';
+				continue;
+			}
+			item.status = 'compressing';
+			const { blob, contentType, outName } = await compressToUnder2MB(file);
+			item.status = 'uploading';
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const presignRes = await (fetchData as any)('/api/uploads/presign', {
+				method: 'post',
+				body: { filename: outName, contentType, sizeBytes: blob.size }
+			});
+			if (!presignRes.ok) {
+				item.status = 'error';
+				item.error = presignRes.error?.message || 'Failed to presign';
+				continue;
+			}
+			const { url, headers, key } = presignRes.data as {
+				url: string;
+				headers: Record<string, string>;
+				key: string;
+			};
+			const putOk = await putToS3(url, headers, blob);
+			if (!putOk) {
+				item.status = 'error';
+				item.error = 'Upload failed';
+				continue;
+			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const regRes = await (fetchData as any)('/api/uploads/register', {
+				method: 'post',
+				body: { key }
+			});
+			if (!regRes.ok) {
+				item.status = 'error';
+				item.error = regRes.error?.message || 'Register failed';
+				continue;
+			}
+			item.status = 'uploaded';
+			item.key = key;
+			uploadedPhotoKeys.push(key);
+		}
+	}
+
+	async function putToS3(
+		url: string,
+		headers: Record<string, string>,
+		blob: Blob
+	): Promise<boolean> {
+		try {
+			const res = await fetch(url, {
+				method: 'PUT',
+				body: blob,
+				headers
+			});
+			return res.ok;
+		} catch {
+			return false;
+		}
+	}
+
+	async function blobFromImage(bitmap: ImageBitmap, type: string, quality: number): Promise<Blob> {
+		const canvas = document.createElement('canvas');
+		canvas.width = bitmap.width;
+		canvas.height = bitmap.height;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('Canvas unsupported');
+		ctx.drawImage(bitmap, 0, 0);
+		const b = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+		if (!b) throw new Error('Failed to create blob');
+		return b;
+	}
+
+	async function compressToUnder2MB(
+		file: File
+	): Promise<{ blob: Blob; contentType: string; outName: string }> {
+		// Convert to WebP for better compression
+		const targetType = 'image/webp';
+		let bitmap = await createImageBitmap(file);
+		// Downscale if extremely large
+		const maxDim = 3000;
+		if (bitmap.width > maxDim || bitmap.height > maxDim) {
+			const scale = Math.min(maxDim / bitmap.width, maxDim / bitmap.height);
+			bitmap = await downscaleBitmap(bitmap, scale);
+		}
+		let quality = 0.92;
+		let blob = await blobFromImage(bitmap, targetType, quality);
+		// Iteratively reduce quality, then dimensions if needed
+		let attempts = 0;
+		while (blob.size > MAX_BYTES && attempts < 6) {
+			quality = Math.max(0.4, quality - 0.15);
+			blob = await blobFromImage(bitmap, targetType, quality);
+			attempts++;
+		}
+		if (blob.size > MAX_BYTES) {
+			// Reduce dimensions by 80% and retry up to 3 times
+			for (let i = 0; i < 3 && blob.size > MAX_BYTES; i++) {
+				bitmap = await downscaleBitmap(bitmap, 0.8);
+				quality = Math.max(0.5, quality - 0.1);
+				blob = await blobFromImage(bitmap, targetType, quality);
+			}
+		}
+		if (blob.size > MAX_BYTES) {
+			throw new Error('Unable to compress under 2MB');
+		}
+		const outName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+		return { blob, contentType: targetType, outName };
+	}
+
+	async function downscaleBitmap(src: ImageBitmap, scale: number): Promise<ImageBitmap> {
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.max(1, Math.floor(src.width * scale));
+		canvas.height = Math.max(1, Math.floor(src.height * scale));
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('Canvas unsupported');
+		ctx.imageSmoothingQuality = 'high';
+		ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+		const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
+		if (!blob) throw new Error('Downscale failed');
+		return await createImageBitmap(blob);
+	}
+
 	async function submitForm(): Promise<void> {
 		if (!formData.name.trim()) {
 			error = 'Plant name is required';
@@ -46,7 +206,7 @@
 				pestHistory: [],
 				flags: formData.flags,
 				notes: formData.notes,
-				photoIds: [],
+				photoIds: uploadedPhotoKeys,
 				growthHistory: []
 			};
 
@@ -183,13 +343,49 @@
 			<!-- Images Section -->
 			<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
 				<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
-				<div
-					class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
-				>
-					<div class="text-center">
-						<div class="mb-2 text-4xl">🖼️</div>
-						<p class="text-sm text-emerald-700">Photo management coming soon</p>
-					</div>
+				<div class="space-y-4">
+					<label class="block">
+						<span class="text-sm font-medium text-green-800"
+							>Add images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
+						>
+						<input
+							type="file"
+							accept="image/jpeg,image/png,image/webp"
+							multiple
+							on:change={onFilesSelected}
+							class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
+						/>
+					</label>
+
+					{#if photos.length}
+						<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+							{#each photos as p (p.previewUrl)}
+								<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
+									<img
+										src={p.previewUrl}
+										alt={p.fileName}
+										class="h-24 w-full rounded object-cover"
+									/>
+									<div class="mt-1 text-xs text-emerald-800">
+										{p.fileName}
+									</div>
+									<div class="text-xs">
+										{#if p.status === 'pending'}
+											<span class="text-gray-600">Pending</span>
+										{:else if p.status === 'compressing'}
+											<span class="text-blue-600">Compressing...</span>
+										{:else if p.status === 'uploading'}
+											<span class="text-emerald-600">Uploading...</span>
+										{:else if p.status === 'uploaded'}
+											<span class="text-green-700">Uploaded</span>
+										{:else}
+											<span class="text-red-600">{p.error || 'Error'}</span>
+										{/if}
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
 				</div>
 			</div>
 

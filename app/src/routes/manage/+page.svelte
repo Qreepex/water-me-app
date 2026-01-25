@@ -3,11 +3,14 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { fetchData } from '$lib/auth/fetch.svelte';
+	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
+	import { onDestroy } from 'svelte';
 
 	let plants: Plant[] = [];
 	let loading = true;
 	let error: string | null = null;
 	let deleting: string | null = null;
+	let previews: Record<string, string> = {};
 
 	async function loadPlants(): Promise<void> {
 		try {
@@ -17,10 +20,23 @@
 				return;
 			}
 			plants = response.data || [];
+			await loadPreviews(plants);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load plants';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadPreviews(items: Plant[]): Promise<void> {
+		for (const p of items) {
+			const firstId = p.photoIds?.[0];
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const firstUrl = (p as any)?.photoUrls?.[0] as string | undefined;
+			if (firstId && firstUrl) {
+				const objUrl = await getImageObjectURL(firstId, firstUrl);
+				if (objUrl) previews[p.id] = objUrl;
+			}
 		}
 	}
 
@@ -56,6 +72,9 @@
 	}
 
 	loadPlants();
+	onDestroy(() => {
+		Object.values(previews).forEach((u) => revokeObjectURL(u));
+	});
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 md:p-10">
@@ -111,6 +130,9 @@
 					<div
 						class="overflow-hidden rounded-2xl border border-emerald-100 bg-white/90 shadow-md backdrop-blur transition hover:shadow-lg"
 					>
+						{#if previews[plant.id]}
+							<img src={previews[plant.id]} alt={plant.name} class="h-40 w-full object-cover" />
+						{/if}
 						<!-- Plant Header -->
 						<div class="bg-gradient-to-r from-emerald-100 to-green-100 p-4">
 							<h3 class="text-xl font-bold text-green-900">{plant.name}</h3>

@@ -7,6 +7,7 @@
 	import SortControls from '$lib/components/SortControls.svelte';
 	import PlantCard from '$lib/components/PlantCard.svelte';
 	import type { Plant } from '$lib/types/api';
+	import { getImageObjectURL } from '$lib/utils/imageCache';
 
 	let plants: Plant[] = [];
 	let loading = true;
@@ -27,10 +28,28 @@
 				return;
 			}
 			plants = result.data;
+			// Prefetch first photo into cache to avoid second load on Android
+			await prefetchPreviews(plants);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function prefetchPreviews(items: Plant[]): Promise<void> {
+		for (const p of items) {
+			const firstId = p.photoIds?.[0];
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const firstUrl = (p as any)?.photoUrls?.[0] as string | undefined;
+			if (firstId && firstUrl) {
+				// Fire and forget; this populates IndexedDB cache
+				try {
+					await getImageObjectURL(firstId, firstUrl);
+				} catch {
+					// ignore
+				}
+			}
 		}
 	}
 

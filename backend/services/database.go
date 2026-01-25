@@ -245,6 +245,33 @@ func (m *MongoDB) WaterPlants(
 	return result.ModifiedCount, nil
 }
 
+// --- Uploads ---
+
+// GetUserUploadCount returns number of uploads for a user
+func (m *MongoDB) GetUserUploadCount(ctx context.Context, userID string) (int64, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Uploads)
+	if collection == nil {
+		return 0, types.ErrNoDocuments
+	}
+	return collection.CountDocuments(ctx, bson.M{"userId": userID})
+}
+
+// RegisterUpload records a newly uploaded object key for a user
+func (m *MongoDB) RegisterUpload(ctx context.Context, userID string, key string, size int64) error {
+	collection := m.GetCollection(constants.MongoDBCollections.Uploads)
+	if collection == nil {
+		return types.ErrNoDocuments
+	}
+	doc := types.Upload{
+		UserID:    userID,
+		Key:       key,
+		SizeBytes: size,
+		CreatedAt: time.Now(),
+	}
+	_, err := collection.InsertOne(ctx, doc)
+	return err
+}
+
 // NotificationConfig methods
 
 func (m *MongoDB) GetNotificationConfig(

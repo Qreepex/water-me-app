@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import type { Plant } from '$lib/types/api';
 	import { SunlightRequirement, WateringMethod, WaterType, FertilizerType } from '$lib/types/api';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { fetchData } from '$lib/auth/fetch.svelte';
+	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
 	import type { FormData } from '$lib/types/forms';
 	import { createEmptyFormData } from '$lib/types/forms';
 	import BasicInformationForm from '$lib/components/PlantForms/BasicInformationForm.svelte';
@@ -24,6 +25,7 @@
 	let submitting = false;
 	let newNote = '';
 	let soilComponentInput = '';
+	let previewUrls: string[] = [];
 
 	let formData: FormData = createEmptyFormData();
 
@@ -41,11 +43,31 @@
 
 			plant = response.data;
 			formData = initializeFormData();
+			await loadPhotoPreviews();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load plant';
 		} finally {
 			loading = false;
 		}
+	});
+
+	async function loadPhotoPreviews(): Promise<void> {
+		if (!plant) return;
+		const ids = plant.photoIds || [];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const urls = ((plant as any)?.photoUrls as string[] | undefined) || [];
+		previewUrls = [];
+		for (let i = 0; i < ids.length; i++) {
+			const id = ids[i];
+			const url = urls[i];
+			if (!id || !url) continue;
+			const objUrl = await getImageObjectURL(id, url);
+			if (objUrl) previewUrls.push(objUrl);
+		}
+	}
+
+	onDestroy(() => {
+		previewUrls.forEach((u) => revokeObjectURL(u));
 	});
 
 	function initializeFormData(): FormData {
@@ -237,14 +259,22 @@
 				<!-- Images Section -->
 				<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
 					<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
-					<div
-						class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
-					>
-						<div class="text-center">
-							<div class="mb-2 text-4xl">🖼️</div>
-							<p class="text-sm text-emerald-700">Photo management coming soon</p>
+					{#if previewUrls.length}
+						<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+							{#each previewUrls as u (u)}
+								<img src={u} alt="" class="h-32 w-full rounded object-cover" />
+							{/each}
 						</div>
-					</div>
+					{:else}
+						<div
+							class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
+						>
+							<div class="text-center">
+								<div class="mb-2 text-4xl">🖼️</div>
+								<p class="text-sm text-emerald-700">No photos yet</p>
+							</div>
+						</div>
+					{/if}
 				</div>
 
 				<!-- Form Sections -->

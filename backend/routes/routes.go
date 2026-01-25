@@ -10,7 +10,8 @@ import (
 )
 
 func RegisterRoutes(router *mux.Router, database *services.MongoDB, s3service *services.S3Service) {
-	PlantHandler(router, database)
+	PlantHandler(router, database, s3service)
+	UploadHandler(router, database, s3service)
 	NotificationHandler(router, database)
 }
 
