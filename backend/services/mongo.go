@@ -11,6 +11,8 @@ import (
 
 var collectionNames = []string{
 	"plants",
+	"uploads",
+	"notifications",
 }
 
 // MongoDB wraps the MongoDB client and database

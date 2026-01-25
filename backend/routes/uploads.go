@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"plants-backend/constants"
-
 	"plants-backend/services"
 	"plants-backend/util"
 
@@ -127,4 +126,27 @@ func UploadHandler(router *mux.Router, database *services.MongoDB, s3 *services.
 		}
 		util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
 	}).Methods(http.MethodPost, http.MethodOptions)
+
+	// DELETE /api/uploads/{key} - Delete an upload and remove from S3
+	router.HandleFunc("/api/uploads/{key}", func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := getUserID(r)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		key := mux.Vars(r)["key"]
+		if key == "" || !services.KeyBelongsToUser(key, userID) {
+			util.BadRequest(w, "Invalid or unauthorized key", nil)
+			return
+		}
+
+		uploadSvc := services.NewUploadService(database, s3)
+		if err := uploadSvc.DeleteUpload(r.Context(), key, userID); err != nil {
+			util.ServerError(w, err)
+			return
+		}
+
+		util.RespondJSON(w, http.StatusOK, map[string]bool{"success": true})
+	}).Methods(http.MethodDelete, http.MethodOptions)
 }

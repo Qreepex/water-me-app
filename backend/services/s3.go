@@ -10,9 +10,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/smithy-go/logging"
 	"github.com/google/uuid"
 )
 
@@ -26,17 +26,30 @@ type S3Service struct {
 
 func NewS3Service(ctx context.Context) (*S3Service, error) {
 	bucket := getenv("S3_BUCKET", "plants-app-images")
+	region := getenv("AWS_REGION", "de")
+	endpoint := getenv("S3_ENDPOINT", "https://s3.de.io.cloud.ovh.net")
 
-	var cfg aws.Config
-	var err error
+	// Create credentials provider from environment variables
+	creds := credentials.NewStaticCredentialsProvider(
+		os.Getenv("AWS_ACCESS_KEY_ID"),
+		os.Getenv("AWS_SECRET_ACCESS_KEY"),
+		"",
+	)
 
-	cfg, err = config.LoadDefaultConfig(ctx)
+	// Load AWS config with explicit credentials and no EC2 IMDS fallback
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(creds),
+		config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load aws config: %w", err)
 	}
-	cfg.Logger = logging.NewStandardLogger(os.Stderr)
 
+	// Create S3 client with custom endpoint
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(endpoint)
+		o.UsePathStyle = true // OVH S3 requires path-style URLs
 	})
 
 	return &S3Service{
@@ -46,6 +59,36 @@ func NewS3Service(ctx context.Context) (*S3Service, error) {
 		URLExpire: 15 * time.Minute,
 		PublicURL: os.Getenv("S3_PUBLIC_URL"),
 	}, nil
+}
+
+// SetupCORS configures CORS rules for the bucket to allow browser uploads.
+// Call this once during setup or when CORS rules need to be updated.
+func (s *S3Service) SetupCORS(ctx context.Context, allowedOrigins []string) error {
+	corsRules := []types.CORSRule{
+		{
+			AllowedOrigins: allowedOrigins,
+			AllowedMethods: []string{"GET", "PUT", "POST", "HEAD"},
+			AllowedHeaders: []string{
+				"*", // Allow all headers including Content-Type, x-amz-*, etc.
+			},
+			ExposeHeaders: []string{
+				"ETag",
+				"x-amz-request-id",
+			},
+			MaxAgeSeconds: aws.Int32(3600),
+		},
+	}
+
+	_, err := s.Client.PutBucketCors(ctx, &s3.PutBucketCorsInput{
+		Bucket: &s.Bucket,
+		CORSConfiguration: &types.CORSConfiguration{
+			CORSRules: corsRules,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("put bucket cors: %w", err)
+	}
+	return nil
 }
 
 // GenerateObjectKey builds a unique, user-scoped object key.
@@ -79,8 +122,12 @@ func (s *S3Service) PresignPutURL(
 	if err != nil {
 		return "", nil, fmt.Errorf("presign put: %w", err)
 	}
-	// Headers client must include
-	headers := map[string]string{"Content-Type": contentType}
+	// Headers client MUST include - must match exactly what's in the signature
+	headers := map[string]string{
+		"Content-Type":    contentType,
+		"x-amz-acl":       "private",
+		"x-amz-meta-user": userID,
+	}
 	return req.URL, headers, nil
 }
 
@@ -118,6 +165,38 @@ func (s *S3Service) HeadObjectInfo(ctx context.Context, key string) (int64, stri
 func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, error) {
 	size, _, err := s.HeadObjectInfo(ctx, key)
 	return size, err
+}
+
+// DeleteObject removes an object from S3. Returns error if object doesn't exist or deletion fails.
+func (s *S3Service) DeleteObject(ctx context.Context, key string) error {
+	_, err := s.Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &s.Bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return fmt.Errorf("delete object: %w", err)
+	}
+	return nil
+}
+
+// DeleteObjects removes multiple objects from S3 in a batch.
+func (s *S3Service) DeleteObjects(ctx context.Context, keys []string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	objects := make([]types.ObjectIdentifier, len(keys))
+	for i, key := range keys {
+		k := key
+		objects[i] = types.ObjectIdentifier{Key: &k}
+	}
+	_, err := s.Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: &s.Bucket,
+		Delete: &types.Delete{Objects: objects},
+	})
+	if err != nil {
+		return fmt.Errorf("delete objects: %w", err)
+	}
+	return nil
 }
 
 // GetUserUsage returns total bytes and object count for a user's prefix.
