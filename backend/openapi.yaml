@@ -1,0 +1,949 @@
+openapi: 3.0.3
+info:
+  title: Plants Management API
+  description: API for managing plants and notification configurations
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Plants
+    description: Plant management operations
+  - name: Notifications
+    description: Notification configuration operations
+
+paths:
+  /api/plants:
+    get:
+      tags:
+        - Plants
+      summary: Get all plants
+      description: Retrieve all plants belonging to the authenticated user
+      operationId: getPlants
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Plants
+      summary: Create a new plant
+      description: Create a new plant for the authenticated user with auto-generated slug
+      operationId: createPlant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlantRequest'
+      responses:
+        '201':
+          description: Plant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/plants/slug/{slug}:
+    get:
+      tags:
+        - Plants
+      summary: Get plant by slug
+      description: Retrieve a specific plant by its slug. Only returns plants belonging to the authenticated user.
+      operationId: getPlantBySlug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: URL-friendly slug of the plant
+          schema:
+            type: string
+          example: monstera-deliciosa
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/plants/{id}:
+    patch:
+      tags:
+        - Plants
+      summary: Update a plant
+      description: Update an existing plant. Only the provided fields will be updated.
+      operationId: updatePlant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Plant ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlantRequest'
+      responses:
+        '200':
+          description: Plant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plant'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Plants
+      summary: Delete a plant
+      description: Delete a plant belonging to the authenticated user
+      operationId: deletePlant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Plant ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plant deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get notification configuration
+      description: Retrieve notification configuration for the authenticated user. Returns default config if none exists.
+      operationId: getNotificationConfig
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Notifications
+      summary: Create or update notification configuration
+      description: Create or update notification configuration for the authenticated user
+      operationId: upsertNotificationConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationConfigInput'
+      responses:
+        '200':
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationConfig'
+        '201':
+          description: Configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationConfig'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Notifications
+      summary: Delete notification configuration
+      description: Delete notification configuration for the authenticated user
+      operationId: deleteNotificationConfig
+      responses:
+        '200':
+          description: Configuration deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+
+  schemas:
+    # Enums
+    SunlightRequirement:
+      type: string
+      enum:
+        - Full Sun
+        - Indirect Sun
+        - Partial Shade
+        - Partial to Full Shade
+        - Full Shade
+
+    WateringMethod:
+      type: string
+      enum:
+        - Top
+        - Bottom
+        - Soaking
+        - Self
+        - MistingOnly
+
+    WaterType:
+      type: string
+      enum:
+        - Tap
+        - Filtered
+        - Rain
+        - Distilled
+        - StaleTap
+        - LowLimestone
+
+    FertilizerType:
+      type: string
+      enum:
+        - Liquid
+        - Sticks
+        - Granulate
+        - LongTerm
+        - Organic
+        - Hydroponic
+
+    PestType:
+      type: string
+      enum:
+        - Spider Mites
+        - Aphids
+        - Thrips
+        - Mealybugs
+        - Scale
+        - Fungus Gnats
+        - Root Rot
+
+    PestStatus:
+      type: string
+      enum:
+        - Active
+        - Treated
+        - Resolved
+
+    PlantFlag:
+      type: string
+      enum:
+        - No Draught
+        - Remove Brown Leaves
+        - High Humidity Required
+        - Sensitive Roots
+
+    HealthStatus:
+      type: string
+      enum:
+        - Excellent
+        - Good
+        - Fair
+        - Poor
+        - Dormant
+
+    # Sub-structures
+    Location:
+      type: object
+      required:
+        - room
+        - position
+        - isOutdoors
+      properties:
+        room:
+          type: string
+          example: Living Room
+        position:
+          type: string
+          example: Window Sill
+        isOutdoors:
+          type: boolean
+          example: false
+
+    WateringConfig:
+      type: object
+      required:
+        - intervalDays
+        - method
+        - waterType
+      properties:
+        intervalDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          example: 7
+        method:
+          $ref: '#/components/schemas/WateringMethod'
+        waterType:
+          $ref: '#/components/schemas/WaterType'
+        lastWatered:
+          type: string
+          format: date-time
+          nullable: true
+
+    HumidityConfig:
+      type: object
+      required:
+        - requiresMisting
+        - mistingIntervalDays
+        - requiresHumidifier
+        - targetHumidityPct
+      properties:
+        requiresMisting:
+          type: boolean
+          example: true
+        mistingIntervalDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+          example: 2
+        lastMisted:
+          type: string
+          format: date-time
+          nullable: true
+        requiresHumidifier:
+          type: boolean
+          example: false
+        targetHumidityPct:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          example: 60.0
+
+    FertilizerConfig:
+      type: object
+      required:
+        - type
+        - intervalDays
+        - npkRatio
+        - concentrationPercent
+        - activeInWinter
+      properties:
+        type:
+          $ref: '#/components/schemas/FertilizerType'
+        intervalDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          example: 14
+        npkRatio:
+          type: string
+          pattern: '^\d+:\d+:\d+$'
+          example: "10:10:10"
+        concentrationPercent:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          example: 50.0
+        lastFertilized:
+          type: string
+          format: date-time
+          nullable: true
+        activeInWinter:
+          type: boolean
+          example: false
+
+    SoilConfig:
+      type: object
+      required:
+        - type
+        - components
+        - repottingCycle
+      properties:
+        type:
+          type: string
+          example: Well-draining
+        components:
+          type: array
+          items:
+            type: string
+          example: ["Peat", "Perlite", "Bark"]
+        lastRepotted:
+          type: string
+          format: date-time
+          nullable: true
+        repottingCycle:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 2
+
+    SeasonalAdjustments:
+      type: object
+      required:
+        - winterRestPeriod
+        - winterWaterFactor
+        - minTempCelsius
+      properties:
+        winterRestPeriod:
+          type: boolean
+          example: true
+        winterWaterFactor:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.5
+        minTempCelsius:
+          type: number
+          format: double
+          example: 15.0
+
+    PestInfection:
+      type: object
+      required:
+        - id
+        - pest
+        - detectedAt
+        - status
+        - treatment
+        - notes
+      properties:
+        id:
+          type: string
+        pest:
+          $ref: '#/components/schemas/PestType'
+        detectedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PestStatus'
+        treatment:
+          type: string
+          example: Neem oil spray
+        notes:
+          type: string
+          example: Applied weekly treatment
+
+    GrowthLog:
+      type: object
+      required:
+        - id
+        - date
+        - heightCm
+        - leafCount
+        - health
+        - condition
+        - photoId
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date-time
+        heightCm:
+          type: number
+          format: double
+          minimum: 0
+          example: 45.5
+        leafCount:
+          type: integer
+          minimum: 0
+          example: 12
+        health:
+          $ref: '#/components/schemas/HealthStatus'
+        condition:
+          type: string
+          example: New leaf unfurling
+        photoId:
+          type: string
+
+    # Main Plant Schema
+    Plant:
+      type: object
+      required:
+        - id
+        - userId
+        - slug
+        - name
+        - species
+        - isToxic
+        - sunlight
+        - preferedTemperature
+        - location
+        - watering
+        - fertilizing
+        - humidity
+        - soil
+        - seasonality
+        - pestHistory
+        - flags
+        - notes
+        - photoIds
+        - growthHistory
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique plant identifier
+        userId:
+          type: string
+          description: Owner's user ID
+        slug:
+          type: string
+          description: URL-friendly unique slug
+          example: monstera-deliciosa
+        name:
+          type: string
+          example: Monstera Deliciosa
+        species:
+          type: string
+          example: Monstera deliciosa
+        isToxic:
+          type: boolean
+          example: true
+        sunlight:
+          $ref: '#/components/schemas/SunlightRequirement'
+        preferedTemperature:
+          type: number
+          format: double
+          example: 22.0
+        location:
+          $ref: '#/components/schemas/Location'
+        watering:
+          $ref: '#/components/schemas/WateringConfig'
+        fertilizing:
+          $ref: '#/components/schemas/FertilizerConfig'
+        humidity:
+          $ref: '#/components/schemas/HumidityConfig'
+        soil:
+          $ref: '#/components/schemas/SoilConfig'
+        seasonality:
+          $ref: '#/components/schemas/SeasonalAdjustments'
+        pestHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PestInfection'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlantFlag'
+        notes:
+          type: array
+          items:
+            type: string
+        photoIds:
+          type: array
+          items:
+            type: string
+        growthHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthLog'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePlantRequest:
+      type: object
+      required:
+        - name
+        - species
+        - isToxic
+        - sunlight
+        - preferedTemperature
+        - location
+        - watering
+        - fertilizing
+        - humidity
+        - soil
+        - seasonality
+        - pestHistory
+        - flags
+        - notes
+        - photoIds
+        - growthHistory
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Monstera Deliciosa
+        species:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Monstera deliciosa
+        isToxic:
+          type: boolean
+          example: true
+        sunlight:
+          $ref: '#/components/schemas/SunlightRequirement'
+        preferedTemperature:
+          type: number
+          format: double
+          minimum: -50
+          maximum: 60
+          example: 22.0
+        location:
+          $ref: '#/components/schemas/Location'
+        watering:
+          $ref: '#/components/schemas/WateringConfig'
+        fertilizing:
+          $ref: '#/components/schemas/FertilizerConfig'
+        humidity:
+          $ref: '#/components/schemas/HumidityConfig'
+        soil:
+          $ref: '#/components/schemas/SoilConfig'
+        seasonality:
+          $ref: '#/components/schemas/SeasonalAdjustments'
+        pestHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PestInfection'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlantFlag'
+        notes:
+          type: array
+          items:
+            type: string
+        photoIds:
+          type: array
+          items:
+            type: string
+        growthHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthLog'
+
+    UpdatePlantRequest:
+      type: object
+      description: All fields are optional. Only provided fields will be updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        species:
+          type: string
+          minLength: 1
+          maxLength: 200
+        isToxic:
+          type: boolean
+        sunlight:
+          $ref: '#/components/schemas/SunlightRequirement'
+        preferedTemperature:
+          type: number
+          format: double
+          minimum: -50
+          maximum: 60
+        location:
+          $ref: '#/components/schemas/Location'
+        watering:
+          $ref: '#/components/schemas/WateringConfig'
+        fertilizing:
+          $ref: '#/components/schemas/FertilizerConfig'
+        humidity:
+          $ref: '#/components/schemas/HumidityConfig'
+        soil:
+          $ref: '#/components/schemas/SoilConfig'
+        seasonality:
+          $ref: '#/components/schemas/SeasonalAdjustments'
+        pestHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PestInfection'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlantFlag'
+        notes:
+          type: array
+          items:
+            type: string
+        photoIds:
+          type: array
+          items:
+            type: string
+        growthHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthLog'
+
+    # Notification Schemas
+    QuietHours:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          example: "22:00"
+          description: Start time in HH:mm format
+        end:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          example: "07:00"
+          description: End time in HH:mm format
+
+    NotificationConfig:
+      type: object
+      required:
+        - id
+        - userId
+        - isEnabled
+        - preferredTime
+        - batchingDays
+        - groupByType
+        - mutedPlantIds
+        - remindWatering
+        - remindFertilize
+        - remindRepotting
+        - remindMisting
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Configuration ID
+        userId:
+          type: string
+          description: Owner's user ID
+        isEnabled:
+          type: boolean
+          example: true
+          description: Global notification enable/disable
+        preferredTime:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          example: "08:00"
+          description: Preferred time for notifications in HH:mm format
+        quietHours:
+          $ref: '#/components/schemas/QuietHours'
+          nullable: true
+        batchingDays:
+          type: integer
+          minimum: 0
+          maximum: 30
+          example: 1
+          description: 0 = immediate, 1 = daily batching, etc.
+        groupByType:
+          type: boolean
+          example: true
+          description: Group notifications by type (watering, fertilizing, etc.)
+        mutedPlantIds:
+          type: array
+          items:
+            type: string
+          maxItems: 1000
+          description: Plant IDs that should never send notifications
+        remindWatering:
+          type: boolean
+          example: true
+        remindFertilize:
+          type: boolean
+          example: true
+        remindRepotting:
+          type: boolean
+          example: true
+        remindMisting:
+          type: boolean
+          example: true
+        updatedAt:
+          type: string
+          format: date-time
+
+    NotificationConfigInput:
+      type: object
+      required:
+        - isEnabled
+        - preferredTime
+        - batchingDays
+        - groupByType
+        - mutedPlantIds
+        - remindWatering
+        - remindFertilize
+        - remindRepotting
+        - remindMisting
+      properties:
+        isEnabled:
+          type: boolean
+          example: true
+        preferredTime:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          example: "08:00"
+        quietHours:
+          $ref: '#/components/schemas/QuietHours'
+          nullable: true
+        batchingDays:
+          type: integer
+          minimum: 0
+          maximum: 30
+          example: 1
+        groupByType:
+          type: boolean
+          example: true
+        mutedPlantIds:
+          type: array
+          items:
+            type: string
+          maxItems: 1000
+        remindWatering:
+          type: boolean
+          example: true
+        remindFertilize:
+          type: boolean
+          example: true
+        remindRepotting:
+          type: boolean
+          example: true
+        remindMisting:
+          type: boolean
+          example: true
+
+    # Error Responses
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+        message:
+          type: string
+          example: Name is required
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthorized
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Not Found
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Internal server error

@@ -1,9 +1,15 @@
 <script lang="ts">
-	import type { Plant } from '$lib/types/types';
-	import { PlantFlag, SunlightRequirement } from '$lib/types/types';
+	import type { Plant } from '$lib/types/api';
+	import {
+		PlantFlag,
+		SunlightRequirement,
+		WateringMethod,
+		WaterType,
+		FertilizerType
+	} from '$lib/types/api';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { fetchWithAuth } from '$lib/auth/api';
+	import { fetchData } from '$lib/auth/fetch.svelte';
 
 	interface FormData {
 		id?: string;
@@ -32,7 +38,7 @@
 	let formData: FormData = {
 		species: '',
 		name: '',
-		sunLight: SunlightRequirement.INDIRECT_SUN,
+		sunLight: SunlightRequirement.Indirect_Sun,
 		preferedTemperature: 20,
 		wateringIntervalDays: 7,
 		fertilizingIntervalDays: 30,
@@ -112,7 +118,7 @@
 			}))
 		};
 
-		const response = await fetchWithAuth('/api/uploads/presign', {
+		const response = await fetch('/api/uploads/presign', {
 			method: 'POST',
 			body: JSON.stringify(body)
 		});
@@ -160,16 +166,14 @@
 
 	async function loadPlants(): Promise<void> {
 		try {
-			const response = await fetchWithAuth('/api/plants');
+			const result = await fetchData('/api/plants', {});
 
-			if (response.status === 401) {
-				// authStore.logout();
-				goto(resolve('/'));
+			if (!result.ok) {
+				error = result.error?.message || 'Failed to fetch plants';
 				return;
 			}
 
-			if (!response.ok) throw new Error('Failed to fetch plants');
-			plants = await response.json();
+			plants = result.data;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
@@ -181,7 +185,7 @@
 		formData = {
 			species: '',
 			name: '',
-			sunLight: SunlightRequirement.INDIRECT_SUN,
+			sunLight: SunlightRequirement.Indirect_Sun,
 			preferedTemperature: 20,
 			wateringIntervalDays: 7,
 			fertilizingIntervalDays: 30,
@@ -203,8 +207,19 @@
 
 	function startEdit(plant: Plant): void {
 		formData = {
-			...plant,
-			photoIds: plant.photoIds // S3 keys from DB
+			species: plant.species,
+			name: plant.name,
+			sunLight: plant.sunlight as SunlightRequirement,
+			preferedTemperature: plant.preferedTemperature,
+			wateringIntervalDays: plant.watering?.intervalDays ?? 7,
+			fertilizingIntervalDays: plant.fertilizing?.intervalDays ?? 30,
+			preferedHumidity: plant.humidity?.targetHumidityPct ?? 50,
+			sprayIntervalDays: plant.humidity?.requiresMisting
+				? (plant.humidity?.mistingIntervalDays ?? undefined)
+				: undefined,
+			notes: plant.notes ?? [],
+			flags: plant.flags ?? [],
+			photoIds: plant.photoIds ?? []
 		};
 		photoPreview = plant.photoIds.map((key) => ({ data: '', key })) as {
 			data: string;
@@ -296,25 +311,99 @@
 		success = null;
 
 		try {
-			const url = editingId ? `/api/plants/${editingId}` : '/api/plants';
-			const method = editingId ? 'PUT' : 'POST';
+			if (editingId) {
+				const updatePayload = {
+					name: formData.name,
+					species: formData.species,
+					sunlight: formData.sunLight,
+					preferedTemperature: formData.preferedTemperature,
+					watering: {
+						intervalDays: formData.wateringIntervalDays,
+						method: WateringMethod.Top,
+						waterType: WaterType.Tap
+					},
+					fertilizing: {
+						type: FertilizerType.Liquid,
+						intervalDays: formData.fertilizingIntervalDays,
+						npkRatio: '10:10:10',
+						concentrationPercent: 50,
+						activeInWinter: false
+					},
+					humidity: {
+						requiresMisting: Boolean(formData.sprayIntervalDays),
+						mistingIntervalDays: formData.sprayIntervalDays ?? 0,
+						requiresHumidifier: false,
+						targetHumidityPct: formData.preferedHumidity
+					},
+					notes: formData.notes,
+					flags: formData.flags,
+					photoIds: formData.photoIds.filter(Boolean)
+				};
 
-			const payload = {
-				...formData,
-				photoIds: formData.photoIds.filter(Boolean) // S3 keys
-			};
+				const updateRes = await fetchData('/api/plants/{id}', {
+					method: 'patch',
+					params: { id: editingId },
+					body: updatePayload
+				});
+				if (!updateRes.ok) throw new Error(updateRes.error?.message || 'Failed to update plant');
+				success = 'Plant updated successfully!';
+			} else {
+				const createPayload = {
+					name: formData.name,
+					species: formData.species,
+					isToxic: false,
+					sunlight: formData.sunLight,
+					preferedTemperature: formData.preferedTemperature,
+					location: {
+						room: 'Unknown',
+						position: 'Unknown',
+						isOutdoors: false
+					},
+					watering: {
+						intervalDays: formData.wateringIntervalDays,
+						method: WateringMethod.Top,
+						waterType: WaterType.Tap,
+						lastWatered: null
+					},
+					fertilizing: {
+						type: FertilizerType.Liquid,
+						intervalDays: formData.fertilizingIntervalDays,
+						npkRatio: '10:10:10',
+						concentrationPercent: 50,
+						lastFertilized: null,
+						activeInWinter: false
+					},
+					humidity: {
+						requiresMisting: Boolean(formData.sprayIntervalDays),
+						mistingIntervalDays: formData.sprayIntervalDays ?? 0,
+						requiresHumidifier: false,
+						targetHumidityPct: formData.preferedHumidity
+					},
+					soil: {
+						type: 'Generic',
+						components: [] as string[],
+						repottingCycle: 2
+					},
+					seasonality: {
+						winterRestPeriod: false,
+						winterWaterFactor: 0.5,
+						minTempCelsius: 15
+					},
+					pestHistory: [],
+					flags: formData.flags,
+					notes: formData.notes,
+					photoIds: formData.photoIds.filter(Boolean),
+					growthHistory: []
+				};
 
-			const response = await fetchWithAuth(url, {
-				method,
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.error || `HTTP error! status: ${response.status}`);
+				const createRes = await fetchData('/api/plants', {
+					method: 'post',
+					body: createPayload
+				});
+				if (!createRes.ok) throw new Error(createRes.error?.message || 'Failed to create plant');
+				success = 'Plant created successfully!';
 			}
 
-			success = editingId ? 'Plant updated successfully!' : 'Plant created successfully!';
 			showForm = false;
 			await loadPlants();
 			resetForm();
@@ -329,10 +418,11 @@
 		if (!confirm('Are you sure you want to delete this plant?')) return;
 
 		try {
-			const response = await fetchWithAuth(`/api/plants/${id}`, {
-				method: 'DELETE'
+			const result = await fetchData('/api/plants/{id}', {
+				method: 'delete',
+				params: { id }
 			});
-			if (!response.ok) throw new Error('Failed to delete plant');
+			if (!result.ok) throw new Error(result.error?.message || 'Failed to delete plant');
 			success = 'Plant deleted successfully!';
 			await loadPlants();
 		} catch (err) {

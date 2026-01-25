@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Plant } from '$lib/types/types';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { tStore } from '$lib/i18n';
-	import { fetchWithAuth } from '$lib/auth/api';
+	import { fetchData } from '$lib/auth/fetch.svelte';
 	import SortControls from '$lib/components/SortControls.svelte';
 	import PlantCard from '$lib/components/PlantCard.svelte';
+	import type { Plant } from '$lib/types/api';
 
 	let plants: Plant[] = [];
 	let loading = true;
@@ -15,19 +15,18 @@
 		| 'name'
 		| 'lastWatered'
 		| 'lastFertilized'
-		| 'sprayInterval'
-		| 'wateringInterval';
+		| 'wateringIntervalDays'
+		| 'mistingIntervalDays';
 	let sortBy: SortOption = 'name';
 
 	async function loadPlants() {
 		try {
-			const response = await fetchWithAuth('/api/plants');
-			if (response.status === 401) {
-				// TODO: logout
+			const result = await fetchData('/api/plants', {});
+			if (!result.ok) {
+				error = result.error?.message || 'Failed to fetch plants';
 				return;
 			}
-			if (!response.ok) throw new Error('Failed to fetch plants');
-			plants = await response.json();
+			plants = result.data;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';
 		} finally {
@@ -41,17 +40,30 @@
 			case 'name':
 				return sorted.sort((a, b) => a.name.localeCompare(b.name));
 			case 'lastWatered':
-				return sorted.sort(
-					(a, b) => new Date(b.lastWatered).getTime() - new Date(a.lastWatered).getTime()
-				);
+				return sorted.sort((a, b) => {
+					const aw = a.watering?.lastWatered ? new Date(a.watering.lastWatered).getTime() : 0;
+					const bw = b.watering?.lastWatered ? new Date(b.watering.lastWatered).getTime() : 0;
+					return bw - aw;
+				});
 			case 'lastFertilized':
+				return sorted.sort((a, b) => {
+					const af = a.fertilizing?.lastFertilized
+						? new Date(a.fertilizing.lastFertilized).getTime()
+						: 0;
+					const bf = b.fertilizing?.lastFertilized
+						? new Date(b.fertilizing.lastFertilized).getTime()
+						: 0;
+					return bf - af;
+				});
+			case 'wateringIntervalDays':
 				return sorted.sort(
-					(a, b) => new Date(b.lastFertilized).getTime() - new Date(a.lastFertilized).getTime()
+					(a, b) => (a.watering?.intervalDays ?? 999) - (b.watering?.intervalDays ?? 999)
 				);
-			case 'wateringInterval':
-				return sorted.sort((a, b) => a.wateringIntervalDays - b.wateringIntervalDays);
-			case 'sprayInterval':
-				return sorted.sort((a, b) => (a.sprayIntervalDays || 999) - (b.sprayIntervalDays || 999));
+			case 'mistingIntervalDays':
+				return sorted.sort(
+					(a, b) =>
+						(a.humidity?.mistingIntervalDays ?? 999) - (b.humidity?.mistingIntervalDays ?? 999)
+				);
 			default:
 				return sorted;
 		}
@@ -65,10 +77,12 @@
 	}
 
 	function getWateringStatus(plant: Plant): { text: string; color: string } {
-		const days = Math.floor(
-			(Date.now() - new Date(plant.lastWatered).getTime()) / (1000 * 60 * 60 * 24)
-		);
-		const daysUntilWater = plant.wateringIntervalDays - days;
+		const last = plant.watering?.lastWatered
+			? new Date(plant.watering.lastWatered).getTime()
+			: Date.now();
+		const interval = plant.watering?.intervalDays ?? 0;
+		const days = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
+		const daysUntilWater = interval - days;
 		if (daysUntilWater <= 0) return { text: '🌵 Needs water!', color: 'text-red-600' };
 		if (daysUntilWater <= 1) return { text: '⚠️ Water soon', color: 'text-yellow-600' };
 		return { text: `✓ In ${daysUntilWater} days`, color: 'text-green-600' };

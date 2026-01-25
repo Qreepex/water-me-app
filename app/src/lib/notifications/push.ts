@@ -39,15 +39,18 @@ async function addPushListeners() {
 	});
 
 	// Listen for registration errors
-	await PushNotifications.addListener('registrationError', (error: any) => {
+	await PushNotifications.addListener('registrationError', (error: unknown) => {
 		console.error('Push registration error:', error);
 
 		// Check for common Firebase initialization error
-		if (error && error.error && error.error.includes('FirebaseApp is not initialized')) {
-			console.error(
-				'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
-			);
-			console.error('📖 See: https://firebase.google.com/docs/android/setup');
+		if (error && typeof error === 'object' && 'error' in error) {
+			const errorMsg = (error as Record<string, unknown>).error;
+			if (typeof errorMsg === 'string' && errorMsg.includes('FirebaseApp is not initialized')) {
+				console.error(
+					'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
+				);
+				console.error('📖 See: https://firebase.google.com/docs/android/setup');
+			}
 		}
 	});
 
@@ -94,16 +97,15 @@ export async function initializePushNotifications(): Promise<NotificationState> 
 			// Register with Apple / Google to receive push notifications
 			try {
 				await PushNotifications.register();
-			} catch (registerError: any) {
+			} catch (registerError: unknown) {
 				console.error('Failed to register for push notifications:', registerError);
 
 				// Provide helpful error message for Firebase setup
-				if (
-					registerError &&
-					registerError.message &&
-					registerError.message.includes('FirebaseApp is not initialized')
-				) {
-					console.error('❌ Firebase Configuration Missing!');
+				if (registerError && typeof registerError === 'object' && 'message' in registerError) {
+					const msgVal = (registerError as Record<string, unknown>).message;
+					if (typeof msgVal === 'string' && msgVal.includes('FirebaseApp is not initialized')) {
+						console.error('❌ Firebase Configuration Missing!');
+					}
 				}
 
 				return notificationState;
@@ -140,7 +142,7 @@ export async function requestNotificationPermissions(): Promise<NotificationStat
 			try {
 				await PushNotifications.register();
 				notificationState.isRegistered = true;
-			} catch (registerError: any) {
+			} catch (registerError: unknown) {
 				console.error('Failed to register for push notifications:', registerError);
 				return notificationState;
 			}

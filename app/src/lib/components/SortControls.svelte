@@ -3,8 +3,8 @@
 		| 'name'
 		| 'lastWatered'
 		| 'lastFertilized'
-		| 'sprayInterval'
-		| 'wateringInterval';
+		| 'wateringIntervalDays'
+		| 'mistingIntervalDays';
 	export let sortBy: SortOption = 'name';
 </script>
 
@@ -18,7 +18,7 @@
 		<option value="name">Plant Name</option>
 		<option value="lastWatered">Last Watered</option>
 		<option value="lastFertilized">Last Fertilized</option>
-		<option value="wateringInterval">Watering Frequency</option>
-		<option value="sprayInterval">Spray Frequency</option>
+		<option value="wateringIntervalDays">Watering Frequency</option>
+		<option value="mistingIntervalDays">Spray Frequency</option>
 	</select>
 </div>
