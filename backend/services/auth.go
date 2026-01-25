@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"plants-backend/util"
 	"strings"
 	"time"
+
+	"plants-backend/util"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -54,12 +55,16 @@ func GenerateJWT(userID string, secret string) (string, error) {
 
 // VerifyJWT validates a JWT token and returns the user ID.
 func VerifyJWT(tokenString string, secret string) (string, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&jwt.RegisteredClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(secret), nil
+		},
+	)
 	if err != nil {
 		return "", fmt.Errorf("parse JWT: %w", err)
 	}
@@ -82,20 +87,32 @@ func authMiddleware(secret string, next http.HandlerFunc) http.HandlerFunc {
 
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Missing authorization header"})
+			util.RespondJSON(
+				w,
+				http.StatusUnauthorized,
+				map[string]string{"error": "Missing authorization header"},
+			)
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid authorization header format"})
+			util.RespondJSON(
+				w,
+				http.StatusUnauthorized,
+				map[string]string{"error": "Invalid authorization header format"},
+			)
 			return
 		}
 
 		tokenString := parts[1]
 		userID, err := VerifyJWT(tokenString, secret)
 		if err != nil {
-			util.RespondJSON(w, http.StatusUnauthorized, map[string]string{"error": "Invalid or expired token"})
+			util.RespondJSON(
+				w,
+				http.StatusUnauthorized,
+				map[string]string{"error": "Invalid or expired token"},
+			)
 			return
 		}
 

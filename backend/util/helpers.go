@@ -32,7 +32,11 @@ func BadRequest(w http.ResponseWriter, message string, details any) {
 // ServerError responds with a 500 error.
 func ServerError(w http.ResponseWriter, err error) {
 	log.Printf("server error: %v", err)
-	RespondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+	RespondJSON(
+		w,
+		http.StatusInternalServerError,
+		map[string]string{"error": "Internal server error"},
+	)
 }
 
 // NotFound responds with a 404 error.

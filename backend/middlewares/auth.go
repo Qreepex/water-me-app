@@ -3,9 +3,10 @@ package middlewares
 import (
 	"context"
 	"net/http"
+	"strings"
+
 	"plants-backend/constants"
 	"plants-backend/services"
-	"strings"
 )
 
 type ctxKey string

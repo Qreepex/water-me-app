@@ -63,7 +63,11 @@ func KeyBelongsToUser(key, userID string) bool {
 // PresignPutURL generates a pre-signed PUT URL for direct upload.
 // Note: Size limits cannot be enforced with PUT pre-signing; enforce client-side
 // and validate with HeadObject after upload.
-func (s *S3Service) PresignPutURL(ctx context.Context, key, contentType string, userID string) (string, map[string]string, error) {
+func (s *S3Service) PresignPutURL(
+	ctx context.Context,
+	key, contentType string,
+	userID string,
+) (string, map[string]string, error) {
 	params := &s3.PutObjectInput{
 		Bucket:      &s.Bucket,
 		Key:         &key,
@@ -109,7 +113,10 @@ func (s *S3Service) HeadObjectSize(ctx context.Context, key string) (int64, erro
 }
 
 // GetUserUsage returns total bytes and object count for a user's prefix.
-func (s *S3Service) GetUserUsage(ctx context.Context, userID string) (total int64, count int, err error) {
+func (s *S3Service) GetUserUsage(
+	ctx context.Context,
+	userID string,
+) (total int64, count int, err error) {
 	prefix := fmt.Sprintf("users/%s/", userID)
 	var token *string
 	for {
