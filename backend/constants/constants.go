@@ -1,9 +1,11 @@
 package constants
 
 var MongoDBCollections = struct {
-	Plants string
+	Plants        string
+	Notifications string
 }{
-	Plants: "plants",
+	Plants:        "plants",
+	Notifications: "notifications",
 }
 
 const UserIdKey = "userID"

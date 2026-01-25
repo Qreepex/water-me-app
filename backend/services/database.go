@@ -139,3 +139,100 @@ func (m *MongoDB) DeletePlant(ctx context.Context, id string, userID string) (bo
 
 	return result.DeletedCount > 0, nil
 }
+
+func (m *MongoDB) GetPlantBySlug(
+	ctx context.Context,
+	userID string,
+	slug string,
+) (*types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	var plant types.Plant
+	err := collection.FindOne(ctx, bson.M{"userId": userID, "slug": slug}).Decode(&plant)
+	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &plant, nil
+}
+
+// NotificationConfig methods
+
+func (m *MongoDB) GetNotificationConfig(
+	ctx context.Context,
+	userID string,
+) (*types.NotificationConfig, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	var config types.NotificationConfig
+	err := collection.FindOne(ctx, bson.M{"userId": userID}).Decode(&config)
+	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, types.ErrNoDocuments
+		}
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+func (m *MongoDB) CreateNotificationConfig(
+	ctx context.Context,
+	config types.NotificationConfig,
+) (*types.NotificationConfig, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	_, err := collection.InsertOne(ctx, config)
+	return &config, err
+}
+
+func (m *MongoDB) UpdateNotificationConfig(
+	ctx context.Context,
+	config types.NotificationConfig,
+) (*types.NotificationConfig, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	result := collection.FindOneAndUpdate(
+		ctx,
+		bson.M{"userId": config.UserID},
+		bson.M{"$set": config},
+		opts,
+	)
+
+	var updatedConfig types.NotificationConfig
+	if err := result.Decode(&updatedConfig); err != nil {
+		return nil, err
+	}
+
+	return &updatedConfig, nil
+}
+
+func (m *MongoDB) DeleteNotificationConfig(ctx context.Context, userID string) (bool, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return false, types.ErrNoDocuments
+	}
+
+	result, err := collection.DeleteOne(ctx, bson.M{"userId": userID})
+	if err != nil {
+		return false, err
+	}
+
+	return result.DeletedCount > 0, nil
+}

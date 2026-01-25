@@ -157,6 +157,7 @@ type GrowthLog struct {
 type Plant struct {
 	ID      string `json:"id"      bson:"_id"`
 	UserID  string `json:"userId"  bson:"userId"`
+	Slug    string `json:"slug"    bson:"slug"`
 	Name    string `json:"name"    bson:"name"`
 	Species string `json:"species" bson:"species"`
 	IsToxic bool   `json:"isToxic" bson:"isToxic"`

@@ -11,6 +11,7 @@ import (
 
 func RegisterRoutes(router *mux.Router, database *services.MongoDB, s3service *services.S3Service) {
 	PlantHandler(router, database)
+	NotificationHandler(router, database)
 }
 
 func getUserID(r *http.Request) (string, bool) {
