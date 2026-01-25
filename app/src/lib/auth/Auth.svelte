@@ -53,7 +53,7 @@
 		try {
 			loading = true;
 			error = null;
-			// Startet den nativen Google-Dialog auf dem Handy
+
 			const result = await FirebaseAuthentication.signInWithGoogle();
 
 			// Check if user cancelled (result exists but no user)
@@ -64,11 +64,7 @@
 
 			user = result.user;
 
-			// Das ist das Token für dein Backend!
 			const idToken = await FirebaseAuthentication.getIdToken();
-			console.log('Token für API:', idToken.token);
-
-			// Hier kannst du das Token an dein Backend senden
 		} catch (err: any) {
 			console.error('Login fehlgeschlagen', err);
 			// Check if user cancelled the popup

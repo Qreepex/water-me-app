@@ -72,13 +72,33 @@ async function putNativeBlob(photoId: string, blob: Blob): Promise<string | null
 	try {
 		const b64 = await blobToBase64(blob);
 		const path = nativePathFor(photoId);
+
+		// Ensure all parent directories exist
+		try {
+			await Filesystem.mkdir({ path: 'images', directory: NATIVE_DIR, recursive: true });
+		} catch {
+			// Directory might already exist, ignore
+		}
+
+		// Create any nested directories if needed
+		const parts = path.split('/');
+		for (let i = 1; i < parts.length - 1; i++) {
+			const dir = parts.slice(0, i + 1).join('/');
+			try {
+				await Filesystem.mkdir({ path: dir, directory: NATIVE_DIR, recursive: true });
+			} catch {
+				// Directory might already exist, ignore
+			}
+		}
+
 		await Filesystem.writeFile({ path, directory: NATIVE_DIR, data: b64 });
 		const index = await getIndex();
 		index[photoId] = Date.now();
 		await setIndex(index);
 		const { uri } = await Filesystem.getUri({ path, directory: NATIVE_DIR });
 		return Capacitor.convertFileSrc(uri);
-	} catch {
+	} catch (err) {
+		console.error('Failed to cache image natively:', err);
 		return null;
 	}
 }

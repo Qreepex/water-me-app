@@ -46,10 +46,7 @@ async function addPushListeners() {
 		if (error && typeof error === 'object' && 'error' in error) {
 			const errorMsg = (error as Record<string, unknown>).error;
 			if (typeof errorMsg === 'string' && errorMsg.includes('FirebaseApp is not initialized')) {
-				console.error(
-					'⚠️ Firebase not configured! Please add google-services.json to your Android project.'
-				);
-				console.error('📖 See: https://firebase.google.com/docs/android/setup');
+				console.error('❌ Firebase Configuration Missing!');
 			}
 		}
 	});
