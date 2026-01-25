@@ -272,21 +272,21 @@ export interface components {
 			/** @example Monstera Deliciosa */
 			name: string;
 			/** @example Monstera deliciosa */
-			species: string;
+			species?: string;
 			/** @example true */
 			isToxic: boolean;
-			sunlight: components['schemas']['SunlightRequirement'];
+			sunlight?: components['schemas']['SunlightRequirement'];
 			/**
 			 * Format: double
 			 * @example 22
 			 */
 			preferedTemperature: number;
-			location: components['schemas']['Location'];
+			location?: components['schemas']['Location'];
 			watering: components['schemas']['WateringConfig'];
-			fertilizing: components['schemas']['FertilizerConfig'];
-			humidity: components['schemas']['HumidityConfig'];
-			soil: components['schemas']['SoilConfig'];
-			seasonality: components['schemas']['SeasonalAdjustments'];
+			fertilizing?: components['schemas']['FertilizerConfig'];
+			humidity?: components['schemas']['HumidityConfig'];
+			soil?: components['schemas']['SoilConfig'];
+			seasonality?: components['schemas']['SeasonalAdjustments'];
 			pestHistory: components['schemas']['PestInfection'][];
 			flags: components['schemas']['PlantFlag'][];
 			notes: string[];

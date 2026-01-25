@@ -25,6 +25,10 @@ func PlantHandler(router *mux.Router, database *services.MongoDB) {
 		createPlant(w, r, database)
 	}).Methods(http.MethodPost, http.MethodOptions)
 
+	router.HandleFunc("/api/plants/water", func(w http.ResponseWriter, r *http.Request) {
+		waterPlants(w, r, database)
+	}).Methods(http.MethodPost, http.MethodOptions)
+
 	router.HandleFunc("/api/plants/slug/{slug}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		slug := vars["slug"]
@@ -158,6 +162,38 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 	util.RespondJSON(w, http.StatusCreated, createdPlant)
 }
 
+func waterPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		PlantIDs []string `json:"plantIds"`
+	}
+	if err := util.DecodeJSON(r, &req); err != nil {
+		util.BadRequest(w, err.Error(), nil)
+		return
+	}
+
+	if len(req.PlantIDs) == 0 {
+		util.BadRequest(w, "At least one plant ID is required", nil)
+		return
+	}
+
+	count, err := db.WaterPlants(r.Context(), userID, req.PlantIDs)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+
+	util.RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"updated": count,
+	})
+}
+
 // slugify converts a string to a URL-friendly slug
 func slugify(s string) string {
 	// Convert to lowercase
@@ -286,16 +322,6 @@ func createPlantFromRequest(
 	// Generate unique slug
 	slug := generateUniqueSlug(req.Name, req.Location, existingPlants)
 
-	// Provide default location if not provided
-	location := types.Location{
-		Room:       "",
-		Position:   "",
-		IsOutdoors: false,
-	}
-	if req.Location != nil {
-		location = *req.Location
-	}
-
 	plant := types.Plant{
 		UserID:              userID,
 		Slug:                slug,
@@ -304,7 +330,7 @@ func createPlantFromRequest(
 		IsToxic:             req.IsToxic,
 		Sunlight:            req.Sunlight,
 		PreferedTemperature: req.PreferedTemperature,
-		Location:            location,
+		Location:            req.Location,
 		Watering:            req.Watering,
 		Fertilizing:         req.Fertilizing,
 		Humidity:            req.Humidity,

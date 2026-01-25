@@ -25,7 +25,7 @@
 		<!-- Species -->
 		<div>
 			<label for="species" class="mb-1 block text-sm font-semibold text-gray-700">
-				Species *
+				Species
 			</label>
 			<input
 				type="text"

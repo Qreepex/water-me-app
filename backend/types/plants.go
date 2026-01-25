@@ -164,13 +164,13 @@ type Plant struct {
 
 	Sunlight            SunlightRequirement `json:"sunlight"            bson:"sunlight"`
 	PreferedTemperature float64             `json:"preferedTemperature" bson:"preferedTemperature"`
-	Location            Location            `json:"location"            bson:"location"`
+	Location            *Location           `json:"location,omitempty"  bson:"location,omitempty"`
 
-	Watering    WateringConfig      `json:"watering"    bson:"watering"`
-	Fertilizing FertilizerConfig    `json:"fertilizing" bson:"fertilizing"`
-	Humidity    HumidityConfig      `json:"humidity"    bson:"humidity"`
-	Soil        SoilConfig          `json:"soil"        bson:"soil"`
-	Seasonality SeasonalAdjustments `json:"seasonality" bson:"seasonality"`
+	Watering    WateringConfig       `json:"watering"              bson:"watering"`
+	Fertilizing *FertilizerConfig    `json:"fertilizing,omitempty" bson:"fertilizing,omitempty"`
+	Humidity    *HumidityConfig      `json:"humidity,omitempty"    bson:"humidity,omitempty"`
+	Soil        *SoilConfig          `json:"soil,omitempty"        bson:"soil,omitempty"`
+	Seasonality *SeasonalAdjustments `json:"seasonality,omitempty" bson:"seasonality,omitempty"`
 
 	PestHistory   []PestInfection `json:"pestHistory"   bson:"pestHistory"`
 	Flags         []PlantFlag     `json:"flags"         bson:"flags"`
@@ -184,22 +184,22 @@ type Plant struct {
 
 // CreatePlantRequest is the request body for creating a new plant.
 type CreatePlantRequest struct {
-	Name                string              `json:"name"`
-	Species             string              `json:"species,omitempty"`
-	IsToxic             bool                `json:"isToxic"`
-	Sunlight            SunlightRequirement `json:"sunlight,omitempty"`
-	PreferedTemperature float64             `json:"preferedTemperature"`
-	Location            *Location           `json:"location,omitempty"`
-	Watering            WateringConfig      `json:"watering"`
-	Fertilizing         FertilizerConfig    `json:"fertilizing"`
-	Humidity            HumidityConfig      `json:"humidity"`
-	Soil                SoilConfig          `json:"soil"`
-	Seasonality         SeasonalAdjustments `json:"seasonality"`
-	PestHistory         []PestInfection     `json:"pestHistory"`
-	Flags               []PlantFlag         `json:"flags"`
-	Notes               []string            `json:"notes"`
-	PhotoIDs            []string            `json:"photoIds"`
-	GrowthHistory       []GrowthLog         `json:"growthHistory"`
+	Name                string               `json:"name"`
+	Species             string               `json:"species,omitempty"`
+	IsToxic             bool                 `json:"isToxic"`
+	Sunlight            SunlightRequirement  `json:"sunlight,omitempty"`
+	PreferedTemperature float64              `json:"preferedTemperature"`
+	Location            *Location            `json:"location,omitempty"`
+	Watering            WateringConfig       `json:"watering"`
+	Fertilizing         *FertilizerConfig    `json:"fertilizing,omitempty"`
+	Humidity            *HumidityConfig      `json:"humidity,omitempty"`
+	Soil                *SoilConfig          `json:"soil,omitempty"`
+	Seasonality         *SeasonalAdjustments `json:"seasonality,omitempty"`
+	PestHistory         []PestInfection      `json:"pestHistory"`
+	Flags               []PlantFlag          `json:"flags"`
+	Notes               []string             `json:"notes"`
+	PhotoIDs            []string             `json:"photoIds"`
+	GrowthHistory       []GrowthLog          `json:"growthHistory"`
 }
 
 // UpdatePlantRequest is for PATCH operations with optional fields.

@@ -22,8 +22,8 @@
 	let soilComponentInput = '';
 
 	async function submitForm(): Promise<void> {
-		if (!formData.species.trim() || !formData.name.trim()) {
-			error = 'Species and name are required';
+		if (!formData.name.trim()) {
+			error = 'Plant name is required';
 			return;
 		}
 
@@ -32,46 +32,16 @@
 		success = null;
 
 		try {
-			const createPayload = {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const createPayload: any = {
 				name: formData.name,
-				species: formData.species,
 				isToxic: formData.isToxic,
-				sunlight: formData.sunlight,
 				preferedTemperature: formData.preferedTemperature,
-				location: {
-					room: formData.room,
-					position: formData.position,
-					isOutdoors: formData.isOutdoors
-				},
 				watering: {
 					intervalDays: formData.wateringIntervalDays,
 					method: formData.wateringMethod,
 					waterType: formData.waterType,
 					lastWatered: null
-				},
-				fertilizing: {
-					type: formData.fertilizingType,
-					intervalDays: formData.fertilizingIntervalDays,
-					npkRatio: formData.npkRatio,
-					concentrationPercent: formData.concentrationPercent,
-					lastFertilized: null,
-					activeInWinter: formData.activeInWinter
-				},
-				humidity: {
-					requiresMisting: formData.requiresMisting,
-					mistingIntervalDays: formData.mistingIntervalDays,
-					requiresHumidifier: formData.requiresHumidifier,
-					targetHumidityPct: formData.targetHumidity
-				},
-				soil: {
-					type: formData.soilType,
-					components: formData.soilComponents,
-					repottingCycle: formData.repottingCycle
-				},
-				seasonality: {
-					winterRestPeriod: formData.winterRestPeriod,
-					winterWaterFactor: formData.winterWaterFactor,
-					minTempCelsius: formData.minTempCelsius
 				},
 				pestHistory: [],
 				flags: formData.flags,
@@ -79,6 +49,80 @@
 				photoIds: [],
 				growthHistory: []
 			};
+
+			// Only include optional fields if they're set
+			if (formData.species) {
+				createPayload.species = formData.species;
+			}
+
+			if (formData.sunlight) {
+				createPayload.sunlight = formData.sunlight;
+			}
+
+			if (formData.room || formData.position) {
+				createPayload.location = {
+					room: formData.room,
+					position: formData.position,
+					isOutdoors: formData.isOutdoors
+				};
+			}
+
+			// Check if fertilizing has non-default values
+			if (
+				formData.fertilizingIntervalDays !== 30 ||
+				formData.npkRatio !== '10:10:10' ||
+				formData.concentrationPercent !== 50 ||
+				formData.activeInWinter
+			) {
+				createPayload.fertilizing = {
+					type: formData.fertilizingType,
+					intervalDays: formData.fertilizingIntervalDays,
+					npkRatio: formData.npkRatio,
+					concentrationPercent: formData.concentrationPercent,
+					lastFertilized: null,
+					activeInWinter: formData.activeInWinter
+				};
+			}
+
+			// Check if humidity has non-default values
+			if (
+				formData.requiresMisting ||
+				formData.requiresHumidifier ||
+				formData.targetHumidity !== 50
+			) {
+				createPayload.humidity = {
+					requiresMisting: formData.requiresMisting,
+					mistingIntervalDays: formData.mistingIntervalDays,
+					requiresHumidifier: formData.requiresHumidifier,
+					targetHumidityPct: formData.targetHumidity
+				};
+			}
+
+			// Check if soil has non-default values
+			if (
+				formData.soilType !== 'Generic' ||
+				formData.repottingCycle !== 2 ||
+				formData.soilComponents.length > 0
+			) {
+				createPayload.soil = {
+					type: formData.soilType,
+					components: formData.soilComponents,
+					repottingCycle: formData.repottingCycle
+				};
+			}
+
+			// Check if seasonality has non-default values
+			if (
+				formData.winterRestPeriod ||
+				formData.winterWaterFactor !== 0.5 ||
+				formData.minTempCelsius !== 15
+			) {
+				createPayload.seasonality = {
+					winterRestPeriod: formData.winterRestPeriod,
+					winterWaterFactor: formData.winterWaterFactor,
+					minTempCelsius: formData.minTempCelsius
+				};
+			}
 
 			const createRes = await fetchData('/api/plants', {
 				method: 'post',

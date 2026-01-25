@@ -8,6 +8,7 @@ import (
 	"plants-backend/types"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -51,6 +52,11 @@ func (m *MongoDB) UpdatePlant(
 	collection := m.GetCollection(constants.MongoDBCollections.Plants)
 	if collection == nil {
 		return nil, false, types.ErrNoDocuments
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, false, err
 	}
 
 	updateDoc := bson.M{}
@@ -110,7 +116,7 @@ func (m *MongoDB) UpdatePlant(
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	result := collection.FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": id, "userId": userID},
+		bson.M{"_id": objectID, "userId": userID},
 		bson.M{"$set": updateDoc},
 		opts,
 	)
@@ -132,7 +138,12 @@ func (m *MongoDB) DeletePlant(ctx context.Context, id string, userID string) (bo
 		return false, types.ErrNoDocuments
 	}
 
-	result, err := collection.DeleteOne(ctx, bson.M{"_id": id, "userId": userID})
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return false, err
+	}
+
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": objectID, "userId": userID})
 	if err != nil {
 		return false, err
 	}
@@ -172,8 +183,13 @@ func (m *MongoDB) GetPlant(
 		return nil, types.ErrNoDocuments
 	}
 
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
 	var plant types.Plant
-	err := collection.FindOne(ctx, bson.M{"userId": userID, "_id": id}).Decode(&plant)
+	err = collection.FindOne(ctx, bson.M{"userId": userID, "_id": objectID}).Decode(&plant)
 	if err != nil {
 		if err.Error() == "mongo: no documents in result" {
 			return nil, nil
@@ -182,6 +198,51 @@ func (m *MongoDB) GetPlant(
 	}
 
 	return &plant, nil
+}
+
+func (m *MongoDB) WaterPlants(
+	ctx context.Context,
+	userID string,
+	plantIDs []string,
+) (int64, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return 0, types.ErrNoDocuments
+	}
+
+	// Convert string IDs to ObjectIDs
+	objectIDs := make([]primitive.ObjectID, 0, len(plantIDs))
+	for _, id := range plantIDs {
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			continue // Skip invalid IDs
+		}
+		objectIDs = append(objectIDs, objectID)
+	}
+
+	if len(objectIDs) == 0 {
+		return 0, nil
+	}
+
+	now := time.Now()
+	result, err := collection.UpdateMany(
+		ctx,
+		bson.M{
+			"_id":    bson.M{"$in": objectIDs},
+			"userId": userID,
+		},
+		bson.M{
+			"$set": bson.M{
+				"watering.lastWatered": now,
+				"updatedAt":            now,
+			},
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.ModifiedCount, nil
 }
 
 // NotificationConfig methods

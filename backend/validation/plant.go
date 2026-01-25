@@ -155,16 +155,24 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 	errors = append(errors, validateWateringConfig(req.Watering)...)
 
 	// Fertilizing validation
-	errors = append(errors, validateFertilizerConfig(req.Fertilizing)...)
+	if req.Fertilizing != nil {
+		errors = append(errors, validateFertilizerConfig(*req.Fertilizing)...)
+	}
 
 	// Humidity validation
-	errors = append(errors, validateHumidityConfig(req.Humidity)...)
+	if req.Humidity != nil {
+		errors = append(errors, validateHumidityConfig(*req.Humidity)...)
+	}
 
 	// Soil validation
-	errors = append(errors, validateSoilConfig(req.Soil)...)
+	if req.Soil != nil {
+		errors = append(errors, validateSoilConfig(*req.Soil)...)
+	}
 
 	// Seasonality validation
-	errors = append(errors, validateSeasonalAdjustments(req.Seasonality)...)
+	if req.Seasonality != nil {
+		errors = append(errors, validateSeasonalAdjustments(*req.Seasonality)...)
+	}
 
 	// Pest history validation
 	for i, pest := range req.PestHistory {
