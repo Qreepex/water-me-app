@@ -115,19 +115,17 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 		errors = append(errors, types.ValidationError{Field: "name", Message: "Name must be 100 characters or less"})
 	}
 
-	if strings.TrimSpace(req.Species) == "" {
+	if req.Species != "" && len(strings.TrimSpace(req.Species)) > constraints.speciesMaxLength {
 		errors = append(
 			errors,
 			types.ValidationError{
 				Field:   "species",
-				Message: "Species is required and must be a non-empty string",
+				Message: "Species must be 100 characters or less",
 			},
 		)
-	} else if len(strings.TrimSpace(req.Species)) > constraints.speciesMaxLength {
-		errors = append(errors, types.ValidationError{Field: "species", Message: "Species must be 100 characters or less"})
 	}
 
-	if !isSunlightRequirement(req.Sunlight) {
+	if req.Sunlight != "" && !isSunlightRequirement(req.Sunlight) {
 		errors = append(
 			errors,
 			types.ValidationError{
@@ -149,7 +147,9 @@ func ValidateCreatePlantRequest(req types.CreatePlantRequest) []types.Validation
 	}
 
 	// Location validation
-	errors = append(errors, validateLocation(req.Location)...)
+	if req.Location != nil {
+		errors = append(errors, validateLocation(*req.Location)...)
+	}
 
 	// Watering validation
 	errors = append(errors, validateWateringConfig(req.Watering)...)
@@ -465,29 +465,25 @@ func validateLocation(loc types.Location) []types.ValidationError {
 	errors := make([]types.ValidationError, 0)
 
 	room := strings.TrimSpace(loc.Room)
-	if room == "" {
+	if len(room) > 0 && len(room) > constraints.locationRoomMaxLength {
 		errors = append(
 			errors,
 			types.ValidationError{
 				Field:   "location.room",
-				Message: "Location room must be a non-empty string",
+				Message: "Location room must be 100 characters or less",
 			},
 		)
-	} else if len(room) > constraints.locationRoomMaxLength {
-		errors = append(errors, types.ValidationError{Field: "location.room", Message: "Location room must be 100 characters or less"})
 	}
 
 	position := strings.TrimSpace(loc.Position)
-	if position == "" {
+	if len(position) > 0 && len(position) > constraints.locationPositionMaxLength {
 		errors = append(
 			errors,
 			types.ValidationError{
 				Field:   "location.position",
-				Message: "Location position must be a non-empty string",
+				Message: "Location position must be 200 characters or less",
 			},
 		)
-	} else if len(position) > constraints.locationPositionMaxLength {
-		errors = append(errors, types.ValidationError{Field: "location.position", Message: "Location position must be 200 characters or less"})
 	}
 
 	return errors

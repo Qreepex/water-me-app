@@ -155,7 +155,7 @@ type GrowthLog struct {
 // --- MAIN STRUCT ---
 
 type Plant struct {
-	ID      string `json:"id"      bson:"_id"`
+	ID      string `json:"id"      bson:"_id,omitempty"`
 	UserID  string `json:"userId"  bson:"userId"`
 	Slug    string `json:"slug"    bson:"slug"`
 	Name    string `json:"name"    bson:"name"`
@@ -185,11 +185,11 @@ type Plant struct {
 // CreatePlantRequest is the request body for creating a new plant.
 type CreatePlantRequest struct {
 	Name                string              `json:"name"`
-	Species             string              `json:"species"`
+	Species             string              `json:"species,omitempty"`
 	IsToxic             bool                `json:"isToxic"`
-	Sunlight            SunlightRequirement `json:"sunlight"`
+	Sunlight            SunlightRequirement `json:"sunlight,omitempty"`
 	PreferedTemperature float64             `json:"preferedTemperature"`
-	Location            Location            `json:"location"`
+	Location            *Location           `json:"location,omitempty"`
 	Watering            WateringConfig      `json:"watering"`
 	Fertilizing         FertilizerConfig    `json:"fertilizing"`
 	Humidity            HumidityConfig      `json:"humidity"`

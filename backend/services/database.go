@@ -162,6 +162,28 @@ func (m *MongoDB) GetPlantBySlug(
 	return &plant, nil
 }
 
+func (m *MongoDB) GetPlant(
+	ctx context.Context,
+	userID string,
+	id string,
+) (*types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	var plant types.Plant
+	err := collection.FindOne(ctx, bson.M{"userId": userID, "_id": id}).Decode(&plant)
+	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &plant, nil
+}
+
 // NotificationConfig methods
 
 func (m *MongoDB) GetNotificationConfig(

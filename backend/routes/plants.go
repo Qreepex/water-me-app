@@ -13,8 +13,6 @@ import (
 	"plants-backend/util"
 	"plants-backend/validation"
 
-	gonanoid "github.com/matoous/go-nanoid/v2"
-
 	"github.com/gorilla/mux"
 )
 
@@ -44,6 +42,12 @@ func PlantHandler(router *mux.Router, database *services.MongoDB) {
 		id := vars["id"]
 		deletePlant(w, r, database, id)
 	}).Methods(http.MethodDelete, http.MethodOptions)
+
+	router.HandleFunc("/api/plants/{id}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+		getPlant(w, r, database, id)
+	})
 }
 
 func getPlants(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
@@ -83,6 +87,30 @@ func getPlantBySlug(w http.ResponseWriter, r *http.Request, db *services.MongoDB
 	plant, err := db.GetPlantBySlug(r.Context(), userID, slug)
 	if err != nil {
 		log.Printf("Failed to retrieve plant by slug: %v", err)
+		http.Error(w, "Failed to retrieve plant", http.StatusInternalServerError)
+		return
+	}
+
+	if plant == nil {
+		util.NotFound(w)
+		return
+	}
+
+	util.RespondJSON(w, http.StatusOK, plant)
+}
+
+func getPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB, id string) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("Getting plant by ID '%s' for user %v", id, userID)
+
+	plant, err := db.GetPlant(r.Context(), userID, id)
+	if err != nil {
+		log.Printf("Failed to retrieve plant by ID: %v", err)
 		http.Error(w, "Failed to retrieve plant", http.StatusInternalServerError)
 		return
 	}
@@ -146,7 +174,11 @@ func slugify(s string) string {
 }
 
 // generateUniqueSlug creates a unique slug for the plant within the user's collection
-func generateUniqueSlug(name string, location types.Location, existingPlants []types.Plant) string {
+func generateUniqueSlug(
+	name string,
+	location *types.Location,
+	existingPlants []types.Plant,
+) string {
 	baseSlug := slugify(name)
 	if baseSlug == "" {
 		baseSlug = "plant"
@@ -157,10 +189,13 @@ func generateUniqueSlug(name string, location types.Location, existingPlants []t
 		return baseSlug
 	}
 
-	// Try with location
-	locationPart := slugify(location.Room)
-	if locationPart == "" {
-		locationPart = slugify(location.Position)
+	// Try with location if available
+	var locationPart string
+	if location != nil {
+		locationPart = slugify(location.Room)
+		if locationPart == "" {
+			locationPart = slugify(location.Position)
+		}
 	}
 	if locationPart != "" {
 		slugWithLocation := baseSlug + "-" + locationPart
@@ -247,17 +282,21 @@ func createPlantFromRequest(
 	existingPlants []types.Plant,
 ) types.Plant {
 	now := time.Now()
-	id, err := gonanoid.New()
-	if err != nil {
-		log.Printf("Failed to generate plant ID: %v", err)
-		id = ""
-	}
 
 	// Generate unique slug
 	slug := generateUniqueSlug(req.Name, req.Location, existingPlants)
 
+	// Provide default location if not provided
+	location := types.Location{
+		Room:       "",
+		Position:   "",
+		IsOutdoors: false,
+	}
+	if req.Location != nil {
+		location = *req.Location
+	}
+
 	plant := types.Plant{
-		ID:                  id,
 		UserID:              userID,
 		Slug:                slug,
 		Name:                req.Name,
@@ -265,7 +304,7 @@ func createPlantFromRequest(
 		IsToxic:             req.IsToxic,
 		Sunlight:            req.Sunlight,
 		PreferedTemperature: req.PreferedTemperature,
-		Location:            req.Location,
+		Location:            location,
 		Watering:            req.Watering,
 		Fertilizing:         req.Fertilizing,
 		Humidity:            req.Humidity,
