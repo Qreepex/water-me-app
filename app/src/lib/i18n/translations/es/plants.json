@@ -69,5 +69,20 @@
 		"lastWateredDesc": "Último riego (más reciente)",
 		"speciesAsc": "Especie (A-Z)",
 		"speciesDesc": "Especie (Z-A)"
-	}
+	},
+	"editPlant": "Editar planta",
+	"photos": "Fotos",
+	"basicInformation": "Información básica",
+	"location": "Ubicación",
+	"fertilizing": "Fertilización",
+	"humidity": "Humedad",
+	"soil": "Suelo",
+	"seasonality": "Estacionalidad",
+	"metadata": "Metadatos",
+	"addImages": "Agregar imágenes (comprimidas automáticamente ≤ 2MB)",
+	"newUploads": "Nuevas cargas:",
+	"existingPhotos": "Fotos existentes:",
+	"noPhotosYet": "Sin fotos aún",
+	"deletePhoto": "Eliminar foto",
+	"deletePhotoConfirm": "¿Eliminar esta foto?"
 }
