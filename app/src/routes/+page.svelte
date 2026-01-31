@@ -28,8 +28,8 @@
 		{:else if store.plants.length === 0}
 			<EmptyState
 				icon="🪴"
-				title={$tStore('plants.noPlants')}
-				description={$tStore('plants.startAddingPlants')}
+				title="plants.noPlants"
+				description="plants.startAddingPlants"
 			/>
 		{:else}
 			<!-- Scrollable Plant List -->

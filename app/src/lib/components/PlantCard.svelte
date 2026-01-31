@@ -3,6 +3,7 @@
 	import type { Plant } from '$lib/types/api';
 	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
 	import { onDestroy } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		plant: Plant;
@@ -16,6 +17,17 @@
 	// Get the URL from cache once (already preloaded in Auth)
 	const previewUrl = $state(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
 
+	function openPlant() {
+		goto(`/plant/${plant.id}`);
+	}
+
+	function onKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			openPlant();
+		}
+	}
+
 	onDestroy(() => {
 		if (firstId) {
 			imageCacheStore.releaseImage(firstId);
@@ -24,6 +36,10 @@
 </script>
 
 <div
+	role="button"
+	tabindex="0"
+	onclick={openPlant}
+	onkeydown={onKeydown}
 	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:border-[var(--p-emerald)]/60 hover:shadow-xl hover:bg-[var(--card-light)]/80"
 >
 	<!-- Image -->

@@ -18,5 +18,8 @@
 	"delete": "Delete",
 	"reset": "Reset",
 	"plant": "Plant",
-	"plants": "Plants"
+	"plants": "Plants",
+	"back": "Back",
+	"yes": "Yes",
+	"no": "No"
 }

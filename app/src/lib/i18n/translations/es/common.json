@@ -8,5 +8,10 @@
 	"success": "Éxito",
 	"cancel": "Cancelar",
 	"save": "Guardar",
-	"close": "Cerrar"
+	"close": "Cerrar",
+	"plant": "Planta",
+	"plants": "Plantas",
+	"back": "Volver",
+	"yes": "Sí",
+	"no": "No"
 }
