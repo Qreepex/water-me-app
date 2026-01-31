@@ -19,7 +19,7 @@
 </script>
 
 <div
-	class="min-h-screen {gradient ? 'bg-[var(--bg-light)]' : 'bg-[var(--card-light)]'} {!noPadding &&
+	class="h-full {gradient ? 'bg-[var(--bg-light)]' : 'bg-[var(--card-light)]'} {!noPadding &&
 		'p-6 md:p-10'}"
 >
 	<div class="mx-auto {widthClasses[maxWidth]} {!noPadding && 'pb-24'}">

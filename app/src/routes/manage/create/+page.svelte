@@ -12,6 +12,10 @@
 	import SoilForm from '$lib/components/PlantForms/SoilForm.svelte';
 	import SeasonalityForm from '$lib/components/PlantForms/SeasonalityForm.svelte';
 	import MetadataForm from '$lib/components/PlantForms/MetadataForm.svelte';
+	import PageContainer from '$lib/components/layout/PageContainer.svelte';
+	import PageHeader from '$lib/components/layout/PageHeader.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Message from '$lib/components/ui/Message.svelte';
 
 	let formData: FormData = createEmptyFormData();
 	let error: string | null = null;
@@ -313,138 +317,102 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 md:p-10">
-	<div class="mx-auto max-w-4xl">
-		<!-- Header -->
-		<div class="mb-8">
-			<div class="mb-4 flex items-center justify-between">
-				<div>
-					<h1 class="flex items-center gap-3 text-4xl font-bold text-green-900">
-						🌱 Create New Plant
-					</h1>
-					<p class="mt-1 text-sm text-emerald-700 italic">Add a new plant to your collection</p>
-				</div>
-				<a
-					href={resolve('/manage')}
-					class="rounded-xl bg-gray-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-gray-700"
-				>
-					← Back
-				</a>
+<PageContainer>
+	<!-- Header -->
+	<PageHeader icon="🌱" title="Create New Plant" description="Add a new plant to your collection">
+		<Button variant="secondary" onclick={() => goto(resolve('/manage'))} text="← Back" />
+	</PageHeader>
+
+	<!-- Messages -->
+	{#if success}
+		<Message message={success} type="success" />
+	{/if}
+
+	{#if error}
+		<Message message={error} type="error" />
+	{/if}
+
+	<div class="space-y-6">
+		<!-- Images Section -->
+		<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+			<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
+			<div class="space-y-4">
+				<label class="block">
+					<span class="text-sm font-medium text-green-800"
+						>Add images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
+					>
+					<input
+						type="file"
+						accept="image/jpeg,image/png,image/webp"
+						multiple
+						on:change={onFilesSelected}
+						class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
+					/>
+				</label>
+
+				{#if photos.length}
+					<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+						{#each photos as p (p.previewUrl)}
+							<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
+								<img src={p.previewUrl} alt={p.fileName} class="h-24 w-full rounded object-cover" />
+								<div class="mt-1 text-xs text-emerald-800">
+									{p.fileName}
+								</div>
+								<div class="text-xs">
+									{#if p.status === 'pending'}
+										<span class="text-gray-600">Pending</span>
+									{:else if p.status === 'compressing'}
+										<span class="text-blue-600">Compressing...</span>
+									{:else if p.status === 'uploading'}
+										<span class="text-emerald-600">Uploading...</span>
+									{:else if p.status === 'uploaded'}
+										<span class="text-green-700">Uploaded</span>
+									{:else}
+										<span class="text-red-600">{p.error || 'Error'}</span>
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		</div>
 
-		<!-- Messages -->
-		{#if success}
-			<div class="mb-6 rounded-lg border-2 border-green-400 bg-green-100 px-6 py-4 text-green-800">
-				✓ {success}
+		<!-- Basic Information -->
+		<BasicInformationForm {formData} />
+
+		<!-- Location -->
+		<LocationForm {formData} />
+
+		<!-- Watering & Fertilizing -->
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+			<WateringForm {formData} />
+			<FertilizingForm {formData} />
+		</div>
+
+		<!-- Misting -->
+		<MistingForm {formData} />
+
+		<!-- Advanced Section -->
+		<div
+			class="space-y-6 rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
+		>
+			<h2 class="text-xl font-bold text-green-800">⚙️ Advanced Settings</h2>
+
+			<div class="space-y-6">
+				<SoilForm {formData} bind:soilComponentInput />
+				<SeasonalityForm {formData} />
+				<MetadataForm {formData} bind:newNote />
 			</div>
-		{/if}
+		</div>
 
-		{#if error}
-			<div class="mb-6 rounded-lg border-2 border-red-400 bg-red-100 px-6 py-4 text-red-800">
-				✕ {error}
-			</div>
-		{/if}
-
-		<div class="space-y-6">
-			<!-- Images Section -->
-			<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
-				<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
-				<div class="space-y-4">
-					<label class="block">
-						<span class="text-sm font-medium text-green-800"
-							>Add images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
-						>
-						<input
-							type="file"
-							accept="image/jpeg,image/png,image/webp"
-							multiple
-							on:change={onFilesSelected}
-							class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
-						/>
-					</label>
-
-					{#if photos.length}
-						<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-							{#each photos as p (p.previewUrl)}
-								<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
-									<img
-										src={p.previewUrl}
-										alt={p.fileName}
-										class="h-24 w-full rounded object-cover"
-									/>
-									<div class="mt-1 text-xs text-emerald-800">
-										{p.fileName}
-									</div>
-									<div class="text-xs">
-										{#if p.status === 'pending'}
-											<span class="text-gray-600">Pending</span>
-										{:else if p.status === 'compressing'}
-											<span class="text-blue-600">Compressing...</span>
-										{:else if p.status === 'uploading'}
-											<span class="text-emerald-600">Uploading...</span>
-										{:else if p.status === 'uploaded'}
-											<span class="text-green-700">Uploaded</span>
-										{:else}
-											<span class="text-red-600">{p.error || 'Error'}</span>
-										{/if}
-									</div>
-								</div>
-							{/each}
-						</div>
-					{/if}
-				</div>
-			</div>
-
-			<!-- Basic Information -->
-			<BasicInformationForm {formData} />
-
-			<!-- Location -->
-			<LocationForm {formData} />
-
-			<!-- Watering & Fertilizing -->
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-				<WateringForm {formData} />
-				<FertilizingForm {formData} />
-			</div>
-
-			<!-- Misting -->
-			<MistingForm {formData} />
-
-			<!-- Advanced Section -->
-			<div
-				class="space-y-6 rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur"
-			>
-				<h2 class="text-xl font-bold text-green-800">⚙️ Advanced Settings</h2>
-
-				<div class="space-y-6">
-					<SoilForm {formData} bind:soilComponentInput />
-					<SeasonalityForm {formData} />
-					<MetadataForm {formData} bind:newNote />
-				</div>
-			</div>
-
-			<div class="flex justify-between gap-3">
-				<button
-					on:click={resetForm}
-					class="rounded-lg bg-gray-200 px-6 py-3 font-semibold text-gray-800 transition hover:bg-gray-300"
-				>
-					Reset
-				</button>
-				<button
-					on:click={submitForm}
-					disabled={submitting}
-					class="rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 px-8 py-3 font-semibold text-white shadow-md transition hover:from-emerald-700 hover:to-green-700 disabled:opacity-50"
-				>
-					{submitting ? 'Creating...' : 'Create Plant'}
-				</button>
-			</div>
+		<div class="flex justify-between gap-3">
+			<Button variant="secondary" onclick={resetForm} text="Reset" />
+			<Button
+				onclick={submitForm}
+				disabled={submitting}
+				text={submitting ? 'Creating...' : 'Create Plant'}
+			/>
 		</div>
 	</div>
-</div>
-
-<style>
-	:global(body) {
-		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	}
-</style>
+</PageContainer>

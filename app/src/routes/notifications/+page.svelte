@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { requestNotificationPermissions, getNotificationState } from '$lib/notifications';
 	import { tStore } from '$lib/i18n';
+	import NotificationDebug from '$lib/components/NotificationDebug.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let state = getNotificationState();
 	let requesting = false;
@@ -35,7 +37,7 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-8">
+<div class="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-8">
 	<div class="mx-auto max-w-3xl">
 		<div class="mb-8">
 			<h1 class="text-4xl font-bold text-green-800">
@@ -49,13 +51,14 @@
 			<div class="rounded-2xl bg-white p-6 shadow">
 				<h2 class="mb-2 text-xl font-semibold text-green-800">Enable Push Notifications</h2>
 				<p class="mb-4 text-green-700">Ask for permission and register your device.</p>
-				<button
+				<Button
+					onclick={enableNotifications}
+					text={requesting
+						? $tStore('notifications.requesting') || 'Requesting…'
+						: $tStore('notifications.enable') || 'Enable Notifications'}
+					variant="primary"
 					disabled={requesting}
-					on:click={enableNotifications}
-					class="rounded-lg bg-green-600 px-5 py-2 text-white transition hover:bg-green-700 disabled:opacity-70"
-				>
-					{requesting ? 'Requesting…' : 'Enable Notifications'}
-				</button>
+				/>
 				{#if message}
 					<p class="mt-3 text-sm text-green-800">{message}</p>
 				{/if}
@@ -85,3 +88,5 @@
 		</div>
 	</div>
 </div>
+
+<NotificationDebug />

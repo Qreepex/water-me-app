@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { FormData } from '$lib/types/forms';
 	import { PlantFlag } from '$lib/types/api';
+	import Button from '../ui/Button.svelte';
 
 	interface Props {
 		formData: FormData;
@@ -65,13 +66,7 @@
 					placeholder="Add a note..."
 					class="flex-1 rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
-				<button
-					type="button"
-					onclick={addNote}
-					class="rounded-lg bg-emerald-600 px-4 py-2 text-white shadow-sm transition hover:bg-emerald-700"
-				>
-					Add
-				</button>
+				<Button onclick={addNote} text="Add" variant="primary" />
 			</div>
 
 			{#if formData.notes.length > 0}
@@ -79,13 +74,7 @@
 					{#each formData.notes as note, i (i)}
 						<div class="flex items-start justify-between rounded-lg bg-blue-50 p-3">
 							<p class="flex-1 text-sm text-gray-800">{note}</p>
-							<button
-								type="button"
-								onclick={() => removeNote(i)}
-								class="ml-2 font-bold text-red-500 hover:text-red-700"
-							>
-								×
-							</button>
+							<Button text="Remove" variant="danger" size="sm" onclick={() => removeNote(i)} />
 						</div>
 					{/each}
 				</div>

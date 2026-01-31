@@ -22,7 +22,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import Alert from '$lib/components/ui/Message.svelte';
 
 	let plant = $state<Plant | null>(null);
 	let loading = $state(true);
@@ -444,149 +444,140 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 p-6 md:p-10">
-	<PageContainer gradient>
-		{#if loading}
-			<LoadingSpinner message="Loading plant details..." icon="🌱" />
-		{:else if !plant}
-			<div class="flex flex-col items-center justify-center gap-6 py-12">
-				<p class="text-lg text-red-600">{error || 'Plant not found'}</p>
-				<Button variant="secondary" onclick={() => handleBackClick()} text="backToPlants" />
-			</div>
-		{:else}
-			<PageHeader icon="🌿" title={plant?.name || 'Plant'} description={plant?.species || ''}>
-				<Button variant="ghost" size="sm" onclick={() => handleBackClick()} text="backToPlants" />
-			</PageHeader>
+<PageContainer gradient>
+	{#if loading}
+		<LoadingSpinner message="Loading plant details..." icon="🌱" />
+	{:else if !plant}
+		<div class="flex flex-col items-center justify-center gap-6 py-12">
+			<p class="text-lg text-red-600">{error || 'Plant not found'}</p>
+			<Button variant="secondary" onclick={() => handleBackClick()} text="backToPlants" />
+		</div>
+	{:else}
+		<PageHeader icon="🌿" title={plant?.name || 'Plant'} description={plant?.species || ''}>
+			<Button variant="ghost" size="sm" onclick={() => handleBackClick()} text="backToPlants" />
+		</PageHeader>
 
-			<!-- Messages -->
-			{#if success}
-				<Alert type="success" title="Success" description={success} />
-			{/if}
-
-			{#if error}
-				<Alert type="error" title="Error" description={error} />
-			{/if}
-
-			<div class="space-y-6">
-				<!-- Images Section -->
-				<Card rounded="2xl">
-					<div class="p-6">
-						<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
-						<div class="space-y-4">
-							<label class="block">
-								<span class="text-sm font-medium text-green-800"
-									>Add new images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
-								>
-								<input
-									type="file"
-									accept="image/jpeg,image/png,image/webp"
-									multiple
-									onchange={onFilesSelected}
-									class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
-								/>
-							</label>
-
-							{#if photos.length}
-								<div>
-									<p class="mb-2 text-sm font-medium text-green-800">New uploads:</p>
-									<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-										{#each photos as p (p.previewUrl)}
-											<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
-												<img
-													src={p.previewUrl}
-													alt={p.fileName}
-													class="h-24 w-full rounded object-cover"
-												/>
-												<div class="mt-1 text-xs text-emerald-800">
-													{p.fileName}
-												</div>
-												<div class="text-xs">
-													{#if p.status === 'pending'}
-														<span class="text-gray-600">⏸️ Pending</span>
-													{:else if p.status === 'compressing'}
-														<span class="text-blue-600">⚙️ Compressing...</span>
-													{:else if p.status === 'uploading'}
-														<span class="text-emerald-600">📤 Uploading...</span>
-													{:else if p.status === 'uploaded'}
-														<span class="font-semibold text-green-700">✓ Uploaded!</span>
-													{:else}
-														<span class="text-red-600">✕ {p.error || 'Error'}</span>
-													{/if}
-												</div>
-											</div>
-										{/each}
-									</div>
-								</div>
-							{/if}
-
-							{#if previewUrls.length}
-								<div>
-									<p class="mb-2 text-sm font-medium text-green-800">Existing photos:</p>
-									<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
-										{#each previewUrls as u, i (u)}
-											<div class="group relative">
-												<img src={u} alt="" class="h-32 w-full rounded object-cover" />
-												<button
-													type="button"
-													onclick={() => removeExistingPhoto(plant?.photoIds?.[i] ?? '', i)}
-													class="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
-													title="Remove photo"
-												>
-													×
-												</button>
-											</div>
-										{/each}
-									</div>
-								</div>
-							{:else if !photos.length}
-								<div
-									class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
-								>
-									<div class="text-center">
-										<div class="mb-2 text-4xl">🖼️</div>
-										<p class="text-sm text-emerald-700">No photos yet</p>
-									</div>
-								</div>
-							{/if}
-						</div>
-					</div>
-				</Card>
-
-				<!-- Form Sections -->
-				<BasicInformationForm {formData} />
-				<LocationForm {formData} />
-
-				<!-- Watering & Fertilizing -->
-				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-					<WateringForm {formData} />
-					<FertilizingForm {formData} />
-				</div>
-
-				<MistingForm {formData} />
-
-				<!-- Advanced Settings -->
-				<SoilForm {formData} bind:soilComponentInput />
-				<SeasonalityForm {formData} />
-				<MetadataForm {formData} bind:newNote />
-
-				<!-- Action Buttons -->
-				<div class="flex justify-between gap-3">
-					<Button variant="secondary" size="md" onclick={resetForm} text="reset" />
-					<Button
-						variant="primary"
-						size="md"
-						disabled={submitting}
-						onclick={submitForm}
-						text={submitting ? 'saving' : 'saveChanges'}
-					/>
-				</div>
-			</div>
+		<!-- Messages -->
+		{#if success}
+			<Alert type="success" title="Success" description={success} />
 		{/if}
-	</PageContainer>
-</div>
 
-<style>
-	:global(body) {
-		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	}
-</style>
+		{#if error}
+			<Alert type="error" title="Error" description={error} />
+		{/if}
+
+		<div class="space-y-6">
+			<!-- Images Section -->
+			<Card rounded="2xl">
+				<div class="p-6">
+					<h2 class="mb-4 text-2xl font-bold text-green-800">📸 Photos</h2>
+					<div class="space-y-4">
+						<label class="block">
+							<span class="text-sm font-medium text-green-800"
+								>Add new images (JPEG/PNG/WebP, auto-compressed ≤ 2MB)</span
+							>
+							<input
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								multiple
+								onchange={onFilesSelected}
+								class="mt-2 w-full rounded-lg border border-emerald-200 bg-white p-2 text-sm"
+							/>
+						</label>
+
+						{#if photos.length}
+							<div>
+								<p class="mb-2 text-sm font-medium text-green-800">New uploads:</p>
+								<div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+									{#each photos as p (p.previewUrl)}
+										<div class="rounded-md border border-emerald-200 bg-emerald-50 p-2">
+											<img
+												src={p.previewUrl}
+												alt={p.fileName}
+												class="h-24 w-full rounded object-cover"
+											/>
+											<div class="mt-1 text-xs text-emerald-800">
+												{p.fileName}
+											</div>
+											<div class="text-xs">
+												{#if p.status === 'pending'}
+													<span class="text-gray-600">⏸️ Pending</span>
+												{:else if p.status === 'compressing'}
+													<span class="text-blue-600">⚙️ Compressing...</span>
+												{:else if p.status === 'uploading'}
+													<span class="text-emerald-600">📤 Uploading...</span>
+												{:else if p.status === 'uploaded'}
+													<span class="font-semibold text-green-700">✓ Uploaded!</span>
+												{:else}
+													<span class="text-red-600">✕ {p.error || 'Error'}</span>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						{#if previewUrls.length}
+							<div>
+								<p class="mb-2 text-sm font-medium text-green-800">Existing photos:</p>
+								<div class="grid grid-cols-2 gap-3 md:grid-cols-3">
+									{#each previewUrls as u, i (u)}
+										<div class="group relative">
+											<img src={u} alt="" class="h-32 w-full rounded object-cover" />
+											<Button
+												text="View"
+												variant="danger"
+												size="sm"
+												onclick={() => removeExistingPhoto(plant?.photoIds?.[i] ?? '', i)}
+												class="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100"
+											/>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{:else if !photos.length}
+							<div
+								class="flex h-48 items-center justify-center rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50"
+							>
+								<div class="text-center">
+									<div class="mb-2 text-4xl">🖼️</div>
+									<p class="text-sm text-emerald-700">No photos yet</p>
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</Card>
+
+			<!-- Form Sections -->
+			<BasicInformationForm {formData} />
+			<LocationForm {formData} />
+
+			<!-- Watering & Fertilizing -->
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+				<WateringForm {formData} />
+				<FertilizingForm {formData} />
+			</div>
+
+			<MistingForm {formData} />
+
+			<!-- Advanced Settings -->
+			<SoilForm {formData} bind:soilComponentInput />
+			<SeasonalityForm {formData} />
+			<MetadataForm {formData} bind:newNote />
+
+			<!-- Action Buttons -->
+			<div class="flex justify-between gap-3">
+				<Button variant="secondary" size="md" onclick={resetForm} text="reset" />
+				<Button
+					variant="primary"
+					size="md"
+					disabled={submitting}
+					onclick={submitForm}
+					text={submitting ? 'saving' : 'saveChanges'}
+				/>
+			</div>
+		</div>
+	{/if}
+</PageContainer>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FormData } from '$lib/types/forms';
+	import Button from '../ui/Button.svelte';
 
 	interface Props {
 		formData: FormData;
@@ -65,13 +66,7 @@
 						placeholder="e.g., Perlite, Orchid bark"
 						class="flex-1 rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
 					/>
-					<button
-						type="button"
-						onclick={addSoilComponent}
-						class="rounded-lg bg-emerald-600 px-3 py-2 text-white shadow-sm transition hover:bg-emerald-700"
-					>
-						Add
-					</button>
+					<Button onclick={addSoilComponent} text="Add" variant="primary" />
 				</div>
 
 				{#if formData.soilComponents.length > 0}
@@ -79,13 +74,12 @@
 						{#each formData.soilComponents as component, i (i)}
 							<div class="flex items-center justify-between rounded-lg bg-blue-50 p-2">
 								<span class="text-sm text-gray-800">{component}</span>
-								<button
-									type="button"
+								<Button
+									text="Remove"
+									variant="danger"
+									size="sm"
 									onclick={() => removeSoilComponent(i)}
-									class="font-bold text-red-500 hover:text-red-700"
-								>
-									×
-								</button>
+								/>
 							</div>
 						{/each}
 					</div>

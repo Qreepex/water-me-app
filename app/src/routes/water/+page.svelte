@@ -15,7 +15,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import Alert from '$lib/components/ui/Message.svelte';
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import { onMount } from 'svelte';
 

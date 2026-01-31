@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
+
 	type AlertType = 'error' | 'success' | 'warning' | 'info';
 
 	interface Props {
@@ -44,9 +46,9 @@
 
 <div class="rounded-lg border-2 {style.border} {style.bg} px-6 py-4 {style.text}">
 	{#if title}
-		<p class="font-bold">{title}</p>
+		<p class="font-bold">{$tStore(title)}</p>
 	{/if}
 	{#if content}
-		<p>{content}</p>
+		<p>{$tStore(content)}</p>
 	{/if}
 </div>

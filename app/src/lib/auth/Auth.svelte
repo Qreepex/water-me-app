@@ -13,8 +13,8 @@
 	import { onMount } from 'svelte';
 	import { FIREBASE_CONFIG } from './firebase';
 	import { tStore } from '$lib/i18n';
-	import Button from '$lib/components/Button.svelte';
-	import Message from '$lib/components/Message.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Message from '$lib/components/ui/Message.svelte';
 
 	const app = initializeApp(FIREBASE_CONFIG);
 	const auth = getAuth(app);
@@ -65,6 +65,7 @@
 			user = result.user;
 
 			const idToken = await FirebaseAuthentication.getIdToken();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: any) {
 			console.error('Login fehlgeschlagen', err);
 			// Check if user cancelled the popup
@@ -89,7 +90,7 @@
 	<slot />
 {:else}
 	<div
-		class="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4"
+		class="flex h-full items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4"
 	>
 		<div class="w-full max-w-md">
 			<!-- Logo/Title -->
@@ -108,11 +109,11 @@
 
 				<!-- Error Message -->
 				{#if error}
-					<Message text={error} type="error" />
+					<Message message={error} type="error" />
 				{/if}
 
 				{#if loading}
-					<Message text="auth.signingIn" />
+					<Message title="auth.signingIn" />
 				{/if}
 
 				<!-- Submit Button -->

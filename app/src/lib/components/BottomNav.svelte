@@ -97,7 +97,11 @@
 				<Burger isActive={showMenu} />
 			</button>
 		</div>
-		<BurgerMenu onClose={() => (showMenu = false)} />
+		<BurgerMenu
+			onClose={() => {
+				showMenu = false;
+			}}
+		/>
 	</div>
 {/if}
 

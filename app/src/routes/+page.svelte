@@ -63,7 +63,7 @@
 	});
 </script>
 
-<PageContainer gradient>
+<PageContainer>
 	<!-- Header -->
 	<PageHeader
 		icon="🌱"

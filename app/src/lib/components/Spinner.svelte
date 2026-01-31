@@ -1,5 +1,5 @@
 <div
-	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50"
+	class="flex h-full items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50"
 >
 	<div class="flex flex-col items-center gap-6">
 		<!-- Plant SVG with animation -->

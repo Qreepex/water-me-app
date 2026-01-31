@@ -43,8 +43,8 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
-	<main class="pt-safe pb-32">
+<div class="fixed inset-0 bg-gradient-to-br from-emerald-50 to-green-50">
+	<main class="pt-safe h-full overflow-y-auto pb-32" style="overscroll-behavior-y: none;">
 		<Auth>
 			<!-- Bottom Navigation: only visible when authenticated (inside Auth slot) -->
 			<BottomNav />

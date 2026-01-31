@@ -11,7 +11,7 @@
 	import Card from '$lib/components/ui/Card.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import Alert from '$lib/components/ui/Message.svelte';
 
 	let plants = $state<Plant[]>([]);
 	let loading = $state(true);
@@ -84,7 +84,7 @@
 	});
 </script>
 
-<PageContainer gradient>
+<PageContainer>
 	<!-- Header -->
 	<PageHeader icon="🌿" title="My Plants" description="Manage your plant collection">
 		<Button variant="primary" onclick={createNewPlant} text="newPlant" />
