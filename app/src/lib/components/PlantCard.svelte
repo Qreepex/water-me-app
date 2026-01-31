@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { tStore } from '$lib/i18n';
 	import type { Plant } from '$lib/types/api';
-	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
-	import { onMount, onDestroy } from 'svelte';
+	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
+	import { onDestroy } from 'svelte';
 
 	interface Props {
 		plant: Plant;
@@ -12,28 +12,23 @@
 
 	const { plant, daysAgo, getWateringStatus }: Props = $props();
 
-	let previewUrl: string | null = $state(null);
-
-	onMount(async () => {
-		const firstId = plant.photoIds?.[0];
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const firstUrl = (plant as any)?.photoUrls?.[0] as string | undefined;
-		if (firstId && firstUrl) {
-			previewUrl = await getImageObjectURL(firstId, firstUrl);
-		}
-	});
+	const firstId = plant.photoIds?.[0];
+	// Get the URL from cache once (already preloaded in Auth)
+	const previewUrl = $state(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
 
 	onDestroy(() => {
-		if (previewUrl) revokeObjectURL(previewUrl);
+		if (firstId) {
+			imageCacheStore.releaseImage(firstId);
+		}
 	});
 </script>
 
 <div
-	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl"
+	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:border-[var(--p-emerald)]/60 hover:shadow-xl hover:bg-[var(--card-light)]/80"
 >
 	<!-- Image -->
 	<div
-		class="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
+		class="relative flex h-48 items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
 	>
 		{#if previewUrl}
 			<img

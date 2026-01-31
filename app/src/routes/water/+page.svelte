@@ -5,41 +5,22 @@
 	import { getPlantWaterStatus, getPlantStatusText, getStatusIcon } from '$lib/utils/plant';
 	import { sortByWateringPriority } from '$lib/utils/watering';
 	import WaterPlantCard from '$lib/components/WaterPlantCard.svelte';
-	import PageContainer from '$lib/components/layout/PageContainer.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import Alert from '$lib/components/ui/Message.svelte';
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
-	import { onMount } from 'svelte';
 	import { Haptics, NotificationType } from '@capacitor/haptics';
 	import type { Plant } from '$lib/types/api';
 	import { SvelteDate } from 'svelte/reactivity';
 	import { tStore } from '$lib/i18n';
+	import PageContent from '$lib/components/layout/PageContent.svelte';
 
 	const store = getPlantsStore();
 	let selectedForWateringId = $state<string | null>(null);
 	let wateringIds = $state<string[]>([]);
 	let dismissedIds = $state<string[]>([]);
-
-	async function loadPlants(): Promise<void> {
-		store.setLoading(true);
-		try {
-			const response = await fetchData('/api/plants', {});
-			if (!response.ok) {
-				const errorMsg = response.error?.message || 'Failed to load plants';
-				store.setError(errorMsg);
-				return;
-			}
-			store.setPlants(response.data || []);
-		} catch (err) {
-			const errorMsg = err instanceof Error ? err.message : 'Failed to load plants';
-			store.setError(errorMsg);
-		} finally {
-			store.setLoading(false);
-		}
-	}
 
 	function invalidateCache(): void {
 		if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -166,16 +147,12 @@
 		nextWaterDate.setDate(nextWaterDate.getDate() + intervalDays);
 		return nextWaterDate;
 	}
-
-	onMount(() => {
-		loadPlants();
-	});
 </script>
 
-<PageContainer gradient>
-	<!-- Header -->
-	<PageHeader icon="💧" title="menu.waterPlants" description="menu.wateringDescription" />
+<PageHeader icon="💧" title="menu.waterPlants" description="menu.wateringDescription" />
 
+<!-- Scrollable Content -->
+<PageContent>
 	<!-- Error Message -->
 	{#if store.error}
 		<Alert type="error" title="Error" description={store.error} />
@@ -256,4 +233,4 @@
 			</div>
 		{/if}
 	{/if}
-</PageContainer>
+</PageContent>

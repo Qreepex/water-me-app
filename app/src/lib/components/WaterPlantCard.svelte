@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Plant } from '$lib/types/api';
-	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
-	import { onMount, onDestroy } from 'svelte';
+	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
+	import { onDestroy } from 'svelte';
 	import Can from '$lib/assets/Can.svg.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { formatPastTimestamp, formatFutureTimestamp } from '$lib/utils/timestamp.svelte';
@@ -33,8 +33,6 @@
 		onSelect
 	}: Props = $props();
 
-	let previewUrl = $state<string | null>(null);
-
 	function getStatusColor(status: 'overdue' | 'due-soon' | 'ok'): string {
 		switch (status) {
 			case 'overdue':
@@ -49,24 +47,22 @@
 	function getLastWateredText(): string {
 		const lastWatered = plant.watering?.lastWatered;
 		if (!lastWatered) return 'Never watered';
-		return $tStore("plants.lastWatered") + `: ${formatPastTimestamp(new Date(lastWatered))}`;
+		return $tStore('plants.lastWatered') + `: ${formatPastTimestamp(new Date(lastWatered))}`;
 	}
 
 	function getNextWaterText(): string {
 		if (!nextWaterDate) return 'No watering schedule';
-		return $tStore("plants.nextWatering") + `: ${formatFutureTimestamp(nextWaterDate)}`;
+		return $tStore('plants.nextWatering') + `: ${formatFutureTimestamp(nextWaterDate)}`;
 	}
 
-	onMount(async () => {
-		const firstId = plant.photoIds?.[0];
-		const firstUrl = plant?.photoUrls?.[0] as string | undefined;
-		if (firstId && firstUrl) {
-			previewUrl = await getImageObjectURL(firstId, firstUrl);
-		}
-	});
+	const firstId = plant.photoIds?.[0];
+	// Get the URL from cache once (already preloaded in Auth)
+	const previewUrl = $state(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
 
 	onDestroy(() => {
-		if (previewUrl) revokeObjectURL(previewUrl);
+		if (firstId) {
+			imageCacheStore.releaseImage(firstId);
+		}
 	});
 </script>
 

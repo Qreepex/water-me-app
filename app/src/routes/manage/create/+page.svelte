@@ -12,7 +12,6 @@
 	import SoilForm from '$lib/components/PlantForms/SoilForm.svelte';
 	import SeasonalityForm from '$lib/components/PlantForms/SeasonalityForm.svelte';
 	import MetadataForm from '$lib/components/PlantForms/MetadataForm.svelte';
-	import PageContainer from '$lib/components/layout/PageContainer.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Message from '$lib/components/ui/Message.svelte';
@@ -317,7 +316,6 @@
 	}
 </script>
 
-<PageContainer>
 	<!-- Header -->
 	<PageHeader icon="🌱" title="Create New Plant" description="Add a new plant to your collection">
 		<Button variant="secondary" onclick={() => goto(resolve('/manage'))} text="← Back" />
@@ -415,4 +413,3 @@
 			/>
 		</div>
 	</div>
-</PageContainer>

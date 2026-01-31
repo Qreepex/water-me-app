@@ -37,8 +37,8 @@
 				: 'text-gray-600'}"
 			aria-label="Home"
 		>
-			<Home isActive={isActive('/')} />
-			<span class="text-xs font-medium">{$tStore('menu.home')}</span>
+			<SunFlower isActive={isActive('/')} />
+			<span class="text-xs font-medium">{$tStore('menu.garden')}</span>
 		</button>
 
 		<!-- Water -->
@@ -52,19 +52,6 @@
 		>
 			<Can isActive={isActive('/water')} />
 			<span class="text-xs font-medium">{$tStore('menu.water')}</span>
-		</button>
-
-		<!-- Manage -->
-		<button
-			onclick={() => navigate('/manage')}
-			class="flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 py-2 transition-colors {!showMenu &&
-			isActive('/manage')
-				? 'text-emerald-600'
-				: 'text-gray-600'}"
-			aria-label="Manage"
-		>
-			<SunFlower isActive={isActive('/manage')} />
-			<span class="text-xs font-medium">{$tStore('menu.garden')}</span>
 		</button>
 
 		<!-- Menu -->

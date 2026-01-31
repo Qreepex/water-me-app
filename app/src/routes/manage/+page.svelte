@@ -1,51 +1,37 @@
 <script lang="ts">
-	import type { Plant } from '$lib/types/api';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { fetchData } from '$lib/auth/fetch.svelte';
-	import { getImageObjectURL, revokeObjectURL } from '$lib/utils/imageCache';
-	import { onDestroy } from 'svelte';
-	import PageContainer from '$lib/components/layout/PageContainer.svelte';
+	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import Alert from '$lib/components/ui/Message.svelte';
+	import { getPlantsStore } from '$lib/stores/plants.svelte';
 
-	let plants = $state<Plant[]>([]);
-	let loading = $state(true);
+	const store = getPlantsStore();
 	let error = $state<string | null>(null);
 	let deleting = $state<string | null>(null);
 	let previews = $state<Record<string, string>>({});
 
-	async function loadPlants(): Promise<void> {
-		try {
-			const response = await fetchData('/api/plants', {});
-			if (!response.ok) {
-				error = response.error?.message || 'Failed to load plants';
-				return;
+	// Load previews for all plants from cache
+	$effect(() => {
+		const loadPreviews = async () => {
+			for (const plant of store.plants) {
+				const firstId = plant.photoIds?.[0];
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const firstUrl = (plant as any)?.photoUrls?.[0] as string | undefined;
+				if (firstId && firstUrl) {
+					const objUrl = await imageCacheStore.getImageURL(firstId, firstUrl);
+					if (objUrl) previews[plant.id] = objUrl;
+				}
 			}
-			plants = response.data || [];
-			await loadPreviews(plants);
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load plants';
-		} finally {
-			loading = false;
-		}
-	}
+		};
 
-	async function loadPreviews(items: Plant[]): Promise<void> {
-		for (const p of items) {
-			const firstId = p.photoIds?.[0];
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const firstUrl = (p as any)?.photoUrls?.[0] as string | undefined;
-			if (firstId && firstUrl) {
-				const objUrl = await getImageObjectURL(firstId, firstUrl);
-				if (objUrl) previews[p.id] = objUrl;
-			}
-		}
-	}
+		loadPreviews();
+	});
 
 	async function deletePlant(id: string, name: string): Promise<void> {
 		if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -62,7 +48,8 @@
 				return;
 			}
 
-			plants = plants.filter((p) => p.id !== id);
+			// Update store
+			store.setPlants(store.plants.filter((p) => p.id !== id));
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete plant';
 		} finally {
@@ -77,14 +64,8 @@
 	function createNewPlant(): void {
 		goto(resolve('/manage/create'));
 	}
-
-	loadPlants();
-	onDestroy(() => {
-		Object.values(previews).forEach((u) => revokeObjectURL(u));
-	});
 </script>
 
-<PageContainer>
 	<!-- Header -->
 	<PageHeader icon="🌿" title="plants.myPlants" description="plants.manageDescription">
 		<Button variant="primary" onclick={createNewPlant} text="plants.newPlant" />
@@ -96,9 +77,9 @@
 	{/if}
 
 	<!-- Loading State -->
-	{#if loading}
+	{#if store.loading}
 		<LoadingSpinner message="Loading your plants..." icon="🌱" />
-	{:else if plants.length === 0}
+	{:else if store.plants.length === 0}
 		<!-- Empty State -->
 		<EmptyState icon="🪴" title="No plants yet" description="Start building your plant collection">
 			<Button variant="primary" onclick={createNewPlant} text="addPlant" />
@@ -106,7 +87,7 @@
 	{:else}
 		<!-- Plants Grid -->
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#each plants as plant (plant.id)}
+			{#each store.plants as plant (plant.id)}
 				<Card rounded="2xl">
 					{#if previews[plant.id]}
 						<img
@@ -171,4 +152,3 @@
 			{/each}
 		</div>
 	{/if}
-</PageContainer>

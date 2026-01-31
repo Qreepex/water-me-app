@@ -17,7 +17,6 @@
 	import SoilForm from '$lib/components/PlantForms/SoilForm.svelte';
 	import SeasonalityForm from '$lib/components/PlantForms/SeasonalityForm.svelte';
 	import MetadataForm from '$lib/components/PlantForms/MetadataForm.svelte';
-	import PageContainer from '$lib/components/layout/PageContainer.svelte';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Card from '$lib/components/ui/Card.svelte';
@@ -444,7 +443,6 @@
 	}
 </script>
 
-<PageContainer gradient>
 	{#if loading}
 		<LoadingSpinner message="Loading plant details..." icon="🌱" />
 	{:else if !plant}
@@ -580,4 +578,3 @@
 			</div>
 		</div>
 	{/if}
-</PageContainer>

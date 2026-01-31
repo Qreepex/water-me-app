@@ -44,11 +44,14 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <div class="fixed inset-0 bg-gradient-to-br from-emerald-50 to-green-50">
-	<main class="pt-safe h-full overflow-y-auto pb-32" style="overscroll-behavior-y: none;">
+	<main class="pt-safe flex h-full flex-col overflow-hidden" style="overscroll-behavior-y: none;">
 		<Auth>
 			<!-- Bottom Navigation: only visible when authenticated (inside Auth slot) -->
 			<BottomNav />
-			{@render children()}
+			<!-- Page content: flex-1 allows inner scrollable components -->
+			<div class="flex-1 overflow-hidden px-6 pt-6 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
+				{@render children()}
+			</div>
 		</Auth>
 	</main>
 </div>

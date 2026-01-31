@@ -15,16 +15,98 @@
 	import { tStore } from '$lib/i18n';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Message from '$lib/components/ui/Message.svelte';
+	import { fetchData } from '$lib/auth/fetch.svelte';
+	import { getPlantsStore } from '$lib/stores/plants.svelte';
+	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
+	import type { Plant } from '$lib/types/api';
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		children: Snippet;
+	}
+
+	const { children }: Props = $props();
 
 	const app = initializeApp(FIREBASE_CONFIG);
 	const auth = getAuth(app);
 
-	let user: User | null = null;
-	let loading = false;
-	let initializing = true;
-	let error: string | null = null;
+	let user = $state<User | null>(null);
+	let loading = $state(false);
+	let initializing = $state(true);
+	let error = $state<string | null>(null);
+	let loadingImages = $state(false);
 
 	const platform = Capacitor.getPlatform();
+	const store = getPlantsStore();
+	let hasLoadedPlants = $state(false);
+
+	// Load plants data when user is authenticated
+	$effect(() => {
+		if (user && !hasLoadedPlants) {
+			hasLoadedPlants = true;
+			loadPlants();
+		}
+	});
+
+	async function loadPlants(): Promise<void> {
+		store.setLoading(true);
+		loadingImages = true;
+		store.setError(null);
+
+		try {
+			const result = await fetchData('/api/plants', {});
+
+			if (!result.ok) {
+				const errorMsg = result.error?.message || 'Failed to fetch plants';
+				store.setError(errorMsg);
+				return;
+			}
+
+			const plants = result.data || [];
+			store.setPlants(plants);
+
+			// Prefetch all plant images into cache
+			await prefetchAllImages(plants);
+		} catch (err) {
+			const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+			store.setError(errorMsg);
+		} finally {
+			store.setLoading(false);
+			loadingImages = false;
+		}
+	}
+
+	async function prefetchAllImages(plants: Plant[]): Promise<void> {
+		const prefetchPromises: Promise<void>[] = [];
+
+		for (const plant of plants) {
+			const photoIds = plant.photoIds || [];
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const photoUrls = ((plant as any)?.photoUrls as string[] | undefined) || [];
+
+			for (let i = 0; i < photoIds.length; i++) {
+				const photoId = photoIds[i];
+				const photoUrl = photoUrls[i];
+
+				if (photoId && photoUrl) {
+					// Fire and forget - load all images into persistent cache
+					prefetchPromises.push(
+						imageCacheStore
+							.getImageURL(photoId, photoUrl)
+							.then(() => {
+								// Image now in cache
+							})
+							.catch(() => {
+								// Ignore errors during prefetch
+							})
+					);
+				}
+			}
+		}
+
+		// Wait for all images to be prefetched (or fail gracefully)
+		await Promise.allSettled(prefetchPromises);
+	}
 
 	onMount(async () => {
 		if (platform === 'web') {
@@ -84,10 +166,10 @@
 	}
 </script>
 
-{#if initializing}
+{#if initializing || loadingImages}
 	<Spinner />
 {:else if user}
-	<slot />
+	{@render children()}
 {:else}
 	<div
 		class="flex h-full items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4"
