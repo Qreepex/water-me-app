@@ -1,14 +1,17 @@
 <script lang="ts">
-	const { class: className = 'h-5 w-5' } = $props<{ class?: string }>();
+	interface Props {
+		isActive: boolean;
+	}
+
+	const { isActive = false }: Props = $props();
 </script>
 
 <svg
-	class={className}
+	fill={isActive ? 'currentColor' : 'none'}
 	xmlns="http://www.w3.org/2000/svg"
 	viewBox="0 0 32 32"
 	width="32"
 	height="32"
-	fill="none"
 >
 	<!-- Körper -->
 	<rect

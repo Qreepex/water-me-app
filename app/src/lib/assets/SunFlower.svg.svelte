@@ -1,4 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+<script lang="ts">
+	interface Props {
+		isActive: boolean;
+	}
+
+	let { isActive }: Props = $props();
+</script>
+
+<svg
+	xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 0 32 32"
+	width="32"
+	height="32"
+	fill={isActive ? 'currentColor' : 'none'}
+	stroke="currentColor"
+>
 	<!-- Stiel -->
 	<line x1="16" y1="17" x2="16" y2="29" stroke="#333" stroke-width="2.2" stroke-linecap="round" />
 	<!-- Blätter -->
