@@ -84,11 +84,7 @@
 <!-- Menu Overlay -->
 {#if showMenu}
 	<div class="fixed inset-0 bottom-20 z-50 overflow-y-auto bg-white">
-		<BurgerMenu
-			onClose={() => {
-				showMenu = false;
-			}}
-		/>
+		<BurgerMenu />
 	</div>
 {/if}
 
