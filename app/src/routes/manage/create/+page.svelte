@@ -290,6 +290,13 @@
 			});
 			if (!createRes.ok) throw new Error(createRes.error?.message || 'Failed to create plant');
 			success = 'Plant created successfully!';
+			// Invalidate cached plant list so new plant appears immediately
+			if (navigator.serviceWorker?.controller) {
+				navigator.serviceWorker.controller.postMessage({
+					type: 'INVALIDATE_CACHE',
+					urls: ['/api/plants']
+				});
+			}
 			setTimeout(() => goto(resolve('/manage')), 1500);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error';

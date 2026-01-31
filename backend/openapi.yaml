@@ -98,6 +98,47 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/plants/water:
+    post:
+      tags:
+        - Plants
+      summary: Mark plants as watered
+      description: Bulk operation to mark multiple plants as watered. Updates lastWatered timestamp to current time.
+      operationId: waterPlants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plantIds
+              properties:
+                plantIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  description: Array of plant IDs to mark as watered
+                  example: ["507f1f77bcf86cd799439011", "507f191e810c19729de860ea"]
+      responses:
+        '200':
+          description: Plants watered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/plants/{id}:
     patch:
       tags:

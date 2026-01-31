@@ -50,6 +50,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/api/plants/water': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Mark plants as watered
+		 * @description Bulk operation to mark multiple plants as watered. Updates lastWatered timestamp to current time.
+		 */
+		post: operations['waterPlants'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/api/plants/{id}': {
 		parameters: {
 			query?: never;
@@ -604,6 +624,45 @@ export interface operations {
 			400: components['responses']['ValidationError'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
+			500: components['responses']['InternalError'];
+		};
+	};
+	waterPlants: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': {
+					/**
+					 * @description Array of plant IDs to mark as watered
+					 * @example [
+					 *       "507f1f77bcf86cd799439011",
+					 *       "507f191e810c19729de860ea"
+					 *     ]
+					 */
+					plantIds: string[];
+				};
+			};
+		};
+		responses: {
+			/** @description Plants watered successfully */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						/** @example true */
+						success?: boolean;
+					};
+				};
+			};
+			400: components['responses']['ValidationError'];
+			401: components['responses']['Unauthorized'];
 			500: components['responses']['InternalError'];
 		};
 	};

@@ -126,6 +126,12 @@
 			</div>
 			<div class="flex gap-3">
 				<button
+					on:click={() => goto(resolve('/water'))}
+					class="rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-2 text-white transition hover:from-blue-600 hover:to-cyan-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				>
+					💧 Water Plants
+				</button>
+				<button
 					on:click={() => goto(resolve('/manage'))}
 					class="rounded-lg bg-green-600 px-5 py-2 text-white transition hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none"
 				>

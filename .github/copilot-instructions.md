@@ -10,6 +10,22 @@ plants/
 ├── app/            SvelteKit + Capacitor mobile app
 ```
 
+## Frontend / App
+
+The frontend mobile app is located in the `app/` directory. It is built with SvelteKit and uses Capacitor to run on Android devices. The app communicates with the backend API for data storage and retrieval.
+
+### Caching
+
+If possible, cache API responses in the app to reduce network requests and improve performance.
+Cache images locally on the device after downloading.
+
+### Components
+
+- Use reusable Svelte components for plant lists, plant details, and forms.
+- Follow Svelte best practices for state management and component communication.
+
+Use Svelte 5 features like `$state`, `$derived`, and `$effect` for reactive state management.
+
 ## Backend (Go + MongoDB)
 
 ### Running

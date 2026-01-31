@@ -7,7 +7,7 @@
 	import Auth from '$lib/auth/Auth.svelte';
 	import { Capacitor } from '@capacitor/core';
 	import { SplashScreen } from '@capacitor/splash-screen';
-	import BurgerMenu from '$lib/components/BurgerMenu.svelte';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	let { children } = $props();
 
@@ -44,14 +44,10 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <div class="relative min-h-screen bg-gradient-to-br from-emerald-50 to-green-50">
-	<main class="pt-safe pb-safe px-4">
+	<main class="pt-safe pb-32">
 		<Auth>
-			<!-- Floating Burger Menu: only visible when authenticated (inside Auth slot) -->
-			<div class="pt-safe pr-safe fixed top-0 right-0 z-50">
-				<div class="p-4">
-					<BurgerMenu />
-				</div>
-			</div>
+			<!-- Bottom Navigation: only visible when authenticated (inside Auth slot) -->
+			<BottomNav />
 			{@render children()}
 		</Auth>
 	</main>
@@ -61,11 +57,5 @@
 	/* Safe area insets for mobile notches and status bars */
 	.pt-safe {
 		padding-top: env(safe-area-inset-top);
-	}
-	.pb-safe {
-		padding-bottom: env(safe-area-inset-bottom);
-	}
-	.pr-safe {
-		padding-right: env(safe-area-inset-right);
 	}
 </style>

@@ -52,22 +52,22 @@ cd backend
 go mod tidy
 ```
 
-2. **Set up MongoDB**:
+1. **Set up MongoDB**:
 
 ```bash
 # Start MongoDB locally or use a cloud instance
 # The server will automatically create collections on first use
 ```
 
-3. **Configure Firebase**:
+1. **Configure Firebase**:
    - Download your Firebase service account key from Firebase Console
    - Place it in `backend/secret/fb.json`
 
-4. **Configure AWS S3**:
+2. **Configure AWS S3**:
    - Create an S3 bucket for plant photos
    - Configure AWS credentials (via environment vars, ~/.aws/credentials, or IAM role)
 
-5. **Run the server**:
+3. **Run the server**:
 
 ```bash
 go run .
@@ -139,35 +139,43 @@ All protected endpoints require `Authorization: Bearer <firebase-id-token>` head
 ## MongoDB Collections
 
 ### plants
+
 - **Fields**: name, species, slug, sunlight, location, watering config, fertilizing config, humidity, soil, seasonality, pest history, flags, notes, photo IDs, growth history
 - **Indexes**: userId (for user isolation), slug (for friendly URLs)
 - **ID Format**: MongoDB ObjectID
 
 ### notifications
+
 - **Fields**: userId, fcmToken, enabled, preferences
 - **Purpose**: Store push notification configuration per user
 
 ### uploads
+
 - **Fields**: userId, key (S3 object key), sizeBytes, createdAt
 - **Purpose**: Track S3 uploads for quota enforcement and orphan cleanup
 
 ## Key Design Patterns
 
 ### User Scoping
+
 All MongoDB queries include `userId` filter to ensure data isolation. The auth middleware extracts the user ID from the Firebase token and stores it in the request context.
 
 ### Slug Generation
+
 Plants have both MongoDB ObjectIDs (for internal operations) and human-readable slugs (for URLs). Slugs are auto-generated from species name on creation and ensured to be unique per user.
 
 ### Presigned URLs
+
 Photo uploads use S3 presigned URLs for direct browser-to-S3 uploads, avoiding backend proxy overhead. The backend validates file types and sizes before generating URLs.
 
 ### Orphan Cleanup
+
 A background worker runs every 30 minutes to delete S3 objects that exist in the `uploads` collection but aren't referenced by any plant's `photoIds` field.
 
 ## Validation
 
 Validation logic exists in two places:
+
 - `backend/validation.ts` - TypeScript validation (used by frontend during development)
 - `backend/validation/` - Go validation (enforced by backend)
 
