@@ -12,23 +12,21 @@
 	let sortBy = $state<SortOption>('nameAsc');
 </script>
 
-<div class="flex h-full flex-col overflow-hidden">
-	<!-- Header -->
-	<div class="flex-shrink-0">
-		<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
-	</div>
-
-	<PageContent>
-		<!-- Loading State -->
-		{#if store.loading}
-			<LoadingSpinner message="Loading your plants..." icon="🌿" />
-		{:else if store.error}
-			<Alert type="error" title="Error loading plants" description={store.error} />
-		{:else if store.plants.length === 0}
-			<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants" />
-		{:else}
-			<!-- Scrollable Plant List -->
-			<PlantList plants={store.plants} {sortBy} onSortChange={(value) => (sortBy = value)} />
-		{/if}
-	</PageContent>
+<!-- Header -->
+<div class="flex-shrink-0">
+	<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
 </div>
+
+<PageContent>
+	<!-- Loading State -->
+	{#if store.loading}
+		<LoadingSpinner message="Loading your plants..." icon="🌿" />
+	{:else if store.error}
+		<Alert type="error" title="Error loading plants" description={store.error} />
+	{:else if store.plants.length === 0}
+		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants" />
+	{:else}
+		<!-- Scrollable Plant List -->
+		<PlantList plants={store.plants} {sortBy} onSortChange={(value) => (sortBy = value)} />
+	{/if}
+</PageContent>

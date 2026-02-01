@@ -55,9 +55,9 @@
 		return $tStore('plants.nextWatering') + `: ${formatFutureTimestamp(nextWaterDate)}`;
 	}
 
-	const firstId = plant.photoIds?.[0];
+	const firstId = $derived(plant.photoIds?.[0]);
 	// Get the URL from cache once (already preloaded in Auth)
-	const previewUrl = $state(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
+	const previewUrl = $derived(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
 
 	onDestroy(() => {
 		if (firstId) {

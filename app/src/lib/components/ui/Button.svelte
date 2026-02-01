@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ButtonSpinner from '$lib/assets/ButtonSpinner.svelte';
 	import { tStore } from '$lib/i18n';
-	import type { Snippet } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 
 	type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'water';
 	type Size = 'sm' | 'md' | 'lg';
@@ -16,7 +16,8 @@
 		text: string;
 		class?: string;
 		icon?: string;
-		iconComponent?: Snippet;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		iconComponent?: Snippet | Component</* props */ any>;
 	}
 
 	const {
@@ -32,7 +33,7 @@
 		iconComponent
 	}: Props = $props();
 
-	const Icon = $derived(iconComponent);
+	const Icon = $derived(typeof iconComponent === 'function' ? iconComponent : () => iconComponent);
 
 	const variantClasses: Record<Variant, string> = {
 		primary:

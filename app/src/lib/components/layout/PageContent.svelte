@@ -8,6 +8,6 @@
 	const { children }: Props = $props();
 </script>
 
-<div class="min-h-0 flex-1 overflow-hidden">
-	{@render children?.()}
+<div class="flex h-full min-h-0 flex-col overflow-hidden">
+	{@render children()}
 </div>

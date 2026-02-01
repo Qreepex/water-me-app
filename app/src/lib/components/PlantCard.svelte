@@ -4,6 +4,7 @@
 	import { imageCacheStore } from '$lib/stores/imageCache.svelte';
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		plant: Plant;
@@ -13,12 +14,12 @@
 
 	const { plant, daysAgo, getWateringStatus }: Props = $props();
 
-	const firstId = plant.photoIds?.[0];
+	const firstId = $derived(plant.photoIds?.[0]);
 	// Get the URL from cache once (already preloaded in Auth)
-	const previewUrl = $state(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
+	const previewUrl = $derived(firstId ? imageCacheStore.getImageURLSync(firstId) : null);
 
 	function openPlant() {
-		goto(`/plant/${plant.id}`);
+		goto(resolve(`/plant/${plant.id}`));
 	}
 
 	function onKeydown(event: KeyboardEvent) {

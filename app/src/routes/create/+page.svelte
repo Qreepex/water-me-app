@@ -65,49 +65,41 @@
 	}
 </script>
 
-<div class="flex h-full min-h-0 flex-col overflow-hidden">
-	<div class="flex-shrink-0">
-		<PageHeader icon="🌱" title="plants.newPlant" description="plants.startAddingPlants">
-			<Button
-				variant="ghost"
-				size="sm"
-				text="common.back"
-				icon="←"
-				onclick={() => goto(resolve('/manage'))}
-			/>
-		</PageHeader>
-	</div>
+<PageHeader icon="🌱" title="plants.newPlant" description="plants.startAddingPlants">
+	<Button
+		variant="ghost"
+		size="sm"
+		text="common.back"
+		icon="←"
+		onclick={() => goto(resolve('/manage'))}
+	/>
+</PageHeader>
 
-	<PageContent>
-		<div class="flex min-h-0 flex-1 items-center justify-center">
-			<div class="flex max-w-sm flex-col items-center gap-6">
-				{#if error}
-					<Message type="error" title="common.error" description={error} />
-				{/if}
+<PageContent>
+	{#if error}
+		<Message type="error" title="common.error" description={error} />
+	{/if}
 
-				{#if creating}
-					<LoadingSpinner message="plants.creating" icon="🌿" />
-				{:else}
-					<div class="text-center">
-						<div class="mb-4 text-6xl">🌱</div>
-						<h1 class="mb-2 text-2xl font-bold text-gray-900">
-							{$tStore('plants.newPlant')}
-						</h1>
-						<p class="mb-8 text-gray-600">
-							{$tStore('plants.createDescription') ||
-								'Create a new plant and fill in the details in the next step.'}
-						</p>
-					</div>
-
-					<Button
-						variant="primary"
-						size="lg"
-						onclick={createEmptyPlant}
-						text="plants.createPlant"
-						class="w-full cursor-pointer"
-					/>
-				{/if}
-			</div>
+	{#if creating}
+		<LoadingSpinner message="plants.creating" icon="🌿" />
+	{:else}
+		<div class="text-center">
+			<div class="mb-4 text-6xl">🌱</div>
+			<h1 class="mb-2 text-2xl font-bold text-gray-900">
+				{$tStore('plants.newPlant')}
+			</h1>
+			<p class="mb-8 text-gray-600">
+				{$tStore('plants.createDescription') ||
+					'Create a new plant and fill in the details in the next step.'}
+			</p>
 		</div>
-	</PageContent>
-</div>
+
+		<Button
+			variant="primary"
+			size="lg"
+			onclick={createEmptyPlant}
+			text="plants.createPlant"
+			class="w-full cursor-pointer"
+		/>
+	{/if}
+</PageContent>
