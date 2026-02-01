@@ -1,13 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { GITHUB_URL, INSTAGRAM_URL, TIKTOK_URL, WEB_APP_URL } from '$lib';
-	import { tStore, languageStore } from '$lib/i18n.svelte';
-	import { derived } from 'svelte/store';
-
-	// Create reactive translations
-	const t = derived(languageStore, () => {
-		return (key: string) => tStore(key);
-	});
+	import { t, languageStore } from '$lib/i18n.svelte';
 
 	let displayStats = $state({
 		users: 0,

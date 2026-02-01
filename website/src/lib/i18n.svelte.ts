@@ -1,4 +1,7 @@
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
+import enTranslations from './i18n/translations/en.json';
+import deTranslations from './i18n/translations/de.json';
+import esTranslations from './i18n/translations/es.json';
 
 type Language = 'en' | 'de' | 'es';
 
@@ -6,30 +9,12 @@ interface Translations {
 	[key: string]: string | Translations;
 }
 
+// Load translations synchronously for static adapter compatibility
 const translations: Record<Language, Translations> = {
-	en: {},
-	de: {},
-	es: {}
+	en: enTranslations as Translations,
+	de: deTranslations as Translations,
+	es: esTranslations as Translations
 };
-
-let translationsLoaded = false;
-
-// Load translations dynamically
-async function loadTranslations() {
-	if (translationsLoaded) return;
-
-	try {
-		translations.en = (await import('./i18n/translations/en.json')).default as Translations;
-		translations.de = (await import('./i18n/translations/de.json')).default as Translations;
-		translations.es = (await import('./i18n/translations/es.json')).default as Translations;
-		translationsLoaded = true;
-	} catch (error) {
-		console.error('Failed to load translations:', error);
-	}
-}
-
-// Initialize translations
-loadTranslations();
 
 // Detect language from URL or browser
 function detectLanguage(): Language {
@@ -97,5 +82,25 @@ export function tStore(key: string, args?: string[]): string {
 
 	return result;
 }
+
+// Create a reactive translation store that returns a function
+export const t = derived(languageStore, (lang) => {
+	return (key: string, args?: string[]): string => {
+		let result = key;
+		const keys = key.split('.');
+		const translation = getNestedTranslation(translations[lang], keys);
+
+		result = translation || key;
+
+		// Replace %s placeholders with args
+		if (args) {
+			for (const arg of args) {
+				result = result.replace('%s', arg);
+			}
+		}
+
+		return result;
+	};
+});
 
 export type { Language };
