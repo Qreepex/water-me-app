@@ -352,3 +352,33 @@ func (m *MongoDB) DeleteNotificationConfig(ctx context.Context, userID string) (
 
 	return result.DeletedCount > 0, nil
 }
+// CountActiveUsers returns the count of unique users who have plants
+func (m *MongoDB) CountActiveUsers(ctx context.Context) (int64, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return 0, types.ErrNoDocuments
+	}
+
+	// Count distinct userIds in plants collection
+	results, err := collection.Distinct(ctx, "userId", bson.M{})
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(len(results)), nil
+}
+
+// CountPlants returns the total count of all plants
+func (m *MongoDB) CountPlants(ctx context.Context) (int64, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return 0, types.ErrNoDocuments
+	}
+
+	count, err := collection.EstimatedDocumentCount(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

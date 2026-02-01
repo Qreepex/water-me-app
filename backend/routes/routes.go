@@ -13,6 +13,7 @@ func RegisterRoutes(router *mux.Router, database *services.MongoDB, s3service *s
 	PlantHandler(router, database, s3service)
 	UploadHandler(router, database, s3service)
 	NotificationHandler(router, database)
+	StatsHandler(router, database)
 }
 
 func getUserID(r *http.Request) (string, bool) {
