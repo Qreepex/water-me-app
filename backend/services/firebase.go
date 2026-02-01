@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
@@ -17,7 +18,14 @@ type FirebaseService struct {
 }
 
 func NewFirebaseService() (*FirebaseService, error) {
-	opt := option.WithAuthCredentialsFile(option.ServiceAccount, "./secret/fb.json")
+	// Use GOOGLE_APPLICATION_CREDENTIALS env var if set (for Kubernetes)
+	// Otherwise fall back to local path for development
+	credPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	if credPath == "" {
+		credPath = "./secret/fb.json"
+	}
+
+	opt := option.WithCredentialsFile(credPath)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing app: %v", err)

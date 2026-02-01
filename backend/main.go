@@ -19,8 +19,11 @@ import (
 func main() {
 	ctx := context.Background()
 	connString := getenv("DATABASE_URL", "mongodb://localhost:27017/plants")
+	mongoUser := getenv("MONGODB_USERNAME", "test2")
+	mongoPassword := getenv("MONGODB_PASSWORD", "test")
+	mongoDatabase := getenv("MONGODB_DATABASE", "plants")
 
-	db, err := services.Connect(connString, "plants", "test2", "test")
+	db, err := services.Connect(connString, mongoDatabase, mongoUser, mongoPassword)
 	if err != nil {
 		log.Fatalf("failed to initialize database: %v", err)
 	}

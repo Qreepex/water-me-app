@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: water-me
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: NotIn
+                    values:
+                      - database
+      containers:
+        - name: backend
+          image: ghcr.io/qreepex/plants-backend:0.0.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: water-me-secret
+            - secretRef:
+                name: mongodb-secret
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /etc/firebase/fb.json
+          volumeMounts:
+            - name: firebase-secret
+              mountPath: /etc/firebase
+              readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: firebase-secret
+          secret:
+            secretName: firebase-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: water-me
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: water-me
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - api.water-me.app
+      secretName: cloudflare-cert
+  rules:
+    - host: api.water-me.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 8080

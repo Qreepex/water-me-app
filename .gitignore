@@ -24,3 +24,5 @@ vite.config.ts.timestamp-*
 plants.db
 
 secret/
+
+/backend/infra/k8s/secrets.yaml
