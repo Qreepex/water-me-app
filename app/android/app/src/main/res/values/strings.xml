@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Water Me</string>
     <string name="title_activity_main">Water Me</string>
-    <string name="package_name">bio.waterme.app</string>
-    <string name="custom_url_scheme">bio.waterme.app</string>
+    <string name="package_name">app.waterme.app</string>
+    <string name="custom_url_scheme">app.waterme.app</string>
 </resources>

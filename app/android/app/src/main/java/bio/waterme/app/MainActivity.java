@@ -1,4 +1,4 @@
-package bio.waterme.app;
+package app.waterme.app;
 
 import com.getcapacitor.BridgeActivity;
 
