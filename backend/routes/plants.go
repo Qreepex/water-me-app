@@ -17,8 +17,39 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// getRealIP extracts the real client IP, considering Cloudflare headers
+func getRealIP(r *http.Request) string {
+	// Cloudflare header
+	if ip := r.Header.Get("CF-Connecting-IP"); ip != "" {
+		return ip
+	}
+	// Fallback to X-Forwarded-For
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		return ip
+	}
+	// Fallback to direct connection
+	return r.RemoteAddr
+}
+
 // PlantHandler registers plant-related routes
 func PlantHandler(router *mux.Router, database *services.MongoDB, s3 *services.S3Service) {
+	// Create rate limiter once
+	rateLimiter := services.NewRateLimiter()
+	
+	// Apply rate limiting to all routes
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ip := getRealIP(r)
+			userID, ok := getUserID(r)
+			if ok && rateLimiter.IsRateLimited(userID, ip) {
+				w.Header().Set("Retry-After", "60")
+				http.Error(w, "Too many requests", http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	router.HandleFunc("/api/plants", func(w http.ResponseWriter, r *http.Request) {
 		getPlants(w, r, database, s3)
 	}).Methods(http.MethodGet, http.MethodOptions)
@@ -161,6 +192,16 @@ func createPlant(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
 		util.ServerError(w, err)
 		return
 	}
+	
+	// Check plant limit
+	if validation.ValidatePlantLimit(len(existingPlants)) {
+		util.BadRequest(w, "Plant limit exceeded", map[string]interface{}{
+			"limit": validation.MaxPlantsPerUser,
+			"current": len(existingPlants),
+		})
+		return
+	}
+	
 	plant := createPlantFromRequest(req, userID, existingPlants)
 	createdPlant, err := db.CreatePlant(r.Context(), plant)
 	if err != nil {
