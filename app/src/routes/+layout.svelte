@@ -49,7 +49,7 @@
 			<!-- Bottom Navigation: only visible when authenticated (inside Auth slot) -->
 			<BottomNav />
 			<!-- Page content: flex-1 allows inner scrollable components -->
-			<div class="flex-1 overflow-hidden px-6 pt-6 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
+			<div class="flex-1 overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
 				{@render children()}
 			</div>
 		</Auth>

@@ -12,15 +12,15 @@
 	const { title, description, icon, children }: Props = $props();
 </script>
 
-<div class="mb-8 flex items-center justify-between gap-3">
-	<div class="flex items-center gap-3">
+<div class="mb-8 flex flex-wrap items-center justify-between gap-3">
+	<div class="flex min-w-0 items-center gap-3">
 		{#if icon}
-			<span class="text-5xl">{icon}</span>
+			<span class="flex-shrink-0 text-5xl">{icon}</span>
 		{/if}
-		<div>
-			<h1 class="text-4xl font-bold text-[var(--text-light-main)]">{$tStore(title)}</h1>
+		<div class="min-w-0">
+			<h1 class="truncate text-4xl font-bold text-[var(--text-light-main)]">{$tStore(title)}</h1>
 			{#if description}
-				<p class="mt-1 text-[var(--text-light-main)]/60">{$tStore(description)}</p>
+				<p class="truncate text-[var(--text-light-main)]/60">{$tStore(description)}</p>
 			{/if}
 		</div>
 	</div>
