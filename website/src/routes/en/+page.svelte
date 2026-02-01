@@ -61,7 +61,7 @@
 	<link rel="alternate" hreflang="x-default" href="https://water-me.app/en" />
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-[#f2faf5] via-white to-[#e8f9f0]">
+<main class="min-h-screen bg-gradient-to-br from-[#f2faf5] via-white to-[#e8f9f0]">
 	<!-- Navigation -->
 	<nav class="sticky top-0 z-50 border-b border-[#00ee57]/10 bg-white/80 backdrop-blur-md">
 		<div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
@@ -90,18 +90,22 @@
 							{$t('nav.open_app')}
 						</a>
 					</div>
-					<select
-						bind:value={$languageStore}
-						onchange={() => {
-							const lang = $languageStore;
-							window.location.href = resolve(`/${lang}`);
-						}}
-						class="rounded border border-[#00ee57]/20 bg-white px-2 py-1 text-[#061f12]"
-					>
-						<option value="en">English</option>
-						<option value="de">Deutsch</option>
-						<option value="es">Español</option>
-					</select>
+					<div>
+						<label for="language-select" class="sr-only">Select language</label>
+						<select
+							id="language-select"
+							bind:value={$languageStore}
+							onchange={() => {
+								const lang = $languageStore;
+								window.location.href = resolve(`/${lang}`);
+							}}
+							class="rounded border border-[#00ee57]/20 bg-white px-2 py-1 text-[#061f12]"
+						>
+							<option value="en">English</option>
+							<option value="de">Deutsch</option>
+							<option value="es">Español</option>
+						</select>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -447,4 +451,4 @@
 			</div>
 		</div>
 	</footer>
-</div>
+</main>
