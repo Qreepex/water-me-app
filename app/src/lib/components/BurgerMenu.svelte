@@ -32,7 +32,7 @@
 
 			const result = await fetchData('/api/plants', {});
 			if (!result.ok) {
-				plantsStore.setError(result.error?.message || 'Failed to fetch plants');
+				plantsStore.setError(result.error?.message || $tStore('plants.failedToFetchPlants'));
 				return;
 			}
 

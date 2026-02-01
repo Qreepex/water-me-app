@@ -153,12 +153,12 @@
 <PageContent>
 	<!-- Error Message -->
 	{#if store.error}
-		<Alert type="error" title="Error" description={store.error} />
+		<Alert type="error" title="common.error" description={store.error} />
 	{/if}
 
 	<!-- Loading State -->
 	{#if store.loading}
-		<LoadingSpinner message="Loading your plants..." icon="🌱" />
+		<LoadingSpinner message="common.loadingPlants" icon="🌱" />
 	{:else if store.plants.length === 0}
 		<!-- Empty State -->
 		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">

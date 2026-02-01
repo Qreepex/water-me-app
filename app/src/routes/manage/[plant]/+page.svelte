@@ -131,7 +131,7 @@
 			const item = photos[i];
 			if (!allowedTypes.has(file.type)) {
 				item.status = 'error';
-				item.error = 'Unsupported file type';
+				item.error = $tStore('common.unsupportedFileType');
 				photos = [...photos]; // Trigger reactivity
 				continue;
 			}
@@ -147,8 +147,8 @@
 				outName = result.outName;
 			} catch (err) {
 				item.status = 'error';
-				item.error = err instanceof Error ? err.message : 'Compression failed';
-				error = `Upload error for ${item.fileName}: ${item.error}`;
+				item.error = err instanceof Error ? err.message : $tStore('common.compressionFailed');
+				error = `${$tStore('common.uploadError')} for ${item.fileName}: ${item.error}`;
 				photos = [...photos]; // Trigger reactivity
 				continue;
 			}
@@ -161,8 +161,8 @@
 			});
 			if (!presignRes.ok) {
 				item.status = 'error';
-				item.error = presignRes.error?.message || 'Failed to presign';
-				error = `Upload error for ${item.fileName}: ${item.error}`;
+				item.error = presignRes.error?.message || $tStore('common.failed');
+				error = `${$tStore('common.uploadError')} for ${item.fileName}: ${item.error}`;
 				photos = [...photos]; // Trigger reactivity
 				continue;
 			}
@@ -174,8 +174,8 @@
 			const putOk = await putToS3(url, headers, blob);
 			if (!putOk) {
 				item.status = 'error';
-				item.error = 'Upload failed';
-				error = `Upload error for ${item.fileName}: ${item.error}`;
+				item.error = $tStore('common.failed');
+				error = `${$tStore('common.uploadError')} for ${item.fileName}: ${item.error}`;
 				photos = [...photos]; // Trigger reactivity
 				continue;
 			}
@@ -186,7 +186,7 @@
 			});
 			if (!regRes.ok) {
 				item.status = 'error';
-				item.error = regRes.error?.message || 'Register failed';
+				item.error = regRes.error?.message || $tStore('common.failed');
 				photos = [...photos]; // Trigger reactivity
 				continue;
 			}
@@ -539,10 +539,10 @@
 
 <PageContent>
 	{#if loading}
-		<LoadingSpinner message="Loading plant details..." icon="🌱" />
+		<LoadingSpinner message="common.loadingPlantDetails" icon="🌱" />
 	{:else if !plant}
 		<div class="flex flex-col items-center justify-center gap-6 py-12">
-			<p class="text-lg text-red-600">{error || 'Plant not found'}</p>
+			<p class="text-lg text-red-600">{error || $tStore('common.plantNotFound')}</p>
 			<Button variant="secondary" onclick={() => handleBackClick()} text="common.back" />
 		</div>
 	{:else}

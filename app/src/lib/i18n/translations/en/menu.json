@@ -18,5 +18,8 @@
 	"wateringDescription": "They deserve some water today!",
 	"settings": "Settings",
 	"resources": "Resources",
-	"about": "About"
+	"about": "About",
+	"notificationsEnabled": "Notifications enabled",
+	"permissionDenied": "Permission denied or registration failed",
+	"notificationError": "Error while enabling notifications"
 }

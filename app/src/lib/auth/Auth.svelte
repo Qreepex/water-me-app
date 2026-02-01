@@ -57,7 +57,7 @@
 			const result = await fetchData('/api/plants', {});
 
 			if (!result.ok) {
-				const errorMsg = result.error?.message || 'Failed to fetch plants';
+				const errorMsg = result.error?.message || $tStore('plants.failedToFetchPlants');
 				store.setError(errorMsg);
 				return;
 			}

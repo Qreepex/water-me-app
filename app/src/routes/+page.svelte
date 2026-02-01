@@ -20,9 +20,9 @@
 <PageContent>
 	<!-- Loading State -->
 	{#if store.loading}
-		<LoadingSpinner message="Loading your plants..." icon="🌿" />
+		<LoadingSpinner message="common.loadingPlants" icon="🌿" />
 	{:else if store.error}
-		<Alert type="error" title="Error loading plants" description={store.error} />
+		<Alert type="error" title="common.errorLoadingPlants" description={store.error} />
 	{:else if store.plants.length === 0}
 		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants" />
 	{:else}

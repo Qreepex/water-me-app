@@ -102,5 +102,10 @@
 	"deletePhoto": "Delete photo",
 	"deletePhotoConfirm": "Remove this photo?",
 	"noWateringConfig": "No Watering Schedule",
-	"configureWateringSchedule": "Set up watering schedule"
+	"configureWateringSchedule": "Set up watering schedule",
+	"failedToFetchPlants": "Failed to fetch plants",
+	"failedToWaterPlant": "Failed to water plant",
+	"failedToCreatePlant": "Failed to create plant",
+	"invalidResponse": "Invalid response from server",
+	"editPlant": "Edit Plant"
 }

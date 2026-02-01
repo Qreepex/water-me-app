@@ -14,5 +14,13 @@
 	"back": "Zurück",
 	"yes": "Ja",
 	"no": "Nein",
-	"refresh": "Aktualisieren"
+	"refresh": "Aktualisieren",
+	"loadingPlants": "Pflanzen werden geladen...",
+	"loadingPlantDetails": "Pflanzendetails werden geladen...",
+	"errorLoadingPlants": "Fehler beim Laden von Pflanzen",
+	"plantNotFound": "Pflanze nicht gefunden",
+	"unsupportedFileType": "Nicht unterstützter Dateityp",
+	"uploadError": "Upload-Fehler",
+	"compressionFailed": "Komprimierung fehlgeschlagen",
+	"failed": "Fehlgeschlagen"
 }

@@ -90,5 +90,10 @@
 	"deletePhoto": "Foto löschen",
 	"deletePhotoConfirm": "Dieses Foto entfernen?",
 	"noWateringConfig": "Kein Bewässerungsplan",
-	"configureWateringSchedule": "Bewässerungsplan einrichten"
+	"configureWateringSchedule": "Bewässerungsplan einrichten",
+	"failedToFetchPlants": "Fehler beim Abrufen von Pflanzen",
+	"failedToWaterPlant": "Fehler beim Bewässern der Pflanze",
+	"failedToCreatePlant": "Fehler beim Erstellen der Pflanze",
+	"invalidResponse": "Ungültige Antwort vom Server",
+	"editPlant": "Pflanze bearbeiten"
 }

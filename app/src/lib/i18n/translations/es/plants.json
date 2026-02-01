@@ -90,5 +90,10 @@
 	"deletePhoto": "Eliminar foto",
 	"deletePhotoConfirm": "¿Eliminar esta foto?",
 	"noWateringConfig": "Sin Horario de Riego",
-	"configureWateringSchedule": "Configurar horario de riego"
+	"configureWateringSchedule": "Configurar horario de riego",
+	"failedToFetchPlants": "Error al recuperar plantas",
+	"failedToWaterPlant": "Error al regar la planta",
+	"failedToCreatePlant": "Error al crear la planta",
+	"invalidResponse": "Respuesta inválida del servidor",
+	"editPlant": "Editar planta"
 }

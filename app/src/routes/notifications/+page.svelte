@@ -20,13 +20,13 @@
 			await requestNotificationPermissions();
 			refreshState();
 			if (state.isRegistered && state.token) {
-				message = 'Notifications enabled';
+				message = $tStore('menu.notificationsEnabled');
 			} else {
-				message = 'Permission denied or registration failed';
+				message = $tStore('menu.permissionDenied');
 			}
 		} catch (e) {
 			console.error(e);
-			message = 'Error while enabling notifications';
+			message = $tStore('menu.notificationError');
 		} finally {
 			requesting = false;
 		}

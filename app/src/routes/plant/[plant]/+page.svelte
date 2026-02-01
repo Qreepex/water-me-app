@@ -100,7 +100,7 @@
 
 <PageContent>
 	{#if store.loading}
-		<LoadingSpinner message={$tStore('plants.loadingPlants')} icon="🌿" />
+		<LoadingSpinner message="plants.loadingPlants" icon="🌿" />
 	{:else if !plant}
 		<Alert type="error" title="common.error" description="plants.notFound" />
 	{:else}

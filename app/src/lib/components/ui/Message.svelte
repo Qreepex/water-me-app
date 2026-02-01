@@ -41,14 +41,18 @@
 	};
 
 	const style = $derived(styles[type]);
-	const content = $derived(description || message);
+	// Translate both description and title as they might be i18n keys
+	const translatedTitle = $derived(title ? $tStore(title) : undefined);
+	const translatedDescription = $derived(
+		description ? $tStore(description) : message ? $tStore(message) : undefined
+	);
 </script>
 
 <div class="rounded-lg border-2 {style.border} {style.bg} px-6 py-4 {style.text}">
-	{#if title}
-		<p class="font-bold">{$tStore(title)}</p>
+	{#if translatedTitle}
+		<p class="font-bold">{translatedTitle}</p>
 	{/if}
-	{#if content}
-		<p>{$tStore(content)}</p>
+	{#if translatedDescription}
+		<p>{translatedDescription}</p>
 	{/if}
 </div>
