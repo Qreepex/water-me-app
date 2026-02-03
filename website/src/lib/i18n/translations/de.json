@@ -3,7 +3,13 @@
 		"features": "Funktionen",
 		"stats": "Statistiken",
 		"download": "Download",
-		"open_app": "App öffnen"
+		"open_app": "App öffnen",
+		"select_language": "Sprache auswählen",
+		"languages": {
+			"en": "Englisch",
+			"de": "Deutsch",
+			"es": "Spanisch"
+		}
 	},
 	"hero": {
 		"title": "Kümmere dich mühelos um deine Pflanzen",
@@ -13,6 +19,8 @@
 		"trust_badge": "Vertraut von Pflanzenliebhabern weltweit"
 	},
 	"features": {
+		"section_title": "Funktionen",
+		"section_subtitle": "Smarter Pflanzenpflege-Begleiter",
 		"watering": {
 			"title": "Intelligente Gießerinnerungen",
 			"description": "Erhalte personalisierte Erinnerungen basierend auf dem Gießplan deiner Pflanze"
@@ -41,12 +49,26 @@
 	"stats": {
 		"title": "Tritt unserer wachsenden Community bei",
 		"users": "Aktive Benutzer",
-		"plants": "Nachverfolgete Pflanzen",
+		"plants": "Nachverfolgte Pflanzen",
 		"reminders": "Gesendete Erinnerungen"
 	},
 	"screenshots": {
-		"title": "Erlebe die App",
-		"subtitle": "Schöne und intuitive Schnittstelle zur Verwaltung deiner Pflanzen"
+		"title": "Schönes & intuitives Design",
+		"subtitle": "Mit Sorgfalt gestaltet für die beste Nutzererfahrung. Einfach zu bedienen, leistungsstarke Funktionen.",
+		"cards": {
+			"home": {
+				"title": "Startseite",
+				"description": "Schneller Überblick über all deine Pflanzen"
+			},
+			"watering": {
+				"title": "Gießen",
+				"description": "Verpasse nie einen Gießtermin"
+			},
+			"management": {
+				"title": "Verwaltung",
+				"description": "Volle Kontrolle über Pflanzendetails"
+			}
+		}
 	},
 	"download": {
 		"title": "Beginne heute",
@@ -57,7 +79,7 @@
 	"faq": {
 		"title": "Häufig gestellte Fragen",
 		"q1": "Wie füge ich eine neue Pflanze hinzu?",
-		"a1": "Tippe einfach auf die '+' Schaltfläche und fülle die Details deiner Pflanze aus. Du kannst Art, Standort und Gießpräferenzen hinzufügen.",
+		"a1": "Im Menü über den Button „Pflanze hinzufügen“. Danach füllst du die Details deiner Pflanze aus.",
 		"q2": "Kann ich benutzerdefinierte Gießpläne festlegen?",
 		"a2": "Ja! Jede Pflanze hat ihren eigenen anpassbaren Gießplan. Du kannst ihn jederzeit basierend auf den Bedürfnissen deiner Pflanze anpassen.",
 		"q3": "Werde ich Gießerinnerungen verpassen?",
@@ -67,15 +89,24 @@
 		"q5": "Kann ich meine Pflanzen mit Familie teilen?",
 		"a5": "Derzeit hat jeder Benutzer seinen eigenen Garten. Wir arbeiten an Multi-User-Funktionen für die Zukunft!",
 		"q6": "Ist die App kostenlos?",
-		"a6": "Ja! Water Me ist völlig kostenlos zum Herunterladen und Verwenden."
+		"a6": "Ja! Water Me ist völlig kostenlos zum Herunterladen und Verwenden.",
+		"q7": "Sind meine Daten sicher?",
+		"a7": "Ja. Die App ist komplett Open Source und wir speichern nur die nötigsten Daten."
 	},
 	"footer": {
 		"product": "Produkt",
 		"legal": "Rechtliches",
 		"connect": "Verbinden",
+		"support": "Support",
+		"tagline": "Smarter Pflanzenpflege-Begleiter",
 		"privacy": "Datenschutzrichtlinie",
 		"terms": "Geschäftsbedingungen",
 		"imprint": "Impressum",
-		"copyright": "© 2024 Water Me. Alle Rechte vorbehalten."
+		"copyright": "© 2026 Water Me. Alle Rechte vorbehalten.",
+		"social": {
+			"tiktok": "TikTok",
+			"instagram": "Instagram",
+			"github": "GitHub"
+		}
 	}
 }

@@ -3,7 +3,13 @@
 		"features": "Features",
 		"stats": "Stats",
 		"download": "Download",
-		"open_app": "Open App"
+		"open_app": "Open App",
+		"select_language": "Select language",
+		"languages": {
+			"en": "English",
+			"de": "Deutsch",
+			"es": "Español"
+		}
 	},
 	"hero": {
 		"title": "Take Care of Your Plants Effortlessly",
@@ -13,6 +19,8 @@
 		"trust_badge": "Trusted by plant lovers worldwide"
 	},
 	"features": {
+		"section_title": "Features",
+		"section_subtitle": "Smart plant care companion",
 		"watering": {
 			"title": "Smart Watering Reminders",
 			"description": "Get personalized reminders based on your plant's watering schedule"
@@ -45,8 +53,22 @@
 		"reminders": "Reminders Sent"
 	},
 	"screenshots": {
-		"title": "Experience the App",
-		"subtitle": "Beautiful and intuitive interface for managing your plants"
+		"title": "Beautiful & Intuitive Design",
+		"subtitle": "Crafted with care for the best user experience. Easy to use, powerful features.",
+		"cards": {
+			"home": {
+				"title": "Home",
+				"description": "Quick overview of all your plants"
+			},
+			"watering": {
+				"title": "Watering",
+				"description": "Never miss a watering schedule"
+			},
+			"management": {
+				"title": "Management",
+				"description": "Full control over plant details"
+			}
+		}
 	},
 	"download": {
 		"title": "Get Started Today",
@@ -57,7 +79,7 @@
 	"faq": {
 		"title": "Frequently Asked Questions",
 		"q1": "How do I add a new plant?",
-		"a1": "Simply tap the '+' button and fill in your plant's details. You can add species, location, and watering preferences.",
+		"a1": "Open the menu and tap the 'Add plant' button. Then fill in your plant's details.",
 		"q2": "Can I set custom watering schedules?",
 		"a2": "Yes! Each plant has its own customizable watering schedule. You can adjust it anytime based on your plant's needs.",
 		"q3": "Will I miss watering reminders?",
@@ -67,15 +89,24 @@
 		"q5": "Can I share my plants with family?",
 		"a5": "Currently, each user has their own garden. We're working on multi-user features for the future!",
 		"q6": "Is the app free?",
-		"a6": "Yes! Water Me is completely free to download and use."
+		"a6": "Yes! Water Me is completely free to download and use.",
+		"q7": "Is my data safe?",
+		"a7": "Yes. The app is fully open source and we only store the minimum data needed to make it work."
 	},
 	"footer": {
 		"product": "Product",
 		"legal": "Legal",
 		"connect": "Connect",
+		"support": "Support",
+		"tagline": "Smart plant care companion",
 		"privacy": "Privacy Policy",
 		"terms": "Terms & Conditions",
 		"imprint": "Imprint",
-		"copyright": "© 2024 Water Me. All rights reserved."
+		"copyright": "© 2026 Water Me. All rights reserved.",
+		"social": {
+			"tiktok": "TikTok",
+			"instagram": "Instagram",
+			"github": "GitHub"
+		}
 	}
 }

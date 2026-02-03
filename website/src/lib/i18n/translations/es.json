@@ -3,7 +3,13 @@
 		"features": "Características",
 		"stats": "Estadísticas",
 		"download": "Descargar",
-		"open_app": "Abrir App"
+		"open_app": "Abrir App",
+		"select_language": "Seleccionar idioma",
+		"languages": {
+			"en": "English",
+			"de": "Deutsch",
+			"es": "Español"
+		}
 	},
 	"hero": {
 		"title": "Cuida tus plantas sin esfuerzo",
@@ -13,6 +19,8 @@
 		"trust_badge": "Confiado por amantes de las plantas en todo el mundo"
 	},
 	"features": {
+		"section_title": "Características",
+		"section_subtitle": "Compañero inteligente para el cuidado de plantas",
 		"watering": {
 			"title": "Recordatorios Inteligentes de Riego",
 			"description": "Obtén recordatorios personalizados basados en el horario de riego de tu planta"
@@ -45,8 +53,22 @@
 		"reminders": "Recordatorios Enviados"
 	},
 	"screenshots": {
-		"title": "Experimenta la Aplicación",
-		"subtitle": "Interfaz hermosa e intuitiva para gestionar tus plantas"
+		"title": "Diseño hermoso e intuitivo",
+		"subtitle": "Creado con cuidado para la mejor experiencia de usuario. Fácil de usar, funciones potentes.",
+		"cards": {
+			"home": {
+				"title": "Inicio",
+				"description": "Vista rápida de todas tus plantas"
+			},
+			"watering": {
+				"title": "Riego",
+				"description": "No te pierdas ningún riego"
+			},
+			"management": {
+				"title": "Gestión",
+				"description": "Control total de los detalles de la planta"
+			}
+		}
 	},
 	"download": {
 		"title": "Comienza Hoy",
@@ -57,7 +79,7 @@
 	"faq": {
 		"title": "Preguntas Frecuentes",
 		"q1": "¿Cómo agrego una nueva planta?",
-		"a1": "Simplemente toca el botón '+' y completa los detalles de tu planta. Puedes agregar especie, ubicación y preferencias de riego.",
+		"a1": "Abre el menú y toca el botón 'Añadir planta'. Luego completa los detalles de tu planta.",
 		"q2": "¿Puedo establecer horarios de riego personalizados?",
 		"a2": "¡Sí! Cada planta tiene su propio horario de riego personalizable. Puedes ajustarlo en cualquier momento según las necesidades de tu planta.",
 		"q3": "¿Me perderé los recordatorios de riego?",
@@ -67,15 +89,24 @@
 		"q5": "¿Puedo compartir mis plantas con la familia?",
 		"a5": "Actualmente, cada usuario tiene su propio jardín. ¡Estamos trabajando en características multiusuario para el futuro!",
 		"q6": "¿Es la aplicación gratuita?",
-		"a6": "¡Sí! Water Me es completamente gratuito para descargar y usar."
+		"a6": "¡Sí! Water Me es completamente gratuito para descargar y usar.",
+		"q7": "¿Mis datos están seguros?",
+		"a7": "Sí. La app es completamente de código abierto y solo guardamos los datos mínimos necesarios."
 	},
 	"footer": {
 		"product": "Producto",
 		"legal": "Legal",
 		"connect": "Conectar",
+		"support": "Soporte",
+		"tagline": "Compañero inteligente para el cuidado de plantas",
 		"privacy": "Política de Privacidad",
 		"terms": "Términos y Condiciones",
 		"imprint": "Aviso Legal",
-		"copyright": "© 2024 Water Me. Todos los derechos reservados."
+		"copyright": "© 2026 Water Me. Todos los derechos reservados.",
+		"social": {
+			"tiktok": "TikTok",
+			"instagram": "Instagram",
+			"github": "GitHub"
+		}
 	}
 }
