@@ -21,7 +21,7 @@
 					<li>
 						<a
 							href={resolve("/#features")}
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('nav.features')}
 						</a>
@@ -29,7 +29,7 @@
 					<li>
 						<a
 							href={resolve("/#download")}  
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('nav.download')}
 						</a>
@@ -37,7 +37,7 @@
 					<li>
 						<a
 							href="mailto:support@water-me.app"
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.support')}
 						</a>
@@ -51,7 +51,8 @@
 					<li>
 						<a
 							href={resolve('/privacy')}
-							class="text-sm text-white/70 transition hover:text-white"
+							data-sveltekit-preload-data="off"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.privacy')}
 						</a>
@@ -59,7 +60,8 @@
 					<li>
 						<a
 							href={resolve('/terms')}
-							class="text-sm text-white/70 transition hover:text-white"
+							data-sveltekit-preload-data="off"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.terms')}
 						</a>
@@ -67,7 +69,8 @@
 					<li>
 						<a
 							href={resolve('/imprint')}
-							class="text-sm text-white/70 transition hover:text-white"
+							data-sveltekit-preload-data="off"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.imprint')}
 						</a>
@@ -83,7 +86,7 @@
 							rel="external"
 							target="_blank"
 							href={TIKTOK_URL}
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.social.tiktok')}
 						</a>
@@ -93,7 +96,7 @@
 							rel="external"
 							target="_blank"
 							href={INSTAGRAM_URL}
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.social.instagram')}
 						</a>
@@ -103,7 +106,7 @@
 							rel="external"
 							target="_blank"
 							href={GITHUB_URL}
-							class="text-sm text-white/70 transition hover:text-white"
+							class="text-sm text-white/70 outline-none transition hover:text-white focus-visible:ring-0 focus-visible:text-white"
 						>
 							{$t('footer.social.github')}
 						</a>
