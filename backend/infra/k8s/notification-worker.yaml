@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-worker
+  namespace: water-me
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-worker
+  template:
+    metadata:
+      labels:
+        app: notification-worker
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: NotIn
+                    values:
+                      - database
+      containers:
+        - name: notification-worker
+          image: ghcr.io/qreepex/plants-notification-worker:0.0.6
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: water-me-secret
+            - secretRef:
+                name: mongodb-secret
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /etc/firebase/fb.json
+          volumeMounts:
+            - name: firebase-secret
+              mountPath: /etc/firebase
+              readOnly: true
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+      volumes:
+        - name: firebase-secret
+          secret:
+            secretName: firebase-secret

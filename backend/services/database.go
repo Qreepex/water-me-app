@@ -383,3 +383,262 @@ func (m *MongoDB) CountPlants(ctx context.Context) (int64, error) {
 
 	return count, nil
 }
+
+// GetPlantsNeedingWatering returns plants that need watering (nextWateringDate <= now)
+// Processes in batches for scalability. Limit controls batch size (recommended: 1000)
+func (m *MongoDB) GetPlantsNeedingWatering(ctx context.Context, limit int) ([]types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	now := time.Now()
+
+	// Query plants where watering is configured and lastWatered + intervalDays <= now
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"watering":              bson.M{"$exists": true, "$ne": nil},
+			"watering.intervalDays": bson.M{"$gt": 0},
+		}},
+		bson.M{"$addFields": bson.M{
+			"nextWateringDate": bson.M{
+				"$dateAdd": bson.M{
+					"startDate": "$watering.lastWatered",
+					"unit":      "day",
+					"amount":    "$watering.intervalDays",
+				},
+			},
+		}},
+		bson.M{"$match": bson.M{
+			"$or": bson.A{
+				bson.M{"watering.lastWatered": nil}, // Never watered
+				bson.M{"nextWateringDate": bson.M{"$lte": now}},
+			},
+		}},
+		bson.M{"$limit": limit},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var plants []types.Plant
+	if err := cursor.All(ctx, &plants); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
+}
+
+// GetPlantsNeedingFertilizer returns plants that need fertilizing
+func (m *MongoDB) GetPlantsNeedingFertilizer(
+	ctx context.Context,
+	limit int,
+) ([]types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	now := time.Now()
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"fertilizing":              bson.M{"$exists": true, "$ne": nil},
+			"fertilizing.intervalDays": bson.M{"$gt": 0},
+		}},
+		bson.M{"$addFields": bson.M{
+			"nextFertilizingDate": bson.M{
+				"$dateAdd": bson.M{
+					"startDate": "$fertilizing.lastFertilized",
+					"unit":      "day",
+					"amount":    "$fertilizing.intervalDays",
+				},
+			},
+		}},
+		bson.M{"$match": bson.M{
+			"$or": bson.A{
+				bson.M{"fertilizing.lastFertilized": nil},
+				bson.M{"nextFertilizingDate": bson.M{"$lte": now}},
+			},
+		}},
+		bson.M{"$limit": limit},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var plants []types.Plant
+	if err := cursor.All(ctx, &plants); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
+}
+
+// GetPlantsNeedingMisting returns plants that need misting
+func (m *MongoDB) GetPlantsNeedingMisting(ctx context.Context, limit int) ([]types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	now := time.Now()
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"humidity":                     bson.M{"$exists": true, "$ne": nil},
+			"humidity.requiresMisting":     true,
+			"humidity.mistingIntervalDays": bson.M{"$gt": 0},
+		}},
+		bson.M{"$addFields": bson.M{
+			"nextMistingDate": bson.M{
+				"$dateAdd": bson.M{
+					"startDate": "$humidity.lastMisted",
+					"unit":      "day",
+					"amount":    "$humidity.mistingIntervalDays",
+				},
+			},
+		}},
+		bson.M{"$match": bson.M{
+			"$or": bson.A{
+				bson.M{"humidity.lastMisted": nil},
+				bson.M{"nextMistingDate": bson.M{"$lte": now}},
+			},
+		}},
+		bson.M{"$limit": limit},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var plants []types.Plant
+	if err := cursor.All(ctx, &plants); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
+}
+
+// GetPlantsNeedingRepotting returns plants that need repotting
+func (m *MongoDB) GetPlantsNeedingRepotting(ctx context.Context, limit int) ([]types.Plant, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Plants)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	now := time.Now()
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"soil":                bson.M{"$exists": true, "$ne": nil},
+			"soil.repottingCycle": bson.M{"$gt": 0},
+		}},
+		bson.M{"$addFields": bson.M{
+			"nextRepottingDate": bson.M{
+				"$dateAdd": bson.M{
+					"startDate": "$soil.lastRepotted",
+					"unit":      "day",
+					"amount":    "$soil.repottingCycle",
+				},
+			},
+		}},
+		bson.M{"$match": bson.M{
+			"$or": bson.A{
+				bson.M{"soil.lastRepotted": nil},
+				bson.M{"nextRepottingDate": bson.M{"$lte": now}},
+			},
+		}},
+		bson.M{"$limit": limit},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var plants []types.Plant
+	if err := cursor.All(ctx, &plants); err != nil {
+		return nil, err
+	}
+
+	return plants, nil
+}
+
+// GetAllNotificationConfigs returns all notification configs in batches
+func (m *MongoDB) GetAllNotificationConfigs(
+	ctx context.Context,
+	limit int,
+	skip int,
+) ([]types.NotificationConfig, error) {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return nil, types.ErrNoDocuments
+	}
+
+	opts := options.Find().SetLimit(int64(limit)).SetSkip(int64(skip))
+	cursor, err := collection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var configs []types.NotificationConfig
+	if err := cursor.All(ctx, &configs); err != nil {
+		return nil, err
+	}
+
+	return configs, nil
+}
+
+// UpdateNotificationLastSent updates the last notification sent timestamp
+func (m *MongoDB) UpdateNotificationLastSent(ctx context.Context, userID string) error {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return types.ErrNoDocuments
+	}
+
+	now := time.Now()
+	_, err := collection.UpdateOne(
+		ctx,
+		bson.M{"userId": userID},
+		bson.M{"$set": bson.M{"lastNotificationSentAt": now}},
+	)
+
+	return err
+}
+
+// MarkTokensAsInactive marks the specified FCM tokens as inactive
+func (m *MongoDB) MarkTokensAsInactive(ctx context.Context, userID string, tokens []string) error {
+	collection := m.GetCollection(constants.MongoDBCollections.Notifications)
+	if collection == nil {
+		return types.ErrNoDocuments
+	}
+
+	// Update all device tokens matching the failed tokens
+	_, err := collection.UpdateOne(
+		ctx,
+		bson.M{"userId": userID},
+		bson.M{
+			"$set": bson.M{
+				"deviceTokens.$[elem].isActive": false,
+			},
+		},
+		options.Update().SetArrayFilters(options.ArrayFilters{
+			Filters: []interface{}{
+				bson.M{"elem.token": bson.M{"$in": tokens}},
+			},
+		}),
+	)
+
+	return err
+}

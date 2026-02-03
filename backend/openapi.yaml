@@ -30,18 +30,18 @@ paths:
       description: Retrieve all plants belonging to the authenticated user
       operationId: getPlants
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Plant'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                  $ref: "#/components/schemas/Plant"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
     post:
       tags:
@@ -54,20 +54,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePlantRequest'
+              $ref: "#/components/schemas/CreatePlantRequest"
       responses:
-        '201':
+        "201":
           description: Plant created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plant'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /api/plants/slug/{slug}:
     get:
@@ -85,18 +85,18 @@ paths:
             type: string
           example: monstera-deliciosa
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plant'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Plant"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /api/plants/water:
     post:
@@ -120,9 +120,10 @@ paths:
                     type: string
                   minItems: 1
                   description: Array of plant IDs to mark as watered
-                  example: ["507f1f77bcf86cd799439011", "507f191e810c19729de860ea"]
+                  example:
+                    ["507f1f77bcf86cd799439011", "507f191e810c19729de860ea"]
       responses:
-        '200':
+        "200":
           description: Plants watered successfully
           content:
             application/json:
@@ -132,12 +133,12 @@ paths:
                   success:
                     type: boolean
                     example: true
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /api/plants/{id}:
     patch:
@@ -158,22 +159,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdatePlantRequest'
+              $ref: "#/components/schemas/UpdatePlantRequest"
       responses:
-        '200':
+        "200":
           description: Plant updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Plant'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
     delete:
       tags:
@@ -189,7 +190,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Plant deleted successfully
           content:
             application/json:
@@ -199,12 +200,12 @@ paths:
                   success:
                     type: boolean
                     example: true
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /api/notifications:
     get:
@@ -214,16 +215,16 @@ paths:
       description: Retrieve notification configuration for the authenticated user. Returns default config if none exists.
       operationId: getNotificationConfig
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationConfig'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationConfig"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
     put:
       tags:
@@ -236,26 +237,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationConfigInput'
+              $ref: "#/components/schemas/NotificationConfigInput"
       responses:
-        '200':
+        "200":
           description: Configuration updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationConfig'
-        '201':
+                $ref: "#/components/schemas/NotificationConfig"
+        "201":
           description: Configuration created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationConfig'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationConfig"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
     delete:
       tags:
@@ -264,7 +265,7 @@ paths:
       description: Delete notification configuration for the authenticated user
       operationId: deleteNotificationConfig
       responses:
-        '200':
+        "200":
           description: Configuration deleted successfully
           content:
             application/json:
@@ -274,12 +275,12 @@ paths:
                   success:
                     type: boolean
                     example: true
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
 components:
   securitySchemes:
@@ -395,9 +396,9 @@ components:
           maximum: 365
           example: 7
         method:
-          $ref: '#/components/schemas/WateringMethod'
+          $ref: "#/components/schemas/WateringMethod"
         waterType:
-          $ref: '#/components/schemas/WaterType'
+          $ref: "#/components/schemas/WaterType"
         lastWatered:
           type: string
           format: date-time
@@ -443,7 +444,7 @@ components:
         - activeInWinter
       properties:
         type:
-          $ref: '#/components/schemas/FertilizerType'
+          $ref: "#/components/schemas/FertilizerType"
         intervalDays:
           type: integer
           minimum: 1
@@ -526,7 +527,7 @@ components:
         id:
           type: string
         pest:
-          $ref: '#/components/schemas/PestType'
+          $ref: "#/components/schemas/PestType"
         detectedAt:
           type: string
           format: date-time
@@ -535,7 +536,7 @@ components:
           format: date-time
           nullable: true
         status:
-          $ref: '#/components/schemas/PestStatus'
+          $ref: "#/components/schemas/PestStatus"
         treatment:
           type: string
           example: Neem oil spray
@@ -569,7 +570,7 @@ components:
           minimum: 0
           example: 12
         health:
-          $ref: '#/components/schemas/HealthStatus'
+          $ref: "#/components/schemas/HealthStatus"
         condition:
           type: string
           example: New leaf unfurling
@@ -616,7 +617,7 @@ components:
           example: true
         sunlight:
           allOf:
-            - $ref: '#/components/schemas/SunlightRequirement'
+            - $ref: "#/components/schemas/SunlightRequirement"
           nullable: true
         preferedTemperature:
           type: number
@@ -624,28 +625,28 @@ components:
           example: 22.0
         location:
           allOf:
-            - $ref: '#/components/schemas/Location'
+            - $ref: "#/components/schemas/Location"
           nullable: true
         watering:
           allOf:
-            - $ref: '#/components/schemas/WateringConfig'
+            - $ref: "#/components/schemas/WateringConfig"
           nullable: true
         fertilizing:
-          $ref: '#/components/schemas/FertilizerConfig'
+          $ref: "#/components/schemas/FertilizerConfig"
         humidity:
-          $ref: '#/components/schemas/HumidityConfig'
+          $ref: "#/components/schemas/HumidityConfig"
         soil:
-          $ref: '#/components/schemas/SoilConfig'
+          $ref: "#/components/schemas/SoilConfig"
         seasonality:
-          $ref: '#/components/schemas/SeasonalAdjustments'
+          $ref: "#/components/schemas/SeasonalAdjustments"
         pestHistory:
           type: array
           items:
-            $ref: '#/components/schemas/PestInfection'
+            $ref: "#/components/schemas/PestInfection"
         flags:
           type: array
           items:
-            $ref: '#/components/schemas/PlantFlag'
+            $ref: "#/components/schemas/PlantFlag"
         notes:
           type: array
           items:
@@ -657,7 +658,7 @@ components:
         growthHistory:
           type: array
           items:
-            $ref: '#/components/schemas/GrowthLog'
+            $ref: "#/components/schemas/GrowthLog"
         createdAt:
           type: string
           format: date-time
@@ -691,7 +692,7 @@ components:
           example: true
         sunlight:
           allOf:
-            - $ref: '#/components/schemas/SunlightRequirement'
+            - $ref: "#/components/schemas/SunlightRequirement"
           nullable: true
         preferedTemperature:
           type: number
@@ -701,36 +702,36 @@ components:
           example: 22.0
         location:
           allOf:
-            - $ref: '#/components/schemas/Location'
+            - $ref: "#/components/schemas/Location"
           nullable: true
         watering:
           allOf:
-            - $ref: '#/components/schemas/WateringConfig'
+            - $ref: "#/components/schemas/WateringConfig"
           nullable: true
         fertilizing:
           allOf:
-            - $ref: '#/components/schemas/FertilizerConfig'
+            - $ref: "#/components/schemas/FertilizerConfig"
           nullable: true
         humidity:
           allOf:
-            - $ref: '#/components/schemas/HumidityConfig'
+            - $ref: "#/components/schemas/HumidityConfig"
           nullable: true
         soil:
           allOf:
-            - $ref: '#/components/schemas/SoilConfig'
+            - $ref: "#/components/schemas/SoilConfig"
           nullable: true
         seasonality:
           allOf:
-            - $ref: '#/components/schemas/SeasonalAdjustments'
+            - $ref: "#/components/schemas/SeasonalAdjustments"
           nullable: true
         pestHistory:
           type: array
           items:
-            $ref: '#/components/schemas/PestInfection'
+            $ref: "#/components/schemas/PestInfection"
         flags:
           type: array
           items:
-            $ref: '#/components/schemas/PlantFlag'
+            $ref: "#/components/schemas/PlantFlag"
         notes:
           type: array
           items:
@@ -742,7 +743,7 @@ components:
         growthHistory:
           type: array
           items:
-            $ref: '#/components/schemas/GrowthLog'
+            $ref: "#/components/schemas/GrowthLog"
 
     UpdatePlantRequest:
       type: object
@@ -759,32 +760,32 @@ components:
         isToxic:
           type: boolean
         sunlight:
-          $ref: '#/components/schemas/SunlightRequirement'
+          $ref: "#/components/schemas/SunlightRequirement"
         preferedTemperature:
           type: number
           format: double
           minimum: -50
           maximum: 60
         location:
-          $ref: '#/components/schemas/Location'
+          $ref: "#/components/schemas/Location"
         watering:
-          $ref: '#/components/schemas/WateringConfig'
+          $ref: "#/components/schemas/WateringConfig"
         fertilizing:
-          $ref: '#/components/schemas/FertilizerConfig'
+          $ref: "#/components/schemas/FertilizerConfig"
         humidity:
-          $ref: '#/components/schemas/HumidityConfig'
+          $ref: "#/components/schemas/HumidityConfig"
         soil:
-          $ref: '#/components/schemas/SoilConfig'
+          $ref: "#/components/schemas/SoilConfig"
         seasonality:
-          $ref: '#/components/schemas/SeasonalAdjustments'
+          $ref: "#/components/schemas/SeasonalAdjustments"
         pestHistory:
           type: array
           items:
-            $ref: '#/components/schemas/PestInfection'
+            $ref: "#/components/schemas/PestInfection"
         flags:
           type: array
           items:
-            $ref: '#/components/schemas/PlantFlag'
+            $ref: "#/components/schemas/PlantFlag"
         notes:
           type: array
           items:
@@ -796,7 +797,7 @@ components:
         growthHistory:
           type: array
           items:
-            $ref: '#/components/schemas/GrowthLog'
+            $ref: "#/components/schemas/GrowthLog"
 
     # Notification Schemas
     QuietHours:
@@ -848,7 +849,7 @@ components:
           example: "08:00"
           description: Preferred time for notifications in HH:mm format
         quietHours:
-          $ref: '#/components/schemas/QuietHours'
+          $ref: "#/components/schemas/QuietHours"
           nullable: true
         batchingDays:
           type: integer
@@ -903,7 +904,7 @@ components:
           pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
           example: "08:00"
         quietHours:
-          $ref: '#/components/schemas/QuietHours'
+          $ref: "#/components/schemas/QuietHours"
           nullable: true
         batchingDays:
           type: integer
@@ -950,7 +951,7 @@ components:
         errors:
           type: array
           items:
-            $ref: '#/components/schemas/ValidationError'
+            $ref: "#/components/schemas/ValidationError"
 
   responses:
     Unauthorized:
@@ -980,7 +981,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     InternalError:
       description: Internal server error

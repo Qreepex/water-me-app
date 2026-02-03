@@ -1,4 +1,4 @@
-# 🏃‍♂️ Minimales Runtime-Image
+# Multi-stage build for Water Me backend components
 FROM golang:1.25.5-alpine AS builder
 
 WORKDIR /app/backend
@@ -10,7 +10,10 @@ COPY . /app/backend
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/app
+# Build argument to specify which component to build (api or notification-worker)
+ARG COMPONENT=api
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/app ./cmd/${COMPONENT}
 
 
 FROM scratch

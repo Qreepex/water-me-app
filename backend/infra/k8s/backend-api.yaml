@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: backend-api
   namespace: water-me
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: backend
+      app: backend-api
   template:
     metadata:
       labels:
-        app: backend
+        app: backend-api
     spec:
       imagePullSecrets:
-      - name: ghcr-secret
+        - name: ghcr-secret
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -25,8 +25,8 @@ spec:
                     values:
                       - database
       containers:
-        - name: backend
-          image: ghcr.io/qreepex/plants-backend:0.0.5
+        - name: backend-api
+          image: ghcr.io/qreepex/plants-backend-api:0.0.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -62,7 +62,7 @@ metadata:
   namespace: water-me
 spec:
   selector:
-    app: backend
+    app: backend-api
   ports:
     - protocol: TCP
       port: 8080

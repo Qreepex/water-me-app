@@ -7,9 +7,21 @@ type QuietHours struct {
 	End   string `json:"end"   bson:"end"`   // e.g., "07:00"
 }
 
+type DeviceToken struct {
+	Token      string    `json:"token"      bson:"token"`
+	DeviceID   string    `json:"deviceId"   bson:"deviceId"`   // Unique device identifier
+	DeviceType string    `json:"deviceType" bson:"deviceType"` // "android", "ios", "web"
+	AddedAt    time.Time `json:"addedAt"    bson:"addedAt"`
+	LastUsedAt time.Time `json:"lastUsedAt" bson:"lastUsedAt"`
+	IsActive   bool      `json:"isActive"   bson:"isActive"` // Can be set to false if token becomes invalid
+}
+
 type NotificationConfig struct {
 	ID     string `json:"id"     bson:"_id"`
 	UserID string `json:"userId" bson:"userId"`
+
+	// FCM Device Tokens for push notifications
+	DeviceTokens []DeviceToken `json:"deviceTokens" bson:"deviceTokens"`
 
 	// Globale Einstellungen
 	IsEnabled bool `json:"isEnabled" bson:"isEnabled"`
@@ -29,5 +41,21 @@ type NotificationConfig struct {
 	RemindRepotting bool     `json:"remindRepotting" bson:"remindRepotting"`
 	RemindMisting   bool     `json:"remindMisting"   bson:"remindMisting"`
 
+	// Notification tracking
+	LastNotificationSentAt *time.Time `json:"lastNotificationSentAt,omitempty" bson:"lastNotificationSentAt,omitempty"`
+
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+}
+
+type NotificationBatch struct {
+	UserID       string     `json:"userId"       bson:"userId"`
+	DeviceTokens []string   `json:"deviceTokens" bson:"deviceTokens"`
+	Plants       []string   `json:"plants"       bson:"plants"` // Plant names
+	Type         string     `json:"type"         bson:"type"`   // "watering", "fertilizing", "repotting", "misting"
+	ScheduledFor time.Time  `json:"scheduledFor" bson:"scheduledFor"`
+	SentAt       *time.Time `json:"sentAt"       bson:"sentAt,omitempty"`
+	FailedAt     *time.Time `json:"failedAt"     bson:"failedAt,omitempty"`
+	ErrorMessage string     `json:"errorMessage" bson:"errorMessage,omitempty"`
+	RetryCount   int        `json:"retryCount"   bson:"retryCount"`
+	CreatedAt    time.Time  `json:"createdAt"    bson:"createdAt"`
 }

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -45,7 +44,7 @@ func main() {
 	allowedOrigins := []string{
 		"https://localhost",
 		"http://localhost",
-		"https://app.water-me.app", // Allows all origins; restrict in production
+		"https://app.water-me.app",
 		"https://water-me.app",
 		"https://my.water-me.app",
 	}
@@ -72,33 +71,10 @@ func main() {
 
 	r.Use(middlewares.AuthMiddleware(firebase))
 
-	// Start background cleanup worker for orphaned uploads
-	go startCleanupWorker(db, s3svc)
-
-	log.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	port := getenv("PORT", "8080")
+	log.Printf("Starting API server on :%s", port)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("failed to start server: %v", err)
-	}
-}
-
-// startCleanupWorker runs a background job to clean up orphaned uploads every 30 minutes
-func startCleanupWorker(db *services.MongoDB, s3 *services.S3Service) {
-	ticker := time.NewTicker(30 * time.Minute)
-	defer ticker.Stop()
-
-	log.Println("Orphaned upload cleanup worker started (runs every 30 minutes)")
-
-	for range ticker.C {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		uploadSvc := services.NewUploadService(db, s3)
-		count, err := uploadSvc.CleanupOrphanedUploads(ctx, 1*time.Hour)
-		cancel()
-
-		if err != nil {
-			log.Printf("Cleanup worker error: %v", err)
-		} else if count > 0 {
-			log.Printf("Cleaned up %d orphaned uploads", count)
-		}
 	}
 }
 

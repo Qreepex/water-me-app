@@ -1,0 +1,38 @@
+{
+  "single": [
+    {
+      "title": "Time to fertilize! 🌱",
+      "body": "{plantName} needs fertilizer"
+    },
+    {
+      "title": "Feeding time! 🌱",
+      "body": "{plantName} is ready for nutrients"
+    },
+    {
+      "title": "Fertilizer reminder 🌱",
+      "body": "Don't forget to feed {plantName}"
+    },
+    {
+      "title": "Your plant is hungry! 🌱",
+      "body": "{plantName} needs some nutrients"
+    }
+  ],
+  "multiple": [
+    {
+      "title": "{count} plants need fertilizer! 🌱",
+      "body": "Don't forget to feed your plants"
+    },
+    {
+      "title": "Feeding time! 🌱",
+      "body": "{count} plants are ready for nutrients"
+    },
+    {
+      "title": "Your plants need nutrients! 🌱",
+      "body": "Time to fertilize {count} plants"
+    },
+    {
+      "title": "Fertilizer reminder 🌱",
+      "body": "{count} of your plants are hungry"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "single": [
+    {
+      "title": "Time to water your plant! 💧",
+      "body": "{plantName} needs water"
+    },
+    {
+      "title": "Your plant is thirsty! 💧",
+      "body": "{plantName} is ready for watering"
+    },
+    {
+      "title": "Watering reminder 💧",
+      "body": "Don't forget to water {plantName}"
+    },
+    {
+      "title": "{plantName} needs attention 💧",
+      "body": "Time to give your plant some water"
+    }
+  ],
+  "multiple": [
+    {
+      "title": "{count} plants need water! 💧",
+      "body": "{plantNames}"
+    },
+    {
+      "title": "Watering time! 💧",
+      "body": "{count} of your plants are thirsty: {plantNames}"
+    },
+    {
+      "title": "Your plants need you! 💧",
+      "body": "{plantNames} and {remaining} more are ready for watering"
+    },
+    {
+      "title": "Don't forget to water! 💧",
+      "body": "{count} plants including {plantNames}"
+    }
+  ]
+}

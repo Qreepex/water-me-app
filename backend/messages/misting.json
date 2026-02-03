@@ -1,0 +1,38 @@
+{
+  "single": [
+    {
+      "title": "Misting time! 💦",
+      "body": "{plantName} needs misting"
+    },
+    {
+      "title": "Keep it humid! 💦",
+      "body": "{plantName} is ready for misting"
+    },
+    {
+      "title": "Humidity check 💦",
+      "body": "Time to mist {plantName}"
+    },
+    {
+      "title": "{plantName} loves humidity! 💦",
+      "body": "Don't forget to give it a mist"
+    }
+  ],
+  "multiple": [
+    {
+      "title": "{count} plants need misting! 💦",
+      "body": "Keep your plants humid and happy"
+    },
+    {
+      "title": "Humidity time! 💦",
+      "body": "{count} plants are ready for misting"
+    },
+    {
+      "title": "Your tropical friends need you! 💦",
+      "body": "Time to mist {count} plants"
+    },
+    {
+      "title": "Misting reminder 💦",
+      "body": "{count} plants would love some humidity"
+    }
+  ]
+}

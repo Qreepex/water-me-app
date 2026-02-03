@@ -1,0 +1,38 @@
+{
+  "single": [
+    {
+      "title": "Repotting reminder! 🪴",
+      "body": "{plantName} might need repotting"
+    },
+    {
+      "title": "Check the roots! 🪴",
+      "body": "{plantName} is due for a soil refresh"
+    },
+    {
+      "title": "Time for fresh soil? 🪴",
+      "body": "{plantName} might need a bigger home"
+    },
+    {
+      "title": "Repotting time! 🪴",
+      "body": "Consider repotting {plantName}"
+    }
+  ],
+  "multiple": [
+    {
+      "title": "{count} plants might need repotting! 🪴",
+      "body": "Check if your plants need fresh soil"
+    },
+    {
+      "title": "Soil check time! 🪴",
+      "body": "{count} plants are due for repotting"
+    },
+    {
+      "title": "Time for fresh soil! 🪴",
+      "body": "{count} plants might need bigger homes"
+    },
+    {
+      "title": "Repotting reminder 🪴",
+      "body": "Consider giving {count} plants fresh soil"
+    }
+  ]
+}

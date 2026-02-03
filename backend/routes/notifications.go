@@ -26,6 +26,15 @@ func NotificationHandler(router *mux.Router, database *services.MongoDB) {
 	router.HandleFunc("/api/notifications", func(w http.ResponseWriter, r *http.Request) {
 		deleteNotificationConfig(w, r, database)
 	}).Methods(http.MethodDelete, http.MethodOptions)
+
+	router.HandleFunc("/api/notifications/tokens", func(w http.ResponseWriter, r *http.Request) {
+		registerDeviceToken(w, r, database)
+	}).Methods(http.MethodPost, http.MethodOptions)
+
+	router.HandleFunc("/api/notifications/tokens/{deviceId}", func(w http.ResponseWriter, r *http.Request) {
+		deleteDeviceToken(w, r, database)
+	}).
+		Methods(http.MethodDelete, http.MethodOptions)
 }
 
 func getNotificationConfig(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
@@ -170,6 +179,7 @@ func createDefaultConfig(userID string) types.NotificationConfig {
 	return types.NotificationConfig{
 		ID:              "",
 		UserID:          userID,
+		DeviceTokens:    []types.DeviceToken{},
 		IsEnabled:       true,
 		PreferredTime:   "08:00",
 		QuietHours:      nil,
@@ -182,4 +192,148 @@ func createDefaultConfig(userID string) types.NotificationConfig {
 		RemindMisting:   true,
 		UpdatedAt:       time.Now(),
 	}
+}
+
+func registerDeviceToken(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var request struct {
+		Token      string `json:"token"`
+		DeviceID   string `json:"deviceId"`
+		DeviceType string `json:"deviceType"`
+	}
+
+	if err := util.DecodeJSON(r, &request); err != nil {
+		util.BadRequest(w, err.Error(), nil)
+		return
+	}
+
+	if request.Token == "" || request.DeviceID == "" {
+		util.BadRequest(w, "token and deviceId are required", nil)
+		return
+	}
+
+	// Get or create notification config
+	config, err := db.GetNotificationConfig(r.Context(), userID)
+	if err != nil && err != types.ErrNoDocuments {
+		util.ServerError(w, err)
+		return
+	}
+
+	if config == nil {
+		// Create default config
+		defaultConfig := createDefaultConfig(userID)
+		id, err := gonanoid.New()
+		if err != nil {
+			log.Printf("Failed to generate notification config ID: %v", err)
+			http.Error(w, "Failed to generate ID", http.StatusInternalServerError)
+			return
+		}
+		defaultConfig.ID = id
+		config, err = db.CreateNotificationConfig(r.Context(), defaultConfig)
+		if err != nil {
+			util.ServerError(w, err)
+			return
+		}
+	}
+
+	// Check if device already exists
+	now := time.Now()
+	deviceExists := false
+	for i, device := range config.DeviceTokens {
+		if device.DeviceID == request.DeviceID {
+			// Update existing device token
+			config.DeviceTokens[i].Token = request.Token
+			config.DeviceTokens[i].DeviceType = request.DeviceType
+			config.DeviceTokens[i].LastUsedAt = now
+			config.DeviceTokens[i].IsActive = true
+			deviceExists = true
+			break
+		}
+	}
+
+	if !deviceExists {
+		// Add new device token
+		newDevice := types.DeviceToken{
+			Token:      request.Token,
+			DeviceID:   request.DeviceID,
+			DeviceType: request.DeviceType,
+			AddedAt:    now,
+			LastUsedAt: now,
+			IsActive:   true,
+		}
+		config.DeviceTokens = append(config.DeviceTokens, newDevice)
+	}
+
+	config.UpdatedAt = now
+
+	// Update config in database
+	updatedConfig, err := db.UpdateNotificationConfig(r.Context(), *config)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+
+	util.RespondJSON(w, http.StatusOK, updatedConfig)
+	log.Printf("Registered device token for user %s, device %s", userID, request.DeviceID)
+}
+
+func deleteDeviceToken(w http.ResponseWriter, r *http.Request, db *services.MongoDB) {
+	userID, ok := getUserID(r)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	deviceID := vars["deviceId"]
+
+	if deviceID == "" {
+		util.BadRequest(w, "deviceId is required", nil)
+		return
+	}
+
+	// Get notification config
+	config, err := db.GetNotificationConfig(r.Context(), userID)
+	if err != nil {
+		if err == types.ErrNoDocuments {
+			util.NotFound(w)
+			return
+		}
+		util.ServerError(w, err)
+		return
+	}
+
+	// Remove device token
+	found := false
+	newTokens := make([]types.DeviceToken, 0, len(config.DeviceTokens))
+	for _, device := range config.DeviceTokens {
+		if device.DeviceID != deviceID {
+			newTokens = append(newTokens, device)
+		} else {
+			found = true
+		}
+	}
+
+	if !found {
+		util.NotFound(w)
+		return
+	}
+
+	config.DeviceTokens = newTokens
+	config.UpdatedAt = time.Now()
+
+	// Update config in database
+	updatedConfig, err := db.UpdateNotificationConfig(r.Context(), *config)
+	if err != nil {
+		util.ServerError(w, err)
+		return
+	}
+
+	util.RespondJSON(w, http.StatusOK, updatedConfig)
+	log.Printf("Removed device token for user %s, device %s", userID, deviceID)
 }

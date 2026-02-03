@@ -1,20 +1,40 @@
-# Plants API - Go Backend
+# Plants Backend - Go Services
 
-A RESTful API for managing plants with Firebase authentication and MongoDB storage.
+A RESTful API and notification worker for managing plants with Firebase authentication and MongoDB storage.
+
+## Components
+
+### 1. **API Server** (`cmd/api`)
+
+REST API for plant management with:
+
+- User authentication (Firebase)
+- Plant CRUD operations
+- Photo uploads (AWS S3)
+- Notification settings
+- Orphaned upload cleanup worker
+
+### 2. **Notification Worker** (`cmd/notification-worker`)
+
+Background service that:
+
+- Checks for plants needing water every 5 minutes
+- Sends push notifications via Firebase Cloud Messaging
+- Operates independently from the API
 
 ## Features
 
 - **User Authentication**: Firebase Authentication (Google sign-in) with JWT token validation
 - **Plant Management**: Full CRUD operations for plants with rich metadata support
 - **Photo Storage**: AWS S3 integration with presigned URLs for direct browser uploads
-- **Notifications**: Push notification configuration per user
+- **Push Notifications**: Automated watering reminders via Firebase Cloud Messaging
 - **User Isolation**: Each user can only access their own plants and data
 - **Background Jobs**: Automatic cleanup of orphaned S3 uploads every 30 minutes
-- **CORS**: Configured for wildcard origin (`*`)
+- **CORS**: Configured for multiple origins (localhost, app.water-me.app, etc.)
 
 ## Tech Stack
 
-- **Language**: Go 1.24
+- **Language**: Go 1.25
 - **Database**: MongoDB with official driver
 - **Authentication**: Firebase Admin SDK
 - **Storage**: AWS S3
@@ -67,37 +87,53 @@ go mod tidy
    - Create an S3 bucket for plant photos
    - Configure AWS credentials (via environment vars, ~/.aws/credentials, or IAM role)
 
-3. **Run the server**:
+3. **Run the API server**:
 
 ```bash
-go run .
+go run ./cmd/api
 ```
 
-The server starts on port 8080 and connects to MongoDB on startup.
+4. **Run the notification worker** (optional, in separate terminal):
+
+```bash
+go run ./cmd/notification-worker
+```
+
+The API server starts on port 8080 and connects to MongoDB on startup.
+The notification worker runs checks every 5 minutes.
 
 ## Project Structure
 
 ```
 backend/
-├── cmd/              Command-line utilities
-├── constants/        Application constants (collections, limits)
-├── main.go           Server entry point + cleanup worker
-├── middlewares/      HTTP middlewares (auth)
-├── routes/           HTTP endpoint handlers
-│   ├── plants.go     Plant CRUD + watering
-│   ├── uploads.go    S3 presigned URL generation
-│   └── notifications.go  Push notification config
-├── services/         Business logic layer
-│   ├── mongo.go      MongoDB connection
-│   ├── database.go   Plant/notification/upload queries
-│   ├── firebase.go   Firebase auth token verification
-│   ├── s3.go         S3 upload/download/presigned URLs
-│   └── uploads.go    Upload service with orphan cleanup
-├── types/            Data models and enums
-├── util/             Helper functions
-├── validation/       Input validation (mirrors frontend)
-└── openapi.yaml      API specification
+├── cmd/                  Command-line binaries
+│   ├── api/              API server entry point
+│   ├── notification-worker/  Notification service
+│   └── setup-cors/       S3 CORS setup utility
+├── constants/            Application constants (collections, limits)
+├── main.go               Legacy entry point (deprecated, use cmd/api)
+├── middlewares/          HTTP middlewares (auth, rate limiting)
+├── routes/               HTTP endpoint handlers
+│   ├── plants.go         Plant CRUD + watering
+│   ├── uploads.go        S3 presigned URL generation
+│   ├── notifications.go  Push notification config
+│   └── stats.go          User statistics
+├── services/             Business logic layer (shared)
+│   ├── mongo.go          MongoDB connection
+│   ├── database.go       Plant/notification/upload queries
+│   ├── firebase.go       Firebase auth token verification
+│   ├── s3.go             S3 upload/download/presigned URLs
+│   ├── uploads.go        Upload service with orphan cleanup
+│   └── ratelimit.go      Rate limiting service
+├── types/                Data models and enums (shared)
+├── util/                 Helper functions (shared)
+├── validation/           Input validation (mirrors frontend, shared)
+├── infra/                Infrastructure as code
+│   └── k8s/              Kubernetes manifests
+└── openapi.yaml          API specification
 ```
+
+See [cmd/README.md](cmd/README.md) for detailed build and deployment instructions.
 
 ## API Endpoints
 

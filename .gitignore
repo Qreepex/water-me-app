@@ -6,6 +6,7 @@ node_modules
 app/.svelte-kit
 app/www
 /build
+backend/bin/
 
 # OS
 .DS_Store

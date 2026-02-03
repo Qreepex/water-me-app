@@ -7,14 +7,15 @@ import (
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
+	"firebase.google.com/go/messaging"
 
 	"google.golang.org/api/option"
 )
 
 type FirebaseService struct {
-	// Add Firebase client fields here
-	app        *firebase.App
-	authClient *auth.Client
+	app             *firebase.App
+	authClient      *auth.Client
+	messagingClient *messaging.Client
 }
 
 func NewFirebaseService() (*FirebaseService, error) {
@@ -36,10 +37,15 @@ func NewFirebaseService() (*FirebaseService, error) {
 		return nil, fmt.Errorf("error getting Auth client: %v", err)
 	}
 
-	// Initialize Firebase client here
+	messagingClient, err := app.Messaging(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("error getting Messaging client: %v", err)
+	}
+
 	return &FirebaseService{
-		app:        app,
-		authClient: authClient,
+		app:             app,
+		authClient:      authClient,
+		messagingClient: messagingClient,
 	}, nil
 }
 
@@ -50,4 +56,66 @@ func (fs *FirebaseService) VerifyIDToken(ctx context.Context, idToken string) (*
 	}
 
 	return token, nil
+}
+
+// SendNotification sends a push notification to a single device token
+func (fs *FirebaseService) SendNotification(
+	ctx context.Context,
+	token, title, body string,
+	data map[string]string,
+) error {
+	message := &messaging.Message{
+		Token: token,
+		Notification: &messaging.Notification{
+			Title: title,
+			Body:  body,
+		},
+		Data: data,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+		},
+		APNS: &messaging.APNSConfig{
+			Headers: map[string]string{
+				"apns-priority": "10",
+			},
+		},
+	}
+
+	_, err := fs.messagingClient.Send(ctx, message)
+	return err
+}
+
+// SendMulticastNotification sends a push notification to multiple device tokens (up to 500)
+func (fs *FirebaseService) SendMulticastNotification(
+	ctx context.Context,
+	tokens []string,
+	title, body string,
+	data map[string]string,
+) (*messaging.BatchResponse, error) {
+	if len(tokens) == 0 {
+		return nil, fmt.Errorf("no tokens provided")
+	}
+
+	if len(tokens) > 500 {
+		return nil, fmt.Errorf("too many tokens (max 500)")
+	}
+
+	message := &messaging.MulticastMessage{
+		Tokens: tokens,
+		Notification: &messaging.Notification{
+			Title: title,
+			Body:  body,
+		},
+		Data: data,
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+		},
+		APNS: &messaging.APNSConfig{
+			Headers: map[string]string{
+				"apns-priority": "10",
+			},
+		},
+	}
+
+	return fs.messagingClient.SendMulticast(ctx, message)
 }
