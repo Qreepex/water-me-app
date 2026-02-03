@@ -19,12 +19,18 @@
 				<h4 class="font-semibold text-white">{$t('footer.product')}</h4>
 				<ul class="mt-2 space-y-1">
 					<li>
-						<a href="#features" class="text-sm text-white/70 transition hover:text-white">
+						<a
+							href={resolve("/#features")}
+							class="text-sm text-white/70 transition hover:text-white"
+						>
 							{$t('nav.features')}
 						</a>
 					</li>
 					<li>
-						<a href="#download" class="text-sm text-white/70 transition hover:text-white">
+						<a
+							href={resolve("/#download")}  
+							class="text-sm text-white/70 transition hover:text-white"
+						>
 							{$t('nav.download')}
 						</a>
 					</li>
