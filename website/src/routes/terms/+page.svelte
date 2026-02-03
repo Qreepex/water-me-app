@@ -1,5 +1,6 @@
 <script>
 	import { resolve } from '$app/paths';
+	import FooterSection from '$lib/components/landing/FooterSection.svelte';
 </script>
 
 <svelte:head>
@@ -31,98 +32,276 @@
 		<div class="prose prose-sm mt-12 max-w-none text-[#4b6658]">
 			<h2 class="text-3xl font-semibold text-[#061f12]">1. Acceptance of Terms</h2>
 			<p>
-				By accessing and using the Water Me application ("Service"), you accept and agree to be
-				bound by the terms and provision of this agreement. If you do not agree to abide by the
-				above, please do not use this service.
+				By accessing and using the Water Me application, website, and related services
+				("Service"), you accept and agree to be bound by these Terms & Conditions and our Privacy
+				Policy. If you do not agree to these terms, you must not use this Service. Your continued
+				use of the Service constitutes your acceptance of any modifications to these terms.
 			</p>
 
-			<h2 class="text-3xl font-semibold text-[#061f12]">2. Use License</h2>
+			<h2 class="text-3xl font-semibold text-[#061f12]">2. Service Description</h2>
 			<p>
-				Permission is granted to temporarily download one copy of the materials (information or
-				software) on Water Me's application for personal, non-commercial transitory viewing only.
-				This is the grant of a license, not a transfer of title, and under this license you may not:
+				Water Me is a plant care management application that allows users to track, manage, and
+				organize their plants through plant records, watering schedules, reminders, and plant
+				images. The Service is provided on an "as is" and "as available" basis for personal,
+				non-commercial use only.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">3. User Accounts & Responsibilities</h2>
+			<p>
+				When you create an account, you agree to:
 			</p>
 			<ul class="list-inside list-disc space-y-2">
-				<li>Modify or copy the materials</li>
-				<li>Use the materials for any commercial purpose or for any public display</li>
-				<li>Attempt to decompile or reverse engineer any software contained on the Service</li>
-				<li>Remove any copyright or other proprietary notations from the materials</li>
+				<li>Provide accurate, complete, and current information</li>
 				<li>
-					Transfer the materials to another person or "mirror" the materials on any other server
+					Maintain the confidentiality of your account credentials and Firebase authentication
+					tokens
+				</li>
+				<li>
+					Notify us immediately of any unauthorized access or use of your account
+				</li>
+				<li>
+					Accept full responsibility for all activities conducted through your account
+				</li>
+				<li>
+					Be at least 16 years of age (or older in your jurisdiction if the legal age of digital
+					consent is higher)
 				</li>
 			</ul>
 
-			<h2 class="text-3xl font-semibold text-[#061f12]">3. Disclaimer</h2>
-			<p>
-				The materials on Water Me's application are provided on an 'as is' basis. Water Me makes no
-				warranties, expressed or implied, and hereby disclaims and negates all other warranties
-				including, without limitation, implied warranties or conditions of merchantability, fitness
-				for a particular purpose, or non-infringement of intellectual property or other violation of
-				rights.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">4. Limitations</h2>
-			<p>
-				In no event shall Water Me or its suppliers be liable for any damages (including, without
-				limitation, damages for loss of data or profit, or due to business interruption) arising out
-				of the use or inability to use the materials on Water Me's application.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">5. Accuracy of Materials</h2>
-			<p>
-				The materials appearing on Water Me's application could include technical, typographical, or
-				photographic errors. Water Me does not warrant that any of the materials on its application
-				are accurate, complete, or current. Water Me may make changes to the materials contained on
-				its application at any time without notice.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">6. Links</h2>
-			<p>
-				Water Me has not reviewed all of the sites linked to its application and is not responsible
-				for the contents of any such linked site. The inclusion of any link does not imply
-				endorsement by Water Me of the site. Use of any such linked website is at the user's own
-				risk.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">7. Modifications</h2>
-			<p>
-				Water Me may revise these terms of service for its application at any time without notice.
-				By using this application, you are agreeing to be bound by the then current version of these
-				terms of service.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">8. Governing Law</h2>
-			<p>
-				These terms and conditions are governed by and construed in accordance with the laws of the
-				jurisdiction in which Water Me operates, and you irrevocably submit to the exclusive
-				jurisdiction of the courts in that location.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">9. User Accounts</h2>
-			<p>
-				When you create an account, you must provide information that is accurate, complete, and
-				current at all times. You are responsible for safeguarding the password and for all
-				activities that occur under your account. You must notify us immediately of any unauthorized
-				use of your account.
-			</p>
-
-			<h2 class="text-3xl font-semibold text-[#061f12]">10. Contact Us</h2>
-			<p>If you have any questions about these Terms & Conditions, please contact us at:</p>
+			<h2 class="text-3xl font-semibold text-[#061f12]">4. Prohibited Uses</h2>
+			<p>You agree not to use the Service to:</p>
 			<ul class="list-inside list-disc space-y-2">
-				<li>Email: legal@water-me.app</li>
-				<li>Address: See imprint for contact information</li>
+				<li>
+					Engage in any illegal, fraudulent, or harmful activity, including hacking, malware
+					distribution, or unauthorized access attempts
+				</li>
+				<li>
+					Upload, store, or transmit any content that violates applicable laws, including but not
+					limited to illegal material, stolen content, or content violating third-party rights
+				</li>
+				<li>
+					Harass, threaten, defame, or discriminate against any individual or group
+				</li>
+				<li>
+					Disrupt or interfere with the Service's functionality, security, or integrity
+				</li>
+				<li>
+					Reverse engineer, decompile, modify, or attempt to derive the source code of the Service
+				</li>
+				<li>
+					Scrape, crawl, or systematically extract data from the Service for unauthorized purposes
+				</li>
+				<li>
+					Use the Service for commercial purposes without written permission
+				</li>
+				<li>
+					Violate any applicable laws, regulations, or these Terms
+				</li>
 			</ul>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">5. Photo Upload & Content Rights</h2>
+			<p>
+				When you upload plant photos to the Water Me Service, you grant Water Me a
+				worldwide, non-exclusive, royalty-free license to host, store, display, and transmit
+				your images for the sole purpose of operating and providing the Service to you. You
+				retain full ownership and all intellectual property rights to your photos.
+			</p>
+			<p>
+				You agree that:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>
+					You own or have permission to upload all photos, and they do not infringe any
+					third-party intellectual property or privacy rights
+				</li>
+				<li>
+					Photos do not contain identifiable images of people, faces, or individuals without
+					explicit consent
+				</li>
+				<li>
+					You will not upload content that is illegal, abusive, defamatory, obscene, or
+					otherwise harmful
+				</li>
+				<li>
+					Water Me may delete any photos that violate these terms or applicable laws
+				</li>
+				<li>
+					You are responsible for creating backups of your photos, as Water Me is not liable
+					for accidental loss or deletion
+				</li>
+			</ul>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">6. Data Storage & Photo Hosting</h2>
+			<p>
+				Your plant data and photos are stored on our cloud providers' infrastructure. By using the
+				Service, you consent to this storage arrangement and acknowledge the associated
+				cloud-based data handling as detailed in our Privacy Policy. Water Me takes reasonable
+				security measures to protect your data, but cannot guarantee absolute security.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">7. Authentication & Data Collection</h2>
+			<p>
+				The Service uses Firebase Authentication for secure login via Google Sign-In. We
+				collect your Firebase unique identifier, email address, and basic profile information
+				necessary for authentication and service operation. All data processing complies with our
+				Privacy Policy, GDPR, and German DSGVO regulations. See our Privacy Policy for detailed
+				information on how your data is processed.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">8. Push Notifications</h2>
+			<p>
+				Water Me uses Firebase Cloud Messaging to send plant care reminders and notifications.
+				You can manage notification preferences within the application. Push notifications will
+				only be sent to registered devices associated with your account. By enabling
+				notifications, you consent to receiving these messages.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">9. Third-Party Services</h2>
+			<p>
+				The Service integrates with third-party services including Google (Firebase
+				Authentication), Amazon Web Services (S3 storage), and Simple Analytics (web analytics).
+				These services are subject to their own terms and privacy policies. Water Me is not
+				responsible for third-party service outages, data handling, or policy changes. Please
+				review their terms before using the Service.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">10. Disclaimer of Warranties</h2>
+			<p>
+				The Service is provided "as is" and "as available" without any warranties, express or
+				implied. Water Me disclaims all warranties including merchantability, fitness for a
+				particular purpose, non-infringement, and accuracy. We do not warrant that:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>The Service will be uninterrupted, error-free, or secure</li>
+				<li>Plant care information provided is always accurate or suitable for all plants</li>
+				<li>Reminders and notifications will always be delivered reliably</li>
+				<li>Your data will be permanently retained or recoverable</li>
+			</ul>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">11. Limitation of Liability</h2>
+			<p>
+				To the fullest extent permitted by law, Water Me shall not be liable for any direct,
+				indirect, incidental, consequential, special, or punitive damages arising from your use
+				or inability to use the Service, including:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>Plant damage or loss resulting from missed watering reminders</li>
+				<li>Data loss or corruption</li>
+				<li>Service interruptions or unavailability</li>
+				<li>Security breaches or unauthorized access</li>
+				<li>Reliance on inaccurate plant care information</li>
+			</ul>
+			<p>
+				This limitation applies even if Water Me has been advised of the possibility of such
+				damages. Some jurisdictions do not allow limitation of liability, so this clause may
+				not apply to you.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">12. Indemnification</h2>
+			<p>
+				You agree to indemnify and hold harmless Water Me and its officers, employees, and
+				agents from any claims, damages, losses, or expenses (including legal fees) arising from:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>Your violation of these Terms</li>
+				<li>Your use of the Service in violation of applicable laws</li>
+				<li>Content you upload or transmit through the Service</li>
+				<li>Your infringement of third-party rights</li>
+			</ul>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">13. User-Generated Content</h2>
+			<p>
+				You are solely responsible for content you create, upload, or transmit through the
+				Service. Water Me may monitor, review, or remove content that violates these Terms or
+				applicable laws. Water Me does not endorse or guarantee the accuracy of any
+				user-generated content.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">14. Intellectual Property</h2>
+			<p>
+				All content, features, and functionality of the Water Me Service, including but not
+				limited to text, graphics, logos, code, and software, are the exclusive property of
+				Water Me or its licensors and are protected by copyright and other intellectual property
+				laws. You may not reproduce, modify, distribute, or create derivative works without
+				explicit written permission.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">15. Account Termination</h2>
+			<p>
+				Water Me reserves the right to suspend or terminate your account at any time if you
+				violate these Terms or applicable laws. Upon termination, your right to use the Service
+				ceases immediately. You may request deletion of your account and associated data at any
+				time, subject to our Data Deletion Policy outlined in the Privacy Policy.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">16. GDPR & DSGVO Compliance</h2>
+			<p>
+				Water Me processes personal data in accordance with the EU General Data Protection
+				Regulation (GDPR) and the German Bundesdatenschutzgesetz (BDSG/DSGVO). As a data
+				controller, Water Me provides:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>
+					Transparent data collection, use, and storage practices detailed in our Privacy Policy
+				</li>
+				<li>Your right to access, correct, or delete your personal data</li>
+				<li>Your right to data portability and objection to processing</li>
+				<li>Secure storage with encryption and appropriate safeguards</li>
+				<li>
+					Data Protection Impact Assessments and Data Processing Agreements with third-party
+					processors
+				</li>
+			</ul>
+			<p>
+				For more information, see our complete Privacy Policy at{' '}
+				<a href={resolve('/privacy')} class="text-[#00ee57] hover:underline">
+					water-me.app/privacy
+				</a>
+				.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">17. Modifications to Terms</h2>
+			<p>
+				Water Me may modify these Terms at any time. Material changes will be notified via email
+				or prominent notice on the Service. Your continued use of the Service following
+				notification of changes constitutes acceptance of the modified terms. If you do not
+				accept changes, you must discontinue use of the Service.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">18. Governing Law & Dispute Resolution</h2>
+			<p>
+				These Terms and Conditions are governed by the laws of Germany, without regard to its
+				conflict of law provisions. You irrevocably submit to the exclusive jurisdiction of the
+				courts located in Germany for resolution of any disputes arising from these Terms or
+				your use of the Service.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">19. Entire Agreement</h2>
+			<p>
+				These Terms and Conditions, together with our Privacy Policy and any other policies
+				referenced herein, constitute the entire agreement between you and Water Me regarding
+				the Service and supersede all prior and contemporaneous agreements, understandings, and
+				negotiations.
+			</p>
+
+			<h2 class="text-3xl font-semibold text-[#061f12]">20. Contact & Support</h2>
+			<p>
+				If you have questions, concerns, or wish to exercise your rights regarding these Terms
+				or the Service, please contact us at:
+			</p>
+			<ul class="list-inside list-disc space-y-2">
+				<li>Email: ben@water-me.app</li>
+				<li>See our imprint for additional contact information and data protection officer details</li>
+			</ul>
+			<p>
+				For urgent matters related to data protection, you may also file a complaint with the
+				competent data protection authority in your jurisdiction.
+			</p>
 		</div>
 	</div>
 
 	<!-- Footer -->
-	<footer class="border-t border-[#00ee57]/10 bg-[#061f12] px-4 py-12 sm:px-6 lg:px-8">
-		<div class="mx-auto max-w-6xl">
-			<div class="text-center text-sm text-white/70">
-				© {new Date().getFullYear()} Water Me. All rights reserved.
-			</div>
-		</div>
-	</footer>
+	<FooterSection />
 </div>
 
 <style>
