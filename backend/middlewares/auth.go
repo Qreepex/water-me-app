@@ -38,6 +38,12 @@ func AuthMiddleware(firebase *services.FirebaseService) func(http.Handler) http.
 
 func auth(next http.HandlerFunc, firebase *services.FirebaseService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Allow unauthenticated access to /api/stats
+		if r.URL.Path == "/api/stats" {
+			next(w, r)
+			return
+		}
+
 		auth := r.Header.Get("Authorization")
 		if auth == "" || !strings.HasPrefix(auth, "Bearer ") {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

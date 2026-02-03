@@ -92,6 +92,7 @@ Firebase service account key should be placed at `backend/secret/fb.json`.
 ### Validation
 
 Both backend and frontend share validation logic:
+
 - `backend/validation.ts` - TypeScript validation (reference implementation)
 - `backend/validation/` - Go validation (enforced by backend)
 

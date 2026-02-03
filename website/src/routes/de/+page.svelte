@@ -1,24 +1,42 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { GITHUB_URL, INSTAGRAM_URL, TIKTOK_URL, WEB_APP_URL } from '$lib';
+	import { API_BASE_URL, GITHUB_URL, INSTAGRAM_URL, TIKTOK_URL, WEB_APP_URL } from '$lib';
 	import { t, languageStore } from '$lib/i18n.svelte';
+	import { onMount } from 'svelte';
 
 	let displayStats = $state({
 		users: 0,
 		plants: 0,
 		reminders: 0
 	});
+	let targetStats = $state({
+		users: 0,
+		plants: 0,
+		reminders: 0
+	});
 	let hasAnimated = $state(false);
+	let statsReady = $state(false);
+
+	onMount(async () => {
+		try {
+			const response = await fetch(API_BASE_URL + '/stats');
+			if (!response.ok) return;
+			const data = await response.json();
+			if (typeof data?.users !== 'number' || typeof data?.plants !== 'number') return;
+			targetStats = {
+				users: data.users,
+				plants: data.plants,
+				reminders: typeof data?.reminders === 'number' ? data.reminders : 0
+			};
+			statsReady = true;
+		} catch {
+			return;
+		}
+	});
 
 	$effect(() => {
-		if (hasAnimated) return;
+		if (!statsReady || hasAnimated) return;
 		hasAnimated = true;
-
-		const targetStats = {
-			users: 2850,
-			plants: 45320,
-			reminders: 128950
-		};
 
 		const duration = 2000;
 		const startTime = Date.now();
