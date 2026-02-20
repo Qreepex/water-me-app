@@ -48,7 +48,7 @@
 		<Auth>
 			<div class="flex-1 overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
 				<BottomNav />
-				<div class="flex h-full flex-col pb-24">
+				<div class="flex h-full flex-col pb-20">
 					{@render children()}
 				</div>
 			</div>

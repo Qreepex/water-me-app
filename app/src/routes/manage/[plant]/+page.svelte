@@ -7,7 +7,6 @@
 	import { tStore } from '$lib/i18n';
 	import PageHeader from '$lib/components/layout/PageHeader.svelte';
 	import PageContent from '$lib/components/layout/PageContent.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
 	import LoadingSpinner from '$lib/components/ui/LoadingSpinner.svelte';
 	import Alert from '$lib/components/ui/Message.svelte';
 	import type { Plant } from '$lib/types/api';
@@ -23,7 +22,7 @@
 		{ key: 'watering', emoji: '💧', label: 'plants.wateringTitle' },
 		{ key: 'fertilizing', emoji: '🍯', label: 'plants.fertilizingTitle' },
 		{ key: 'humidity', emoji: '💨', label: 'plants.humidityTitle' },
-		{ key: 'soil', emoji: '🌍', label: 'plants.soilTitle' },
+		{ key: 'soil', emoji: '💩', label: 'plants.soilTitle' },
 		{ key: 'seasonality', emoji: '❄️', label: 'plants.seasonalityTitle' },
 		{ key: 'metadata', emoji: '🏷️', label: 'plants.metadata' }
 	] as const;
@@ -78,22 +77,23 @@
 		/>
 	{:else}
 		<div class="space-y-4">
-			<Card rounded="2xl">
-				<div class="space-y-3 p-4">
-					<p class="text-base font-semibold text-[var(--text-light-main)]">
-						{$tStore('plants.manageOptionalSections')}
-					</p>
-					{#each sectionItems as item (item.key)}
-						<button
-							onclick={() => goToSection(item.key)}
-							class="flex min-h-12 w-full cursor-pointer items-center justify-between rounded-xl border border-[var(--p-emerald)]/25 bg-white px-4 py-3 text-left text-base font-medium text-[var(--text-light-main)] hover:bg-[var(--bg-light)]"
-						>
-							<span>{item.emoji} {$tStore(item.label)}</span>
-							<span aria-hidden="true">›</span>
-						</button>
-					{/each}
-				</div>
-			</Card>
+			<p class="px-1 text-base font-semibold text-[var(--text-light-main)]">
+				{$tStore('plants.manageSections')}
+			</p>
+			<div class="overflow-hidden rounded-xl bg-white">
+				{#each sectionItems as item, index (item.key)}
+					<button
+						onclick={() => goToSection(item.key)}
+						class="flex min-h-14 w-full cursor-pointer items-center justify-between px-4 py-3 text-left text-base font-medium text-[var(--text-light-main)] active:bg-[var(--bg-light)]"
+					>
+						<span>{item.emoji} {$tStore(item.label)}</span>
+						<span aria-hidden="true">›</span>
+					</button>
+					{#if index < sectionItems.length - 1}
+						<div class="mx-3 h-px bg-[var(--p-emerald)]/20"></div>
+					{/if}
+				{/each}
+			</div>
 		</div>
 	{/if}
 </PageContent>

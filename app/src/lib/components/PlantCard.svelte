@@ -43,33 +43,33 @@
 	tabindex="0"
 	onclick={openPlant}
 	onkeydown={onKeydown}
-	class="group cursor-pointer touch-manipulation overflow-hidden rounded-3xl border border-[var(--p-emerald)]/25 bg-[var(--card-light)] shadow-md transition-all duration-200 hover:border-[var(--p-emerald)]/50 active:scale-[0.99] active:shadow-sm"
+	class="group cursor-pointer touch-manipulation overflow-hidden rounded-2xl bg-white shadow transition-all duration-200 active:shadow-sm active:scale-[0.98]"
 >
 	<!-- Image -->
 	<div
-		class="relative flex h-44 items-center justify-center overflow-hidden rounded-t-3xl bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
+		class="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
 	>
 		{#if previewUrl}
 			<img
 				src={previewUrl}
 				alt={plant.name}
-				class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+				class="h-full w-full object-cover transition-transform duration-300 group-active:scale-105"
 			/>
 		{:else}
-			<div class="text-7xl transition-transform duration-300 group-hover:scale-110">🌱</div>
+			<div class="text-6xl">🌱</div>
 		{/if}
 	</div>
 
 	<!-- Content -->
-	<div class="p-5">
+	<div class="p-3.5">
 		<!-- Name and Species -->
-		<h3 class="mb-1 line-clamp-2 text-xl font-bold text-[var(--text-light-main)]">{plant.name}</h3>
-		<p class="mb-4 line-clamp-1 text-sm text-[var(--status-success)]">{plant.species}</p>
+		<h3 class="line-clamp-1 text-base font-bold text-[var(--text-light-main)]">{plant.name}</h3>
+		<p class="mb-2 line-clamp-1 text-xs text-[var(--status-success)]">{plant.species}</p>
 
 		<!-- Watering Status -->
 		{#if wateringStatus}
-			<div class="mb-4">
-				<div class={`mb-2 flex items-center gap-2 text-sm font-semibold ${wateringStatus.color}`}>
+			<div class="mb-3">
+				<div class={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold ${wateringStatus.color}`}>
 					<span>{wateringStatus.emoji}</span>
 					<span>{$tStore(wateringStatus.text, wateringStatus.args)}</span>
 				</div>
@@ -80,12 +80,13 @@
 				</p>
 			</div>
 		{/if}
+
 		<!-- Metadata Grid -->
-		<div class="grid grid-cols-2 gap-3 text-xs">
+		<div class="grid grid-cols-2 gap-2 text-xs">
 			{#if plant.watering?.intervalDays}
-				<div class="rounded-lg bg-[var(--p-emerald)]/20 p-2">
+				<div class="rounded-lg bg-[var(--p-emerald)]/20 p-1.5">
 					<div class="font-semibold text-[var(--p-emerald-dark)]">💧</div>
-					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					<p class="mt-0.5 text-xs text-[var(--text-light-main)]/80">
 						{$tStore('plants.every')}
 						{plant.watering?.intervalDays}
 						{$tStore('plants.days')}
@@ -93,9 +94,9 @@
 				</div>
 			{/if}
 			{#if plant.fertilizing?.intervalDays}
-				<div class="rounded-lg bg-[var(--status-warn)]/20 p-2">
+				<div class="rounded-lg bg-[var(--status-warn)]/20 p-1.5">
 					<div class="font-semibold text-[var(--status-warn)]">🥗</div>
-					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					<p class="mt-0.5 text-xs text-[var(--text-light-main)]/80">
 						{$tStore('plants.every')}
 						{plant.fertilizing?.intervalDays}
 						{$tStore('plants.days')}
@@ -103,23 +104,25 @@
 				</div>
 			{/if}
 			{#if plant.sunlight}
-				<div class="rounded-lg bg-[var(--status-info)]/20 p-2">
+				<div class="rounded-lg bg-[var(--status-info)]/20 p-1.5">
 					<div class="font-semibold text-[var(--status-info)]">☀️</div>
-					<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
+					<p class="mt-0.5 text-xs text-[var(--text-light-main)]/80">
 						{$tStore('plants.sunlight.' + plant.sunlight)}
 					</p>
 				</div>
 			{/if}
 			{#if plant.humidity?.targetHumidityPct}
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/80">
-					{plant.humidity?.targetHumidityPct}%
-				</p>
+				<div class="rounded-lg bg-[var(--p-emerald)]/10 p-1.5">
+					<p class="text-xs font-semibold text-[var(--text-light-main)]/80">
+						{plant.humidity?.targetHumidityPct}%
+					</p>
+				</div>
 			{/if}
 		</div>
 
 		<!-- Spray Info -->
 		{#if plant.humidity?.requiresMisting && plant.humidity?.mistingIntervalDays}
-			<div class="mb-3 rounded-lg bg-[var(--status-info)]/20 p-2">
+			<div class="mt-2 rounded-lg bg-[var(--status-info)]/20 p-1.5">
 				<p class="text-xs text-[var(--text-light-main)]/70">
 					💦 {$tStore('plants.sprayEvery')}
 					<span class="font-semibold text-[var(--status-info)]"
@@ -127,7 +130,7 @@
 					>
 					{$tStore('plants.days')}
 				</p>
-				<p class="mt-1 text-xs text-[var(--text-light-main)]/70">
+				<p class="mt-0.5 text-xs text-[var(--text-light-main)]/70">
 					{$tStore('plants.lastSprayedStatus')}:
 					<span class="font-semibold"
 						>{formatPastTimestamp(new Date(plant.humidity?.lastMisted ?? ''))}</span
@@ -138,10 +141,10 @@
 
 		<!-- Flags -->
 		{#if plant.flags && plant.flags.length > 0}
-			<div class="mb-3 flex flex-wrap gap-2">
+			<div class="mt-2 flex flex-wrap gap-1.5">
 				{#each plant.flags as flag (flag)}
 					<span
-						class="rounded-full bg-[var(--status-warn)]/30 px-2 py-1 text-xs font-medium text-[var(--status-warn)]"
+						class="rounded-full bg-[var(--status-warn)]/30 px-2 py-0.5 text-xs font-medium text-[var(--status-warn)]"
 						>⚡{flag}</span
 					>
 				{/each}
@@ -150,7 +153,7 @@
 
 		<!-- Notes Preview -->
 		{#if plant.notes && plant.notes.length > 0}
-			<div class="border-t border-[var(--p-emerald)]/30 pt-3">
+			<div class="mt-2 border-t border-[var(--p-emerald)]/20 pt-2">
 				<p class="line-clamp-2 text-xs text-[var(--text-light-main)]/60">📝 {plant.notes[0]}</p>
 			</div>
 		{/if}

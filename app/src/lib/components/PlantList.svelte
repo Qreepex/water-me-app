@@ -41,29 +41,23 @@
 	});
 </script>
 
-<!-- Header Bar with Search and Sort Button -->
-<div
-	class="mb-4 flex flex-shrink-0 flex-col gap-3 rounded-2xl border border-[var(--p-emerald)]/20 bg-white/80 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between"
->
-	<!-- Search Input -->
-	<SearchInput
-		bind:value={searchQuery}
-		placeholder={$tStore('plants.searchPlants') ?? 'Search plants...'}
-		ariaLabel={$tStore('plants.searchPlants') ?? 'Search plants'}
-	/>
-
-	<!-- Count and Sort Button -->
-	<div class="flex items-center justify-between gap-3 sm:justify-start">
-		<div
-			class="rounded-full bg-[var(--p-emerald)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--text-light-main)]"
-		>
-			{filteredPlants.length}{filteredPlants.length === 1
-				? ' ' + $tStore('common.plant')
-				: ' ' + $tStore('common.plants')}
-		</div>
-
-		<SortControls {sortBy} {onSortChange} />
+<!-- Mobile-first search and controls -->
+<div class="mb-3 flex flex-shrink-0 items-center gap-2">
+	<div class="min-w-0 flex-1">
+		<SearchInput
+			bind:value={searchQuery}
+			placeholder={$tStore('plants.searchPlants') ?? 'Search plants...'}
+			ariaLabel={$tStore('plants.searchPlants') ?? 'Search plants'}
+		/>
 	</div>
+
+	<div
+		class="flex h-11 min-w-[2.5rem] flex-shrink-0 items-center justify-center rounded-full bg-[var(--p-emerald)]/10 px-2.5 text-xs font-semibold text-[var(--text-light-main)]"
+	>
+		{filteredPlants.length}
+	</div>
+
+	<SortControls {sortBy} {onSortChange} compact={true} iconOnly={true} />
 </div>
 
 <Scrollable multi>
