@@ -22,13 +22,13 @@
 	}
 </script>
 
-<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+<div class="space-y-4">
 	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.soilTitle')}</h2>
 
 	<div class="space-y-4">
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div>
-				<label for="soil-type" class="mb-1 block text-sm font-semibold text-gray-700">
+				<label for="soil-type" class="mb-1 block text-base font-semibold text-gray-700">
 					Soil Type
 				</label>
 				<input
@@ -36,12 +36,12 @@
 					id="soil-type"
 					bind:value={formData.soilType}
 					placeholder="e.g., Peat moss"
-					class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
+					class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
 			</div>
 
 			<div>
-				<label for="repot-cycle" class="mb-1 block text-sm font-semibold text-gray-700">
+				<label for="repot-cycle" class="mb-1 block text-base font-semibold text-gray-700">
 					Repotting Cycle (years)
 				</label>
 				<input
@@ -49,29 +49,29 @@
 					id="repot-cycle"
 					min="1"
 					bind:value={formData.repottingCycle}
-					class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
+					class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
 			</div>
 		</div>
 
 		<div>
 			<fieldset>
-				<legend class="mb-2 block text-sm font-semibold text-gray-700">Soil Components</legend>
-				<div class="mb-2 flex gap-2">
+				<legend class="mb-2 block text-base font-semibold text-gray-700">Soil Components</legend>
+				<div class="mb-2 flex flex-col gap-2 sm:flex-row">
 					<input
 						type="text"
 						bind:value={soilComponentInput}
 						placeholder="e.g., Perlite, Orchid bark"
-						class="flex-1 rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
+						class="flex-1 rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 					/>
-					<Button onclick={addSoilComponent} text="Add" variant="primary" />
+					<Button onclick={addSoilComponent} text="Add" variant="primary" class="w-full sm:w-auto" />
 				</div>
 
 				{#if formData.soilComponents.length > 0}
 					<div class="space-y-2">
 						{#each formData.soilComponents as component, i (i)}
-							<div class="flex items-center justify-between rounded-lg bg-blue-50 p-2">
-								<span class="text-sm text-gray-800">{component}</span>
+							<div class="flex items-center justify-between rounded-lg bg-blue-50 p-3">
+								<span class="text-base text-gray-800">{component}</span>
 								<Button
 									text="Remove"
 									variant="danger"
@@ -82,7 +82,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="text-sm text-gray-500 italic">No components added</p>
+					<p class="text-base text-gray-500 italic">No components added</p>
 				{/if}
 			</fieldset>
 		</div>

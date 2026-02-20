@@ -743,9 +743,9 @@
 				</button>
 
 				{#if expandedSections.photos}
-					<div class="space-y-4 border-t border-emerald-100 p-4">
+					<div class="space-y-4 border-t border-emerald-100 p-3">
 						<label class="block">
-							<span class="text-sm font-medium text-emerald-900">{$tStore('plants.addImages')}</span
+							<span class="text-base font-medium text-emerald-900">{$tStore('plants.addImages')}</span
 							>
 							<input
 								type="file"
@@ -753,24 +753,24 @@
 								multiple
 								onchange={onFilesSelected}
 								aria-label={$tStore('plants.addImages')}
-								class="mt-2 w-full cursor-pointer touch-manipulation rounded-lg border border-emerald-300 bg-white p-3 text-sm"
+								class="mt-2 w-full cursor-pointer touch-manipulation rounded-lg border border-emerald-300 bg-white p-3 text-base"
 							/>
 						</label>
 
 						{#if photos.length}
 							<div>
-								<p class="mb-2 text-xs font-semibold text-emerald-700">
+								<p class="mb-2 text-sm font-semibold text-emerald-700">
 									{$tStore('plants.newUploads')}
 								</p>
 								<div class="grid grid-cols-2 gap-2">
 									{#each photos as p (p.previewUrl)}
 										<div class="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50">
 											<img src={p.previewUrl} alt={p.fileName} class="h-20 w-full object-cover" />
-											<div class="p-2 text-xs">
+											<div class="p-2 text-sm">
 												<div class="mb-1 truncate font-medium text-emerald-900">
 													{p.fileName}
 												</div>
-												<div class="text-xs">
+												<div class="text-sm">
 													{#if p.status === 'pending'}
 														<span class="text-gray-600">⏸️ Pending</span>
 													{:else if p.status === 'compressing'}
@@ -792,7 +792,7 @@
 
 						{#if previewUrls.length}
 							<div>
-								<p class="mb-2 text-xs font-semibold text-emerald-700">
+								<p class="mb-2 text-sm font-semibold text-emerald-700">
 									{$tStore('plants.existingPhotos')}
 								</p>
 								<div class="grid grid-cols-2 gap-2">
@@ -818,7 +818,7 @@
 							>
 								<div class="text-center">
 									<div class="text-2xl">🖼️</div>
-									<p class="text-xs text-emerald-700">{$tStore('plants.noPhotosYet')}</p>
+									<p class="text-sm text-emerald-700">{$tStore('plants.noPhotosYet')}</p>
 								</div>
 							</div>
 						{/if}
@@ -839,7 +839,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.basic ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.basic}
-					<div class="border-t border-gray-100 p-4">
+					<div class="border-t border-gray-100 p-3">
 						<BasicInformationForm {formData} />
 					</div>
 				{/if}
@@ -857,7 +857,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.location ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.location}
-					<div class="border-t border-gray-100 p-4">
+					<div class="border-t border-gray-100 p-3">
 						<LocationForm {formData} />
 					</div>
 				{/if}
@@ -875,7 +875,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.watering ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.watering}
-					<div class="border-t border-blue-100 p-4">
+					<div class="border-t border-blue-100 p-3">
 						<WateringForm {formData} />
 					</div>
 				{/if}
@@ -893,7 +893,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.fertilizing ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.fertilizing}
-					<div class="border-t border-yellow-100 p-4">
+					<div class="border-t border-yellow-100 p-3">
 						<FertilizingForm {formData} />
 					</div>
 				{/if}
@@ -911,7 +911,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.humidity ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.humidity}
-					<div class="space-y-4 border-t border-purple-100 p-4">
+					<div class="space-y-4 border-t border-purple-100 p-3">
 						<MistingForm {formData} />
 					</div>
 				{/if}
@@ -929,7 +929,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.soil ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.soil}
-					<div class="border-t border-amber-100 p-4">
+					<div class="border-t border-amber-100 p-3">
 						<SoilForm {formData} bind:soilComponentInput />
 					</div>
 				{/if}
@@ -947,7 +947,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.seasonality ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.seasonality}
-					<div class="border-t border-orange-100 p-4">
+					<div class="border-t border-orange-100 p-3">
 						<SeasonalityForm {formData} />
 					</div>
 				{/if}
@@ -965,7 +965,7 @@
 					<span class="text-lg" aria-hidden="true">{expandedSections.metadata ? '−' : '+'}</span>
 				</button>
 				{#if expandedSections.metadata}
-					<div class="border-t border-red-100 p-4">
+					<div class="border-t border-red-100 p-3">
 						<MetadataForm {formData} bind:newNote />
 					</div>
 				{/if}
@@ -979,14 +979,14 @@
 		>
 			<Button
 				variant="secondary"
-				size="md"
+				size="lg"
 				onclick={cancelForm}
 				text="common.cancel"
 				class="w-full cursor-pointer"
 			/>
 			<Button
 				variant="primary"
-				size="md"
+				size="lg"
 				disabled={submitting}
 				onclick={submitForm}
 				text={submitting ? 'common.saving' : 'common.save'}

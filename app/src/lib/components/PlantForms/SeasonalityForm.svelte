@@ -9,18 +9,18 @@
 	let { formData = $bindable() }: Props = $props();
 </script>
 
-<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+<div class="space-y-4">
 	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.seasonalityTitle')}</h2>
 
 	<div class="space-y-4">
-		<label class="flex items-center gap-2">
-			<input type="checkbox" bind:checked={formData.winterRestPeriod} class="h-4 w-4" />
-			<span class="text-sm font-semibold text-gray-700">Has winter rest period</span>
+		<label class="flex min-h-11 items-center gap-3">
+			<input type="checkbox" bind:checked={formData.winterRestPeriod} class="h-5 w-5" />
+			<span class="text-base font-semibold text-gray-700">Has winter rest period</span>
 		</label>
 
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div>
-				<label for="winter-factor" class="mb-1 block text-sm font-semibold text-gray-700">
+				<label for="winter-factor" class="mb-1 block text-base font-semibold text-gray-700">
 					Winter Water Factor: <span class="font-bold text-emerald-600"
 						>{(formData.winterWaterFactor * 100).toFixed(0)}%</span
 					>
@@ -34,18 +34,18 @@
 					bind:value={formData.winterWaterFactor}
 					class="w-full accent-blue-600"
 				/>
-				<p class="mt-1 text-xs text-gray-500">Multiply normal watering by this factor</p>
+				<p class="mt-1 text-sm text-gray-500">Multiply normal watering by this factor</p>
 			</div>
 
 			<div>
-				<label for="min-temp" class="mb-1 block text-sm font-semibold text-gray-700">
+				<label for="min-temp" class="mb-1 block text-base font-semibold text-gray-700">
 					Minimum Temperature (°C)
 				</label>
 				<input
 					type="number"
 					id="min-temp"
 					bind:value={formData.minTempCelsius}
-					class="w-full rounded-lg border-2 border-emerald-200 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none"
+					class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
 			</div>
 		</div>
