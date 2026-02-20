@@ -16,7 +16,7 @@
 	<div class="space-y-4">
 		<div>
 			<label for="fert-interval" class="mb-1 block text-base font-semibold text-gray-700">
-				Interval (days)
+				{$tStore('plants.formIntervalDays')}
 			</label>
 			<input
 				type="number"
@@ -28,36 +28,37 @@
 		</div>
 
 		<div>
-			<label for="fert-type" class="mb-1 block text-base font-semibold text-gray-700">Type</label>
+			<label for="fert-type" class="mb-1 block text-base font-semibold text-gray-700"
+				>{$tStore('plants.formType')}</label
+			>
 			<select
 				id="fert-type"
 				bind:value={formData.fertilizingType}
 				class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 			>
 				{#each Object.values(FertilizerType) as type (type)}
-					<option value={type}>{type}</option>
+					<option value={type}>{$tStore('plants.fertilizerTypeOptions.' + type) || type}</option>
 				{/each}
 			</select>
 		</div>
 
 		<div>
 			<label for="npk-ratio" class="mb-1 block text-base font-semibold text-gray-700">
-				NPK Ratio
+				{$tStore('plants.npkRatio')}
 			</label>
 			<input
 				type="text"
 				id="npk-ratio"
 				bind:value={formData.npkRatio}
-				placeholder="e.g., 10:10:10"
+				placeholder={$tStore('plants.formNpkPlaceholder')}
 				class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 			/>
 		</div>
 
 		<div>
 			<label for="concentration" class="mb-1 block text-base font-semibold text-gray-700">
-				Concentration (%): <span class="font-bold text-emerald-600"
-					>{formData.concentrationPercent}</span
-				>
+				{$tStore('plants.concentration')} (%):
+				<span class="font-bold text-emerald-600">{formData.concentrationPercent}</span>
 			</label>
 			<input
 				type="range"
@@ -71,7 +72,7 @@
 
 		<label class="flex min-h-11 items-center gap-3">
 			<input type="checkbox" bind:checked={formData.activeInWinter} class="h-5 w-5" />
-			<span class="text-base text-gray-700">Fertilize in winter</span>
+			<span class="text-base text-gray-700">{$tStore('plants.formFertilizeInWinter')}</span>
 		</label>
 	</div>
 </div>

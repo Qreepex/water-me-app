@@ -29,20 +29,20 @@
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div>
 				<label for="soil-type" class="mb-1 block text-base font-semibold text-gray-700">
-					Soil Type
+					{$tStore('plants.soilType')}
 				</label>
 				<input
 					type="text"
 					id="soil-type"
 					bind:value={formData.soilType}
-					placeholder="e.g., Peat moss"
+					placeholder={$tStore('plants.formSoilTypePlaceholder')}
 					class="w-full rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 				/>
 			</div>
 
 			<div>
 				<label for="repot-cycle" class="mb-1 block text-base font-semibold text-gray-700">
-					Repotting Cycle (years)
+					{$tStore('plants.repottingCycle')} ({$tStore('plants.years')})
 				</label>
 				<input
 					type="number"
@@ -56,15 +56,22 @@
 
 		<div>
 			<fieldset>
-				<legend class="mb-2 block text-base font-semibold text-gray-700">Soil Components</legend>
+				<legend class="mb-2 block text-base font-semibold text-gray-700">
+					{$tStore('plants.soilComponents')}
+				</legend>
 				<div class="mb-2 flex flex-col gap-2 sm:flex-row">
 					<input
 						type="text"
 						bind:value={soilComponentInput}
-						placeholder="e.g., Perlite, Orchid bark"
+						placeholder={$tStore('plants.formSoilComponentsPlaceholder')}
 						class="flex-1 rounded-lg border-2 border-emerald-200 px-4 py-3 text-base shadow-sm focus:border-emerald-500 focus:outline-none"
 					/>
-					<Button onclick={addSoilComponent} text="Add" variant="primary" class="w-full sm:w-auto" />
+					<Button
+						onclick={addSoilComponent}
+						text="plants.formAdd"
+						variant="primary"
+						class="w-full sm:w-auto"
+					/>
 				</div>
 
 				{#if formData.soilComponents.length > 0}
@@ -73,7 +80,7 @@
 							<div class="flex items-center justify-between rounded-lg bg-blue-50 p-3">
 								<span class="text-base text-gray-800">{component}</span>
 								<Button
-									text="Remove"
+									text="plants.formRemove"
 									variant="danger"
 									size="sm"
 									onclick={() => removeSoilComponent(i)}
@@ -82,7 +89,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="text-base text-gray-500 italic">No components added</p>
+					<p class="text-base text-gray-500 italic">{$tStore('plants.formNoComponentsAdded')}</p>
 				{/if}
 			</fieldset>
 		</div>
