@@ -42,7 +42,7 @@
 </script>
 
 <!-- Mobile-first search and controls -->
-<div class="mb-3 flex flex-shrink-0 items-center gap-2">
+<div class="mb-3 flex flex-shrink-0 items-center gap-2 px-2">
 	<div class="min-w-0 flex-1">
 		<SearchInput
 			bind:value={searchQuery}

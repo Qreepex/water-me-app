@@ -76,7 +76,7 @@
 			description={error || $tStore('common.plantNotFound')}
 		/>
 	{:else}
-		<div class="space-y-4">
+		<div class="space-y-4 px-2">
 			<p class="px-1 text-base font-semibold text-[var(--text-light-main)]">
 				{$tStore('plants.manageSections')}
 			</p>

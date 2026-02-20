@@ -119,7 +119,7 @@
 		<Alert type="error" title="common.error" description={error} />
 	{/if}
 
-	<div class="space-y-4 pb-[calc(env(safe-area-inset-bottom)+12rem)]">
+	<div class="space-y-4 pb-[calc(env(safe-area-inset-bottom)+12rem)] px-2">
 		<BasicInformationForm {formData} />
 		<div
 			class="fixed right-3 left-3 z-50 flex gap-3 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur md:right-10 md:left-10 xl:right-32 xl:left-32"

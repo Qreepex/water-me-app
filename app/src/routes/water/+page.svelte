@@ -185,7 +185,7 @@
 							{getDuePlants().length}
 						</span>
 					</div>
-					<List>
+					<List noPadding>
 						{#each getDuePlants() as plant (plant.id)}
 							<WaterPlantCard
 								{plant}
@@ -216,7 +216,7 @@
 							{getNotDuePlants().length}
 						</span>
 					</div>
-					<List>
+					<List noPadding>
 						{#each getNotDuePlants() as plant (plant.id)}
 							<WaterPlantCard
 								{plant}
@@ -248,7 +248,7 @@
 							{getPlantsWithoutConfig().length}
 						</span>
 					</div>
-					<List>
+					<List noPadding>
 						{#each getPlantsWithoutConfig() as plant (plant.id)}
 							<div
 								class="flex items-center justify-between rounded-lg bg-[var(--bg-surface)] p-4 text-sm"

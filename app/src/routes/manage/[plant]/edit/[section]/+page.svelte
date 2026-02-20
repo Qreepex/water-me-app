@@ -239,7 +239,7 @@
 			<Alert type="error" title="common.error" description={error} />
 		{/if}
 
-		<div class="space-y-4 pb-[calc(env(safe-area-inset-bottom)+12rem)]">
+		<div class="space-y-4 px-2 pb-[calc(env(safe-area-inset-bottom)+12rem)]">
 			{#if section === 'basic'}
 				<BasicInformationForm {formData} />
 			{:else if section === 'location'}

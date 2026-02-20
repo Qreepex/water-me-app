@@ -12,7 +12,7 @@
 	const { title, description, icon, children }: Props = $props();
 </script>
 
-<div class="mb-4 flex flex-wrap items-center justify-between gap-3 md:mb-8">
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3 md:mb-8 px-1">
 	<div class="flex min-w-0 items-center gap-3">
 		{#if icon}
 			<span class="flex-shrink-0 text-4xl md:text-5xl">{icon}</span>
@@ -28,6 +28,8 @@
 			{/if}
 		</div>
 	</div>
+<div class="px-2">
+		{@render children?.()}
+</div>
 
-	{@render children?.()}
 </div>

@@ -21,7 +21,7 @@
 <div class="relative flex min-h-0 flex-col flex-1">
 	<!-- Fade out overlay at top (absolutely positioned, doesn't affect layout) -->
 	<div
-		class="pointer-events-none absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-10 transition-opacity duration-100 {isScrolled
+		class="pointer-events-none absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/12 via-black/5 to-transparent z-10 transition-opacity duration-150 {isScrolled
 			? 'opacity-100'
 			: 'opacity-0'}"
 	></div>
@@ -38,7 +38,7 @@
 
 		<!-- Fade out overlay at bottom to indicate scrollable content -->
 		<div
-			class="pointer-events-none sticky bottom-0 left-0 right-0 h-4 bg-gradient-to-b from-transparent via-white/40 to-white/90 z-10"
+			class="pointer-events-none sticky bottom-0 left-0 right-0 h-3 bg-gradient-to-b from-transparent via-black/5 to-black/12 z-10"
 		></div>
 	</div>
 </div>

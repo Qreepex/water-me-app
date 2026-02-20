@@ -16,9 +16,7 @@
 </script>
 
 <!-- Header -->
-<div class="flex-shrink-0">
 	<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
-</div>
 
 <PageContent>
 	<!-- Loading State -->
