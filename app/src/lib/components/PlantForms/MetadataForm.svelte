@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { FormData } from '$lib/types/forms';
 	import { PlantFlag } from '$lib/types/api';
+	import { tStore } from '$lib/i18n';
 	import Button from '../ui/Button.svelte';
 
 	interface Props {
@@ -30,14 +31,10 @@
 	}
 </script>
 
-<details class="space-y-4">
-	<summary class="cursor-pointer font-semibold text-green-700 select-none">
-		<span>🏷️ Flags & Notes</span>
-		<span class="ml-2 text-sm text-gray-600">▶</span>
-	</summary>
+<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.metadataTitle')}</h2>
 
-	<div class="ml-2 space-y-4">
-		<!-- Flags -->
+	<div class="space-y-4">
 		<div>
 			<span class="mb-2 block text-sm font-semibold text-gray-700">Flags</span>
 			<div class="space-y-2">
@@ -55,7 +52,6 @@
 			</div>
 		</div>
 
-		<!-- Notes -->
 		<fieldset>
 			<legend class="mb-2 block text-sm font-semibold text-gray-700">Notes</legend>
 			<div class="mb-2 flex gap-2">
@@ -83,4 +79,4 @@
 			{/if}
 		</fieldset>
 	</div>
-</details>
+</div>

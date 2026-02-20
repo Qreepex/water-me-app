@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
 	import type { FormData } from '$lib/types/forms';
 
 	interface Props {
@@ -8,13 +9,10 @@
 	let { formData = $bindable() }: Props = $props();
 </script>
 
-<details class="space-y-4">
-	<summary class="cursor-pointer font-semibold text-green-700 select-none">
-		<span>❄️ Seasonality</span>
-		<span class="ml-2 text-sm text-gray-600">▶</span>
-	</summary>
+<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.seasonalityTitle')}</h2>
 
-	<div class="ml-2 space-y-4">
+	<div class="space-y-4">
 		<label class="flex items-center gap-2">
 			<input type="checkbox" bind:checked={formData.winterRestPeriod} class="h-4 w-4" />
 			<span class="text-sm font-semibold text-gray-700">Has winter rest period</span>
@@ -52,4 +50,4 @@
 			</div>
 		</div>
 	</div>
-</details>
+</div>

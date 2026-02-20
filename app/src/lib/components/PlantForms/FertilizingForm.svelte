@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
 	import type { FormData } from '$lib/types/forms';
 	import { FertilizerType } from '$lib/types/api';
 
@@ -10,7 +11,7 @@
 </script>
 
 <div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
-	<h2 class="mb-4 text-xl font-bold text-green-800">🥗 Fertilizing</h2>
+	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.fertilizingTitle')}</h2>
 
 	<div class="space-y-4">
 		<div>

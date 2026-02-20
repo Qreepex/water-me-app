@@ -43,11 +43,11 @@
 	tabindex="0"
 	onclick={openPlant}
 	onkeydown={onKeydown}
-	class="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--p-emerald)]/30 bg-[var(--card-light)] shadow-md transition-all duration-300 hover:border-[var(--p-emerald)]/60 hover:bg-[var(--card-light)]/80 hover:shadow-xl"
+	class="group cursor-pointer touch-manipulation overflow-hidden rounded-3xl border border-[var(--p-emerald)]/25 bg-[var(--card-light)] shadow-md transition-all duration-200 hover:border-[var(--p-emerald)]/50 active:scale-[0.99] active:shadow-sm"
 >
 	<!-- Image -->
 	<div
-		class="relative flex h-48 items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
+		class="relative flex h-44 items-center justify-center overflow-hidden rounded-t-3xl bg-gradient-to-br from-[var(--p-emerald)] to-[var(--p-emerald-dark)]"
 	>
 		{#if previewUrl}
 			<img

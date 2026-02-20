@@ -18,7 +18,7 @@
 		bind:value
 		{placeholder}
 		aria-label={ariaLabel}
-		class="w-full rounded-lg border border-[var(--p-emerald)]/30 bg-white py-2 pr-10 pl-10 text-sm placeholder-[var(--text-light-main)]/40 transition-all focus:border-[var(--p-emerald)]/60 focus:ring-2 focus:ring-[var(--p-emerald)]/20 focus:outline-none"
+		class="w-full rounded-xl border border-[var(--p-emerald)]/30 bg-white/95 py-3 pr-10 pl-10 text-base placeholder-[var(--text-light-main)]/40 shadow-sm transition-all focus:border-[var(--p-emerald)]/60 focus:ring-2 focus:ring-[var(--p-emerald)]/20 focus:outline-none"
 	/>
 	<svg
 		class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--p-emerald)]/50"

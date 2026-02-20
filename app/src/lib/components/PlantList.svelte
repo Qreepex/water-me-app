@@ -42,7 +42,9 @@
 </script>
 
 <!-- Header Bar with Search and Sort Button -->
-<div class="mb-4 flex flex-shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+<div
+	class="mb-4 flex flex-shrink-0 flex-col gap-3 rounded-2xl border border-[var(--p-emerald)]/20 bg-white/80 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+>
 	<!-- Search Input -->
 	<SearchInput
 		bind:value={searchQuery}
@@ -51,8 +53,10 @@
 	/>
 
 	<!-- Count and Sort Button -->
-	<div class="flex items-center gap-3">
-		<div class="text-sm font-medium text-[var(--text-light-main)]">
+	<div class="flex items-center justify-between gap-3 sm:justify-start">
+		<div
+			class="rounded-full bg-[var(--p-emerald)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--text-light-main)]"
+		>
 			{filteredPlants.length}{filteredPlants.length === 1
 				? ' ' + $tStore('common.plant')
 				: ' ' + $tStore('common.plants')}

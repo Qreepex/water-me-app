@@ -7,6 +7,9 @@
 	import { getPlantsStore } from '$lib/stores/plants.svelte';
 	import type { SortOption } from '$lib/utils/plant';
 	import PageContent from '$lib/components/layout/PageContent.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	const store = getPlantsStore();
 	let sortBy = $state<SortOption>('nameAsc');
@@ -24,7 +27,9 @@
 	{:else if store.error}
 		<Alert type="error" title="common.errorLoadingPlants" description={store.error} />
 	{:else if store.plants.length === 0}
-		<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants" />
+			<EmptyState icon="🪴" title="plants.noPlants" description="plants.startAddingPlants">
+			<Button variant="primary" onclick={() => goto(resolve('/create'))} text="plants.addPlant" />
+		</EmptyState>
 	{:else}
 		<!-- Scrollable Plant List -->
 		<PlantList plants={store.plants} {sortBy} onSortChange={(value) => (sortBy = value)} />

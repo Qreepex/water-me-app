@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tStore } from '$lib/i18n';
 	import type { FormData } from '$lib/types/forms';
 	import Button from '../ui/Button.svelte';
 
@@ -21,13 +22,10 @@
 	}
 </script>
 
-<details class="space-y-4">
-	<summary class="cursor-pointer font-semibold text-green-700 select-none">
-		<span>🪴 Soil</span>
-		<span class="ml-2 text-sm text-gray-600">▶</span>
-	</summary>
+<div class="rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-md backdrop-blur">
+	<h2 class="mb-4 text-xl font-bold text-green-800">{$tStore('plants.soilTitle')}</h2>
 
-	<div class="ml-2 space-y-4">
+	<div class="space-y-4">
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div>
 				<label for="soil-type" class="mb-1 block text-sm font-semibold text-gray-700">
@@ -89,4 +87,4 @@
 			</fieldset>
 		</div>
 	</div>
-</details>
+</div>

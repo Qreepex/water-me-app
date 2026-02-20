@@ -30,7 +30,7 @@
 		id="sort"
 		value={sortBy}
 		onchange={handleChange}
-		class="w-full rounded-lg border-2 border-[var(--p-emerald)] bg-[var(--card-light)] px-4 py-2 text-sm font-medium text-[var(--text-light-main)] transition hover:border-[var(--p-emerald-dark)] focus:border-[var(--p-emerald)] focus:outline-none sm:w-auto"
+		class="w-full rounded-xl border-2 border-[var(--p-emerald)] bg-[var(--card-light)] px-4 py-3 text-base font-medium text-[var(--text-light-main)] shadow-sm transition hover:border-[var(--p-emerald-dark)] focus:border-[var(--p-emerald)] focus:outline-none sm:w-auto"
 	>
 		{#each sortOptions as option (option.value)}
 			<option value={option.value}>{option.icon} {$tStore(option.label)}</option>
