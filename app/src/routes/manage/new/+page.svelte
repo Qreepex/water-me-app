@@ -30,55 +30,104 @@
 		error = null;
 
 		try {
-			const createPayload = {
-				name: formData.name,
-				species: formData.species,
-				isToxic: formData.isToxic,
-				sunlight: formData.sunlight,
-				preferedTemperature: formData.preferedTemperature,
-				location: {
-					room: formData.room,
-					position: formData.position,
+			const hasChanged = <K extends keyof FormData>(key: K): boolean => {
+				if (Array.isArray(formData[key]) && Array.isArray(initialFormData[key])) {
+					return JSON.stringify(formData[key]) !== JSON.stringify(initialFormData[key]);
+				}
+
+				return formData[key] !== initialFormData[key];
+			};
+
+			const now = new Date().toISOString();
+			const createPayload: Record<string, unknown> = {
+				name: formData.name.trim(),
+				species: formData.species.trim()
+			};
+
+			if (hasChanged('isToxic')) createPayload.isToxic = formData.isToxic;
+			if (hasChanged('sunlight')) createPayload.sunlight = formData.sunlight;
+			if (hasChanged('preferedTemperature')) {
+				createPayload.preferedTemperature = formData.preferedTemperature;
+			}
+
+			if (hasChanged('room') || hasChanged('position') || hasChanged('isOutdoors')) {
+				createPayload.location = {
+					room: formData.room.trim(),
+					position: formData.position.trim(),
 					isOutdoors: formData.isOutdoors
-				},
-				watering: {
+				};
+			}
+
+			if (
+				hasChanged('wateringIntervalDays') ||
+				hasChanged('wateringMethod') ||
+				hasChanged('waterType')
+			) {
+				createPayload.watering = {
 					intervalDays: formData.wateringIntervalDays,
 					method: formData.wateringMethod,
-					waterType: formData.waterType
-				},
-				fertilizing: {
+					waterType: formData.waterType,
+					lastWatered: now
+				};
+			}
+
+			if (
+				hasChanged('fertilizingType') ||
+				hasChanged('fertilizingIntervalDays') ||
+				hasChanged('npkRatio') ||
+				hasChanged('concentrationPercent') ||
+				hasChanged('activeInWinter')
+			) {
+				createPayload.fertilizing = {
 					type: formData.fertilizingType,
 					intervalDays: formData.fertilizingIntervalDays,
-					npkRatio: formData.npkRatio,
+					npkRatio: formData.npkRatio.trim(),
 					concentrationPercent: formData.concentrationPercent,
-					activeInWinter: formData.activeInWinter
-				},
-				humidity: {
+					activeInWinter: formData.activeInWinter,
+					lastFertilized: now
+				};
+			}
+
+			if (
+				hasChanged('targetHumidity') ||
+				hasChanged('requiresMisting') ||
+				hasChanged('mistingIntervalDays') ||
+				hasChanged('requiresHumidifier')
+			) {
+				createPayload.humidity = {
 					targetHumidityPct: formData.targetHumidity,
 					requiresMisting: formData.requiresMisting,
 					mistingIntervalDays: formData.mistingIntervalDays,
 					requiresHumidifier: formData.requiresHumidifier
-				},
-				soil: {
-					type: formData.soilType,
+				};
+			}
+
+			if (hasChanged('soilType') || hasChanged('repottingCycle') || hasChanged('soilComponents')) {
+				createPayload.soil = {
+					type: formData.soilType.trim(),
 					repottingCycle: formData.repottingCycle,
 					components: formData.soilComponents
-				},
-				seasonality: {
+				};
+			}
+
+			if (
+				hasChanged('winterRestPeriod') ||
+				hasChanged('winterWaterFactor') ||
+				hasChanged('minTempCelsius')
+			) {
+				createPayload.seasonality = {
 					winterRestPeriod: formData.winterRestPeriod,
 					winterWaterFactor: formData.winterWaterFactor,
 					minTempCelsius: formData.minTempCelsius
-				},
-				photoIds: [],
-				flags: formData.flags,
-				notes: formData.notes,
-				pestHistory: [],
-				growthHistory: []
-			};
+				};
+			}
+
+			if (hasChanged('flags')) createPayload.flags = formData.flags;
+			if (hasChanged('notes')) createPayload.notes = formData.notes;
 
 			const res = await fetchData('/api/plants', {
 				method: 'post' as const,
-				body: createPayload
+				body: createPayload as never
 			});
 
 			if (!res.ok) {
@@ -119,7 +168,7 @@
 		<Alert type="error" title="common.error" description={error} />
 	{/if}
 
-	<div class="space-y-4 pb-[calc(env(safe-area-inset-bottom)+12rem)] px-2">
+	<div class="space-y-4 px-2 pb-[calc(env(safe-area-inset-bottom)+12rem)]">
 		<BasicInformationForm {formData} />
 		<div
 			class="fixed right-3 left-3 z-50 flex gap-3 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur md:right-10 md:left-10 xl:right-32 xl:left-32"

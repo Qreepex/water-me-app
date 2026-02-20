@@ -70,7 +70,7 @@
 <!-- Menu Overlay -->
 {#if showMenu}
 	<div class="pt-safe fixed inset-0 bottom-20 z-50 bg-white">
-		<div class="flex h-full flex-col overflow-hidden px-3 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
+		<div class="flex h-full flex-col overflow-hidden px-2 pt-2 md:px-10 md:pt-10 xl:px-32 xl:pt-14">
 			<BurgerMenu onClose={() => (showMenu = false)} />
 		</div>
 	</div>

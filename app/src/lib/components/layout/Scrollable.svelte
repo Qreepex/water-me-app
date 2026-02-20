@@ -18,10 +18,10 @@
 </script>
 
 <!-- Outer wrapper with flex column layout -->
-<div class="relative flex min-h-0 flex-col flex-1">
+<div class="relative flex min-h-0 flex-1 flex-col">
 	<!-- Fade out overlay at top (absolutely positioned, doesn't affect layout) -->
 	<div
-		class="pointer-events-none absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black/12 via-black/5 to-transparent z-10 transition-opacity duration-150 {isScrolled
+		class="pointer-events-none absolute top-0 right-0 left-0 z-10 h-3 bg-gradient-to-b from-black/12 via-black/5 to-transparent transition-opacity duration-150 {isScrolled
 			? 'opacity-100'
 			: 'opacity-0'}"
 	></div>
@@ -38,7 +38,7 @@
 
 		<!-- Fade out overlay at bottom to indicate scrollable content -->
 		<div
-			class="pointer-events-none sticky bottom-0 left-0 right-0 h-3 bg-gradient-to-b from-transparent via-black/5 to-black/12 z-10"
+			class="pointer-events-none sticky right-0 bottom-0 left-0 z-10 h-3 bg-gradient-to-b from-transparent via-black/5 to-black/12"
 		></div>
 	</div>
 </div>

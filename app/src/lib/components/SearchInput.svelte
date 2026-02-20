@@ -7,7 +7,13 @@
 		onblur?: () => void;
 	}
 
-	let { value = $bindable(''), placeholder = '', ariaLabel = 'Search', onfocus, onblur }: Props = $props();
+	let {
+		value = $bindable(''),
+		placeholder = '',
+		ariaLabel = 'Search',
+		onfocus,
+		onblur
+	}: Props = $props();
 
 	function clear() {
 		value = '';
@@ -20,8 +26,8 @@
 		bind:value
 		{placeholder}
 		aria-label={ariaLabel}
-		onfocus={onfocus}
-		onblur={onblur}
+		{onfocus}
+		{onblur}
 		class="h-11 w-full rounded-full border border-[var(--p-emerald)]/30 bg-white/95 pr-12 pl-10 text-[0.95rem] text-[var(--text-light-main)] placeholder-[var(--text-light-main)]/40 shadow-sm transition-all focus:border-[var(--p-emerald)]/60 focus:ring-2 focus:ring-[var(--p-emerald)]/20 focus:outline-none"
 	/>
 	<svg

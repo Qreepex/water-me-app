@@ -60,7 +60,7 @@
 	const version = '1.0.0';
 </script>
 
-	<PageHeader icon="⚙️" title="menu.settings" />
+<PageHeader icon="⚙️" title="menu.settings" />
 
 <PageContent>
 	<div class="overflow-y-auto">

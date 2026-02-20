@@ -43,7 +43,7 @@
 	tabindex="0"
 	onclick={openPlant}
 	onkeydown={onKeydown}
-	class="group cursor-pointer touch-manipulation overflow-hidden rounded-2xl bg-white shadow transition-all duration-200 active:shadow-sm active:scale-[0.98]"
+	class="group cursor-pointer touch-manipulation overflow-hidden rounded-2xl bg-white shadow transition-all duration-200 active:scale-[0.98] active:shadow-sm"
 >
 	<!-- Image -->
 	<div
@@ -69,15 +69,20 @@
 		<!-- Watering Status -->
 		{#if wateringStatus}
 			<div class="mb-3">
-				<div class={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold ${wateringStatus.color}`}>
+				<div
+					class={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold ${wateringStatus.color}`}
+				>
 					<span>{wateringStatus.emoji}</span>
 					<span>{$tStore(wateringStatus.text, wateringStatus.args)}</span>
 				</div>
-				<p class="text-xs text-[var(--text-light-main)]/60">
-					{$tStore('plants.lastWatered')}: {formatPastTimestamp(
-						new Date(plant.watering?.lastWatered ?? '')
-					)}
-				</p>
+
+				{#if plant.watering?.lastWatered}
+					<p class="text-xs text-[var(--text-light-main)]/60">
+						{$tStore('plants.lastWatered')}: {formatPastTimestamp(
+							new Date(plant.watering?.lastWatered ?? '')
+						)}
+					</p>
+				{/if}
 			</div>
 		{/if}
 

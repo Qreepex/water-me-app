@@ -16,7 +16,7 @@
 </script>
 
 <!-- Header -->
-	<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
+<PageHeader icon="🌱" title="common.app" description="common.appDescription" />
 
 <PageContent>
 	<!-- Loading State -->

@@ -26,6 +26,7 @@
 		onSortChange?.(value);
 	}
 </script>
+
 {#if iconOnly}
 	<div class="relative h-11 w-11 flex-shrink-0">
 		<div
@@ -59,9 +60,7 @@
 			value={sortBy}
 			onchange={handleChange}
 			class={`rounded-full border-2 border-[var(--p-emerald)] bg-[var(--card-light)] text-base font-medium text-[var(--text-light-main)] shadow-sm transition hover:border-[var(--p-emerald-dark)] focus:border-[var(--p-emerald)] focus:outline-none ${
-				compact
-					? 'h-11 flex-shrink-0 px-3 text-xs'
-					: 'w-full px-4 py-3 sm:w-auto'
+				compact ? 'h-11 flex-shrink-0 px-3 text-xs' : 'w-full px-4 py-3 sm:w-auto'
 			}`}
 		>
 			{#each sortOptions as option (option.value)}

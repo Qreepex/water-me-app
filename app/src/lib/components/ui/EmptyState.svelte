@@ -13,7 +13,7 @@
 </script>
 
 <div
-	class="rounded-2xl border-2 border-dashed border-[var(--p-emerald)] bg-[var(--bg-light)] p-12 text-center"
+	class="rounded-2xl border-2 border-dashed border-[var(--p-emerald)] bg-[var(--bg-light)] p-12 px-2 text-center"
 >
 	<div class="mb-4 text-5xl">{icon}</div>
 	<h2 class="mb-2 text-2xl font-bold text-[var(--text-light-main)]">{$tStore(title)}</h2>
